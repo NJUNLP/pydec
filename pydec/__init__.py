@@ -1,6 +1,5 @@
 from . import composition
 from . import variable_functions
-from .nn import functional
 from .composition import Composition
 from .bias_decomposition import (
     set_bias_decomposition_func,
@@ -34,6 +33,8 @@ composition._from_replce = variable_functions._from_replce
 composition._get_bias_decomposition_name = get_bias_decomposition_name
 composition._get_bias_decomposition_func = get_bias_decomposition_func
 
+
+from pydec.nn import functional
 
 # for name in dir(_C._VariableFunctions):
 #     if name.startswith('__') or name in PRIVATE_OPS:
