@@ -8,7 +8,6 @@ from ..exception_utils import none_bias_decomposition_func_error
 
 from typing import Optional
 
-torch.nn.functional.layer_norm
 
 
 def relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:

@@ -26,15 +26,14 @@ __all__ = [
     "no_bias_decomposition",
 ]
 
-"""
-initialization
-"""
+# initialization
+
 composition._from_replce = variable_functions._from_replce
 composition._get_bias_decomposition_name = get_bias_decomposition_name
 composition._get_bias_decomposition_func = get_bias_decomposition_func
 
 
-from pydec.nn import functional
+import pydec.nn as nn
 
 # for name in dir(_C._VariableFunctions):
 #     if name.startswith('__') or name in PRIVATE_OPS:
