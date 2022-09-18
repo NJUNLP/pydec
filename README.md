@@ -125,6 +125,7 @@ This also creates a composition containing 4 tensors of size (3, 2), initialized
 
 ### Initialize a Composition
 After creating a Composition, we usually initialize the value of the Composition based on orthogonality, i.e.,
+
 $$
 \frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\\\boldsymbol{0}, &\text{otherwise}\end{cases}.
 $$
