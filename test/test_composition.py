@@ -98,3 +98,49 @@ class TestReshape:
         assert self.c.reshape((3, 2)).size() == (3, 2)
         assert self.c.reshape(shape=(3, 2)).size() == (3, 2)
         assert self.c.reshape(3, 2).size() == (3, 2)
+
+
+class TestPlus:
+    c = init_composition((2, 3))
+
+    def test1(self):
+        from pydec import set_bias_decomposition_func
+
+        self.c[:] = 1.5
+        set_bias_decomposition_func("abs_decomposition")
+        c = self.c + 3
+        assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
+
+        set_bias_decomposition_func("norm_decomposition")
+        c = self.c + 3
+        assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
+
+        set_bias_decomposition_func("hybrid_decomposition")
+        c = self.c + 3
+        assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
+
+        set_bias_decomposition_func("sign_decomposition")
+        c = self.c + 3
+        assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
+
+        set_bias_decomposition_func("hybrid_decomposition_value_threshold")
+        c = self.c + 3
+        assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
+
+        with pydec.no_bias_decomposition():
+            c = self.c + 3
+            assert (self.c._composition_tensor == c._composition_tensor).all()
+            assert (self.c._residual_tensor + 3 == c._residual_tensor).all()
+
+        with pydec.using_bias_decomposition_func("abs_decomposition"):
+            self.c._composition_tensor[1] = -self.c._composition_tensor[1]
+            c = self.c + 3
+            assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
+
+    def test2(self):
+        c = init_composition((2, 3))
+        out = c + self.c
+        assert torch.all(
+            self.c._composition_tensor + c._composition_tensor
+            == out._composition_tensor
+        )

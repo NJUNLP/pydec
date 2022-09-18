@@ -45,7 +45,10 @@ def _from_replce(
 ) -> Composition:
     ...
 
-def _get_bias_decomposition_name() -> str:...
+
+def _get_bias_decomposition_name() -> str:
+    ...
+
 
 def _get_bias_decomposition_func(inplace: bool = False) -> Callable[..., Composition]:
     ...
@@ -203,10 +206,8 @@ class Composition:
 
     def __iadd__(self, other) -> Composition:
         if isinstance(other, Composition):
-            if self.composition_num() != other.composition_num():
-                raise composition_num_error(
-                    self.composition_num(), other.composition_num
-                )
+            if self.numc() != other.numc():
+                raise composition_num_error(self.numc(), other.numc())
             self._composition_tensor += other.composition_tensor
             self._residual_tensor += other._residual_tensor
             return self
@@ -222,11 +223,11 @@ class Composition:
 
     def __add__(self, other) -> Composition:
         if isinstance(other, Composition):
-            if self.composition_num() != other.composition_num():
-                raise composition_num_error(
-                    self.composition_num(), other.composition_num
-                )
-            out_composition_tensor = self._composition_tensor + other.composition_tensor
+            if self.numc() != other.numc():
+                raise composition_num_error(self.numc(), other.numc())
+            out_composition_tensor = (
+                self._composition_tensor + other._composition_tensor
+            )
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
@@ -602,7 +603,7 @@ class Composition:
         ...
 
     def masked_fill(self, mask: Tensor, value: Any) -> Composition:
-        """
+        r"""
         Unsafe.
         """
         out_composition_tensor = self._composition_tensor.masked_fill(mask[None], value)
@@ -643,7 +644,7 @@ class Composition:
         ...
 
     def masked_fill_(self, mask: Tensor, value: Any) -> Composition:
-        """
+        r"""
         Unsafe.
         """
         self._composition_tensor.masked_fill_(mask[None], value)
@@ -658,7 +659,7 @@ class Composition:
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def masked_scatter(self, mask: Tensor, source: Tensor) -> Composition:
-        """
+        r"""
         Unsafe.
         """
         out_composition_tensor = self._composition_tensor.masked_scatter(
@@ -668,7 +669,7 @@ class Composition:
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def masked_scatter_(self, mask: Tensor, source: Tensor) -> Composition:
-        """
+        r"""
         Unsafe.
         """
         self._composition_tensor.masked_scatter_(mask[None], source)
@@ -738,7 +739,7 @@ class Composition:
     def scatter(
         self, dim: Any, index: Tensor, src: Any, *, reduce: str = None
     ) -> Composition:
-        """
+        r"""
         Unsafe.
         Safe when reduce is not None.
         """
@@ -787,7 +788,7 @@ class Composition:
     def scatter_(
         self, dim: Any, index: Tensor, src: Any, *, reduce: str = None
     ) -> Composition:
-        """
+        r"""
         Unsafe.
         """
         if reduce == "add":
@@ -814,6 +815,9 @@ class Composition:
     def diagonal_scatter(
         self, src: Tensor, offset: _int = 0, dim1: _int = 0, dim2: _int = 1
     ) -> Composition:
+        r"""
+        Unsafe.
+        """
         c_src = src[None].expand((self.numc(),) + (-1,) * src.dim())
         out_composition_tensor = self._composition_tensor.diagonal_scatter(
             c_src, offset, _shift_dim(dim1), _shift_dim(dim2)
