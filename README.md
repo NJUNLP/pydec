@@ -84,9 +84,11 @@ In the above example, each composition consists of two components whose sum is a
 ## Decomposition
 
 Given an arbitrary tensor $h$ in the network, there exists a way to decompose it into the sum of several components. As shown in the following equation,
+
 $$
 h = \frac{\mathscr{D}h}{\mathscr{D}x_1} + \cdots + \frac{\mathscr{D}h}{\mathscr{D}x_m} + \frac{\mathscr{D}h}{\mathscr{D}b^1\cdots\mathscr{D}b^L},
 $$
+
 where $x_1,\cdots,x_m$ are the inputs to the network and $b$ is the bias parameter of the network (usually used in the linear layer). Each component corresponds to one or some of the inputs (marked in the denominator), e.g., the components of $h$ corresponding to $\{x_1, x_2\}$ are denoted as $\frac{\mathscr{D}h}{\mathscr{D}x_1\mathscr{D}x_2}$
 
 ## Composition
