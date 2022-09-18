@@ -21,9 +21,7 @@ REQUIRES_PYTHON = ">=3.8.0"
 VERSION = "0.1.0"
 
 # What packages are required for this module to be executed?
-REQUIRED = [
-    'pytorch'
-]
+REQUIRED = ["pytorch>=1.11"]
 
 # What packages are optional?
 EXTRAS = {
