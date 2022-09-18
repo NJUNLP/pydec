@@ -1,0 +1,55 @@
+r"""Functional interface"""
+
+import torch
+from torch import Tensor
+from ..composition import Composition
+from ..bias_decomposition import get_bias_decomposition_func, get_bias_decomposition_name
+from ..exception_utils import none_bias_decomposition_func_error
+
+from typing import Optional
+
+torch.nn.functional.layer_norm
+
+
+def relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+    if ref is None:
+        ref = input.c_sum()
+    zero_mask = ref < 0
+    out = input.masked_fill(zero_mask, 0.0)
+    return out
+
+
+def linear(input: Composition, weight: Tensor, bias: Tensor = None) -> Composition:
+    out = input @ weight.t()
+    if bias is not None:
+        decomposition_func = get_bias_decomposition_func()
+        if decomposition_func is not None:
+            return decomposition_func(out, bias)
+        else:
+            raise none_bias_decomposition_func_error(get_bias_decomposition_name())
+    else:
+        return out
+
+
+def layer_norm_1d(
+    input: Composition,
+    ref: Optional[Tensor] = None,
+    weight: Optional[Tensor] = None,
+    bias: Optional[Tensor] = None,
+    eps: float = 1e-5,
+) -> Composition:
+    r"""Applies Layer Normalization for last dimension."""
+    input_mean = input.mean(dim=-1, keepdim=True)
+    if ref is None:
+        ref = input.c_sum()
+    input_std = torch.sqrt(torch.var(ref, dim=-1, unbiased=False, keepdim=True) + eps)
+    out = (input - input_mean) * weight / input_std[None]
+
+    if bias is not None:
+        decomposition_func = get_bias_decomposition_func()
+        if decomposition_func is not None:
+            return decomposition_func(out, bias)
+        else:
+            raise none_bias_decomposition_func_error(get_bias_decomposition_name())
+    else:
+        return out
