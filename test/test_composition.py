@@ -145,6 +145,7 @@ class TestPlus:
             == out._composition_tensor
         )
 
+
 # import torch.nn as nn
 # from torch import Tensor
 
@@ -183,10 +184,10 @@ class TestPlus:
 #         # Initialize composition
 #         import pydec
 #         from pydec import Composition
-#         c1 = Composition(x1.size(), composition_num=2).to(x1)
+#         c1 = Composition(x1.size(), component_num=2).to(x1)
 #         c1[0] = x1
 
-#         c2 = Composition(x2.size(), composition_num=2).to(x2)
+#         c2 = Composition(x2.size(), component_num=2).to(x2)
 #         c2[1] = x2
 
 #         # Apply the same operation for composition

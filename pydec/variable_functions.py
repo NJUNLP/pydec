@@ -110,8 +110,12 @@ def stack(
 def diagonal_init(
     input: Composition, src: Tensor, dim: _int, offset: _int = 0
 ) -> Composition:
+    permute_dims = list(range(src.dim()))
+    permute_dims.remove(dim)
+    permute_dims.append(dim)
+    src = src.permute(permute_dims)
     out_composition_tensor = input._composition_tensor.diagonal_scatter(
-        src, offset=offset, dim1=0, dim2=dim
+        src, offset=offset, dim1=0, dim2=_shift_dim(dim)
     )
     out_residual_tensor = input._residual_tensor.clone()
     return _from_replce(out_composition_tensor, out_residual_tensor)

@@ -25,7 +25,7 @@ from torch.types import (
 from pydec.exception_utils import (
     args_error,
     size_error,
-    composition_num_error,
+    component_num_error,
     unsupported_operand_error,
     arg_value_error,
     none_bias_decomposition_func_error,
@@ -60,7 +60,7 @@ class Composition:
     """
 
     @overload
-    def __init__(self, size: _size, composition_num: _int, **kwargs: Any) -> None:
+    def __init__(self, size: _size, component_num: _int, **kwargs: Any) -> None:
         ...
 
     @overload
@@ -99,8 +99,8 @@ class Composition:
         if isinstance(args[0], (torch.Size, list, Tuple)):
             if len(args) != 2:
                 raise args_error(Composition.__init__.__name__, args, kwargs)
-            size, composition_num = args
-            self._composition_tensor = torch.zeros((composition_num,) + size, **kwargs)
+            size, component_num = args
+            self._composition_tensor = torch.zeros((component_num,) + size, **kwargs)
             self._residual_tensor: Tensor = torch.zeros(size, **kwargs)
         elif isinstance(args[0], Tensor):
             if len(args) != 2 or len(kwargs) != 0:
@@ -207,7 +207,7 @@ class Composition:
     def __iadd__(self, other) -> Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
-                raise composition_num_error(self.numc(), other.numc())
+                raise component_num_error(self.numc(), other.numc())
             self._composition_tensor += other.composition_tensor
             self._residual_tensor += other._residual_tensor
             return self
@@ -224,7 +224,7 @@ class Composition:
     def __add__(self, other) -> Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
-                raise composition_num_error(self.numc(), other.numc())
+                raise component_num_error(self.numc(), other.numc())
             out_composition_tensor = (
                 self._composition_tensor + other._composition_tensor
             )

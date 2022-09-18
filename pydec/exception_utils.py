@@ -28,7 +28,7 @@ def size_error(
     )
 
 
-def composition_num_error(
+def component_num_error(
     num1: _int, num2: _int, c1_name="composition1", c2_name="composition2"
 ) -> RuntimeError:
     return RuntimeError(

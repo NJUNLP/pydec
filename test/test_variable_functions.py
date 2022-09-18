@@ -63,7 +63,7 @@ class TestDiagonalInit:
     def test1(self):
         data = torch.zeros((2, 3))
 
-        out = pydec.diagonal_init(self.c, data, 2)
+        out = pydec.diagonal_init(self.c, data, 1)
 
         for i in range(self.c.numc()):
             for j in range(self.c.numc()):
@@ -78,7 +78,7 @@ class TestDiagonalInit:
         data = torch.zeros((2, 3))
         offset = -1
 
-        out = pydec.diagonal_init(c, data, 2, offset=offset)
+        out = pydec.diagonal_init(c, data, 1, offset=offset)
 
         for i in range(1, c.numc()):
             for j in range(c.size(1)):
@@ -86,3 +86,16 @@ class TestDiagonalInit:
                     assert torch.all(out[i, :, j] == data[:, j])
                 else:
                     assert torch.all(out[i, :, j] == c[i, :, j])
+
+    def test3(self):
+        component_num = 3
+        size = (3, 2)
+        x = torch.randn(size)
+        c = Composition((3, 2), component_num)
+        out = pydec.diagonal_init(c, src=x, dim=0)
+        for i in range(self.c.numc()):
+            for j in range(self.c.numc()):
+                if i == j:
+                    assert torch.all(out[i, j] == x[i])
+                else:
+                    assert torch.all(out[i, j] == c[i, j])
