@@ -27,10 +27,10 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install black pytest
           pip install .
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        flake8 .
+    - name: Python Lint (isort/black)
+      # You may pin to the exact commit or the version.
+      # uses: wrboyce/python-lint-action@7c6d719c086f19e7eeb802c3fbdeeff6c01cab61
+      uses: wrboyce/python-lint-action@v1.0.0
     - name: Test with pytest
       run: |
         pytest
