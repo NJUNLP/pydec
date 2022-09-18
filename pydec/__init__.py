@@ -1,5 +1,6 @@
 from . import composition
 from . import variable_functions
+import nn.functional
 from .composition import Composition
 from .bias_decomposition import (
     set_bias_decomposition_func,

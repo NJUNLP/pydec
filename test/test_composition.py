@@ -144,3 +144,64 @@ class TestPlus:
             self.c._composition_tensor + c._composition_tensor
             == out._composition_tensor
         )
+
+
+# import torch.nn as nn
+# from torch import Tensor
+
+
+# class NN(nn.Module):
+#     def __init__(self) -> None:
+#         ...
+
+#     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
+#         x1 = self.linear1(x1)
+#         x1 = self.relu(x1)
+
+#         x2 = self.linear2(x2)
+#         x2 = self.relu(x2)
+
+#         out = self.linear3(x1 + x2)
+#         return out
+
+
+# class NN(nn.Module):
+#     def __init__(self) -> None:
+#         self.linear1: nn.Linear = None
+#         self.linear2: nn.Linear = None
+#         self.linear3: nn.Linear = None
+
+#     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
+#         x1 = self.linear1(x1)
+#         x1 = self.relu(x1)
+
+#         x2 = self.linear2(x2)
+#         x2 = self.relu(x2)
+
+#         out = self.linear3(x1 + x2)
+
+
+#         # Initialize composition
+#         import pydec
+#         from pydec import Composition
+#         c1 = Composition(x1.size(), composition_num=2).to(x1)
+#         c1[0] = x1
+
+#         c2 = Composition(x2.size(), composition_num=2).to(x2)
+#         c2[1] = x2
+
+#         # Apply the same operation for composition
+#         c1 = pydec.nn.functional.linear(
+#             c1, weight=self.linear1.weight, bias=self.linear1.bias
+#         )
+#         c1 = pydec.nn.functional.relu(c1)
+
+#         c2 = pydec.nn.functional.linear(
+#             c2, weight=self.linear2.weight, bias=self.linear2.bias
+#         )
+#         c2 = pydec.nn.functional.relu(c2)
+
+#         c_out = pydec.nn.functional.linear3(
+#             c1 + c2, weight=self.linear3.weight, bias=self.linear3.bias
+#         )
+#         return out, c_out
