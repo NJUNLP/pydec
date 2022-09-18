@@ -27,8 +27,10 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install black pytest
           pip install .
-    - name: Python linters Black Check
-      uses: jose-lpa/python-black-check-action@1.0.0
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        flake8 .
     - name: Test with pytest
       run: |
         pytest
