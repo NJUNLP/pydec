@@ -330,6 +330,65 @@ class Composition:
             return other.__ge__(self.c_sum())
         return self.c_sum().__le__(other)
 
+    def add(
+        self,
+        other: Union[Composition, Tensor, Number],
+        *,
+        alpha: Optional[Number] = 1,
+        out: Optional[Composition] = None,
+        **kwargs,
+    ) -> Composition:
+        if isinstance(other, Composition):
+            if self.numc() != other.numc():
+                raise component_num_error(self.numc(), other.numc())
+            if out is None:
+                out_composition_tensor = self._composition_tensor.add(
+                    other._composition_tensor, alpha=alpha
+                )
+                out_residual_tensor = self._residual_tensor.add(
+                    other._residual_tensor, alpha=alpha
+                )
+            else:
+                out_composition_tensor = self._composition_tensor.add(
+                    other._composition_tensor, alpha=alpha, out=out._composition_tensor
+                )
+                out_residual_tensor = self._residual_tensor.add(
+                    other._residual_tensor, alpha=alpha, out=out._residual_tensor
+                )
+            return _from_replce(out_composition_tensor, out_residual_tensor)
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            decomposition_func = _get_bias_decomposition_func()
+            if decomposition_func is not None:
+                kwargs["out"] = out
+                return decomposition_func(self, alpha * other, **kwargs)
+            else:
+                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+        else:
+            raise unsupported_operand_error("add", type(self), type(other))
+
+    def add_(
+        self,
+        other: Union[Composition, Tensor, Number],
+        *,
+        alpha: Optional[Number] = 1,
+        **kwargs,
+    ) -> Composition:
+        if isinstance(other, Composition):
+            if self.numc() != other.numc():
+                raise component_num_error(self.numc(), other.numc())
+            self._composition_tensor.add_(other.composition_tensor, alpha=alpha)
+            self._residual_tensor.add_(other._residual_tensor, alpha=alpha)
+            return self
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            decomposition_func = _get_bias_decomposition_func(inplace=True)
+            if decomposition_func is not None:
+                self = decomposition_func(self, alpha * other, **kwargs)
+            else:
+                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            return self
+        else:
+            raise unsupported_operand_error("add_", type(self), type(other))
+
     @overload
     def any(self) -> Tensor:
         ...

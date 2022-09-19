@@ -74,7 +74,10 @@ def get_bias_decomposition_name() -> str:
 
 
 def get_bias_decomposition_func(inplace: bool = False) -> Callable[..., Composition]:
-    if _BiasDecompositionState.bias_decomposition_name not in _BIAS_DECOMPOSITION_FUNC_REGISTRY:
+    if (
+        _BiasDecompositionState.bias_decomposition_name
+        not in _BIAS_DECOMPOSITION_FUNC_REGISTRY
+    ):
         return None
     else:
         current_bias_decomposition_func = _BIAS_DECOMPOSITION_FUNC_REGISTRY[
@@ -355,9 +358,7 @@ def norm_decomposition(
         out_residual_tensor = c._residual_tensor
 
     compositions = c._composition_tensor
-    norm_compositions = torch.norm(
-        compositions, p=p, dim=-1, keepdim=True
-    )
+    norm_compositions = torch.norm(compositions, p=p, dim=-1, keepdim=True)
     sum_compositions = norm_compositions.sum(dim=0, keepdim=True)
     sum_compositions[sum_compositions == 0] = eps
 
@@ -371,6 +372,7 @@ def norm_decomposition(
         out_composition_tensor = compositions + weights * bias
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
+
 @register_bias_decomposition_func("norm_decomposition_")
 def norm_decomposition_(
     c: Composition,
@@ -379,8 +381,7 @@ def norm_decomposition_(
     p=2,
     eps=1e-6,
 ) -> Composition:
-    return norm_decomposition(c, bias, p=2,eps=eps, inplace=True)
-
+    return norm_decomposition(c, bias, p=2, eps=eps, inplace=True)
 
 
 # @register_bias_decomposition_func("sparse_abs_decomposition")
