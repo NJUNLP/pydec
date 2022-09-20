@@ -74,9 +74,7 @@ class Composition:
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        def init_from_tensor(
-            composition_tensor: Tensor, residual_tensor: Tensor = None
-        ):
+        def init_from_tensor(composition_tensor: Tensor, residual_tensor: Tensor = None):
             self._composition_tensor = torch.tensor(composition_tensor).to(
                 composition_tensor
             )
@@ -88,9 +86,7 @@ class Composition:
                         "composition",
                         "residual",
                     )
-                self._residual_tensor = torch.tensor(residual_tensor).to(
-                    residual_tensor
-                )
+                self._residual_tensor = torch.tensor(residual_tensor).to(residual_tensor)
             else:
                 self._residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
                     composition_tensor
@@ -153,6 +149,12 @@ class Composition:
     def numel(self) -> _int:
         return self._residual_tensor.numel()
 
+    def c_numel(self, count_residual=False) -> _int:
+        if count_residual:
+            return self._composition_tensor.numel() + self._residual_tensor.numel()
+        else:
+            return self._composition_tensor.numel()
+
     def numc(self) -> _int:
         return len(self)
 
@@ -169,6 +171,11 @@ class Composition:
         out._composition_tensor = self._composition_tensor.detach()
         out._residual_tensor = self._residual_tensor.detach()
         return out
+
+    def detach_(self) -> Composition:
+        self._composition_tensor.detach_()
+        self._residual_tensor.detach_()
+        return self
 
     @overload
     def size(self) -> torch.Size:
@@ -198,6 +205,9 @@ class Composition:
         else:
             return self._composition_tensor.size(dim)
 
+    def dim(self) -> _int:
+        return self._residual_tensor.dim()
+
     def __neg__(self) -> Composition:
         return _from_replce(-self._composition_tensor, -self._residual_tensor)
 
@@ -225,9 +235,7 @@ class Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
                 raise component_num_error(self.numc(), other.numc())
-            out_composition_tensor = (
-                self._composition_tensor + other._composition_tensor
-            )
+            out_composition_tensor = self._composition_tensor + other._composition_tensor
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
@@ -389,6 +397,21 @@ class Composition:
         else:
             raise unsupported_operand_error("add_", type(self), type(other))
 
+    def sub(
+        self,
+        other: Union[Composition, Tensor, Number],
+        *,
+        alpha: Optional[Number] = 1,
+        out: Optional[Composition] = None,
+        **kwargs,
+    ) -> Composition:
+        return self.add(-other, alpha=alpha, out=out, **kwargs)
+
+    def sub_(
+        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1
+    ) -> Composition:
+        return self.add_(-other, alpha=alpha)
+
     @overload
     def any(self) -> Tensor:
         ...
@@ -402,10 +425,7 @@ class Composition:
         ...
 
     def any(self, *args: Any, **kwargs: Any) -> Tensor:
-        if len(args) + len(kwargs) == 0:
-            return self.c_sum().any()
-        else:
-            return self.c_sum().any(*args, **kwargs)
+        return self.c_sum().any(*args, **kwargs)
 
     @overload
     def all(self) -> Tensor:
@@ -420,19 +440,30 @@ class Composition:
         ...
 
     def all(self, *args: Any, **kwargs: Any) -> Tensor:
-        if len(args) + len(kwargs) == 0:
-            return self.c_sum().all()
-        else:
-            return self.c_sum().all(*args, **kwargs)
+        return self.c_sum().all(*args, **kwargs)
 
     def unsqueeze(self, dim: _int) -> Composition:
         out_residual_tensor = self._residual_tensor.unsqueeze(dim)
         out_composition_tensor = self._composition_tensor.unsqueeze(_shift_dim(dim))
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
+    @overload
+    def squeeze(self) -> Composition:
+        ...
+
+    @overload
     def squeeze(self, dim: _int) -> Composition:
-        out_residual_tensor = self._residual_tensor.squeeze(dim)
-        out_composition_tensor = self._composition_tensor.squeeze(_shift_dim(dim))
+        ...
+
+    def squeeze(self, dim: _int = None) -> Composition:
+        if dim is None:
+            out_residual_tensor = self._residual_tensor.squeeze()
+            out_composition_tensor = self._composition_tensor.squeeze()
+            if self.numc() == 1:
+                out_composition_tensor = out_composition_tensor.unsqueeze(0)
+        else:
+            out_residual_tensor = self._residual_tensor.squeeze(dim)
+            out_composition_tensor = self._composition_tensor.squeeze(_shift_dim(dim))
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def unsqueeze_(self, dim: _int) -> Composition:
@@ -440,9 +471,24 @@ class Composition:
         self._composition_tensor.unsqueeze_(_shift_dim(dim))
         return self
 
+    @overload
+    def squeeze_(self) -> Composition:
+        ...
+
+    @overload
     def squeeze_(self, dim: _int) -> Composition:
-        self._residual_tensor.squeeze_(dim)
-        self._composition_tensor.squeeze_(_shift_dim(dim))
+        ...
+
+    def squeeze_(self, dim: _int = None) -> Composition:
+        if dim is None:
+            self._residual_tensor.squeeze_()
+            if self.numc() == 1:
+                self._composition_tensor.squeeze_().unsqueeze_(0)
+            else:
+                self._composition_tensor.squeeze_()
+        else:
+            self._residual_tensor.squeeze_(dim)
+            self._composition_tensor.squeeze_(_shift_dim(dim))
         return self
 
     def transpose(self, dim0: _int, dim1: _int) -> Composition:
@@ -466,10 +512,12 @@ class Composition:
         ...
 
     def permute(self, *args, **kwargs) -> Composition:
-        if len(args) == 1:
-            dims = args[0]
-        elif len(kwargs) == 1:
+        if len(kwargs) == 1:
             dims = kwargs["dims"]
+        elif isinstance(args[0], _int):
+            dims = torch.Size(args)
+        else:
+            dims = args[0]
         out_residual_tensor = self._residual_tensor.permute(dims)
         out_composition_tensor = self._composition_tensor.permute(
             (0,) + _shift_dims(dims)
@@ -574,9 +622,7 @@ class Composition:
             out_composition_tensor = self._composition_tensor.view(dtype)
             out_residual_tensor = self._residual_tensor.view(dtype)
         else:
-            out_composition_tensor = self._composition_tensor.view(
-                (self.numc(),) + size
-            )
+            out_composition_tensor = self._composition_tensor.view((self.numc(),) + size)
             out_residual_tensor = self._residual_tensor.view(size)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -592,18 +638,13 @@ class Composition:
         ...
 
     def reshape(self, *args, shape=None) -> Composition:
-        if len(args) > 1:
-            out_composition_tensor = self._composition_tensor.reshape(
-                self.numc(), *args
-            )
-            out_residual_tensor = self._residual_tensor.reshape(*args)
-        else:
-            if shape is None:
+        if shape is None:
+            if isinstance(args[0], _int):
+                shape = torch.Size(args)
+            else:
                 shape = args[0]
-            out_composition_tensor = self._composition_tensor.view(
-                (self.numc(),) + shape
-            )
-            out_residual_tensor = self._residual_tensor.view(shape)
+        out_composition_tensor = self._composition_tensor.view((self.numc(),) + shape)
+        out_residual_tensor = self._residual_tensor.view(shape)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def reshape_as(self, other: Tensor) -> Composition:
@@ -678,6 +719,13 @@ class Composition:
         ...
 
     def c_masked_fill(self, mask: Tensor, value: Any) -> Composition:
+        if mask.dim() == 1:
+            if len(mask) != self.numc():
+                raise arg_value_error(
+                    f"the length of mask ({len(mask)}) should match component number ({self.numc()})"
+                )
+            mask_size = (self.numc(),) + (1,) * self.dim()
+            mask = mask.view(mask_size)
         out_composition_tensor = self._composition_tensor.masked_fill(mask, value)
         out_residual_tensor = self._residual_tensor.clone()
         return _from_replce(out_composition_tensor, out_residual_tensor)
@@ -691,6 +739,13 @@ class Composition:
         ...
 
     def c_masked_fill_(self, mask: Tensor, value: Any) -> Composition:
+        if mask.dim() == 1:
+            if len(mask) != self.numc():
+                raise arg_value_error(
+                    f"the length of mask ({len(mask)}) should match component number ({self.numc()})"
+                )
+            mask_size = (self.numc(),) + (1,) * self.dim()
+            mask = mask.view(mask_size)
         self._composition_tensor.masked_fill_(mask, value)
         return self
 
@@ -741,16 +796,6 @@ class Composition:
     ) -> Composition:
         ...
 
-    @overload
-    def gather(
-        self,
-        dim: Union[str, ellipsis, None],
-        index: Tensor,
-        *,
-        sparse_grad: _bool = False,
-    ) -> Composition:
-        ...
-
     def gather(
         self, dim: Any, index: Tensor, *, sparse_grad: _bool = False
     ) -> Composition:
@@ -796,12 +841,20 @@ class Composition:
         ...
 
     def scatter(
-        self, dim: Any, index: Tensor, src: Any, *, reduce: str = None
+        self,
+        dim: Any,
+        index: Tensor,
+        src: Any = None,
+        value: Any = None,
+        *,
+        reduce: str = None,
     ) -> Composition:
         r"""
         Unsafe.
         Safe when reduce is not None.
         """
+        if src is None:
+            src = value
         if reduce == "add":
             holder = torch.zeros_like(self._residual_tensor).to(self._residual_tensor)
             holder = holder.scatter(dim, index, src, reduce=reduce)
@@ -835,9 +888,7 @@ class Composition:
         ...
 
     @overload
-    def scatter_(
-        self, dim: _int, index: Tensor, value: Number, *, reduce: str
-    ) -> Tensor:
+    def scatter_(self, dim: _int, index: Tensor, value: Number, *, reduce: str) -> Tensor:
         ...
 
     @overload
@@ -915,9 +966,11 @@ class Composition:
     def index_select(self, dim: Union[str, ellipsis, None], index: Tensor) -> Tensor:
         ...
 
+    # TODO
     def index_select(self):
         ...
 
+    # TODO
     def masked_select(self, mask: Tensor) -> Tensor:
         ...
 

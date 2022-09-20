@@ -1,5 +1,5 @@
-from . import composition
-from . import variable_functions
+from . import composition as _composition
+from . import variable_functions as _variable_functions
 from .composition import Composition
 from .bias_decomposition import (
     set_bias_decomposition_func,
@@ -8,14 +8,7 @@ from .bias_decomposition import (
     using_bias_decomposition_func,
     no_bias_decomposition,
 )
-from .variable_functions import (
-    void,
-    cat,
-    c_cat,
-    _from_replce,
-    diagonal_init,
-    call_torch_function,
-)
+
 from .error_check import no_error_check, error_check, check_error
 
 __all__ = [
@@ -26,23 +19,36 @@ __all__ = [
     "no_bias_decomposition",
 ]
 
-# initialization
+import typing as _typing
+import torch.types as _types
 
-composition._from_replce = variable_functions._from_replce
-composition._get_bias_decomposition_name = get_bias_decomposition_name
-composition._get_bias_decomposition_func = get_bias_decomposition_func
-
+PRIVATE_NAME = ["memory_format"]
+PRIVATE_NAME.extend(dir(_typing))
+PRIVATE_NAME.extend(dir(_types))
 
 import pydec.nn as nn
 
-# for name in dir(_C._VariableFunctions):
-#     if name.startswith('__') or name in PRIVATE_OPS:
-#         continue
-#     obj = getattr(_C._VariableFunctions, name)
-#     obj.__module__ = 'torch'
-#     globals()[name] = obj
-#     if not name.startswith("_"):
-#         __all__.append(name)
+from typing import TYPE_CHECKING
+
+# Fake import for type checking
+if TYPE_CHECKING:
+    from variable_functions import *
+
+for name in dir(_variable_functions):
+    if name.startswith("__") or name in PRIVATE_NAME:
+        continue
+    obj = getattr(_variable_functions, name)
+    obj.__module__ = "pydec"
+    globals()[name] = obj
+    if not name.startswith("_"):
+        __all__.append(name)
+
+# initialization
+
+_composition._from_replce = _variable_functions._from_replce
+_composition._get_bias_decomposition_name = get_bias_decomposition_name
+_composition._get_bias_decomposition_func = get_bias_decomposition_func
+
 
 # import torch
 # c = Composition((3, 4), 3, dtype=torch.float)
