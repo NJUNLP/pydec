@@ -1,6 +1,7 @@
 [![Test](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/DoubleVII/pydec/python-coverage-comment-action-data/endpoint.json)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 
 <h1 align="center" style="font-size:60px">
@@ -129,7 +130,7 @@ This also creates a composition containing 4 tensors of size (3, 2), initialized
 After creating a Composition, we usually initialize the value of the Composition based on orthogonality, i.e.,
 
 $$
-\frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\\0, &\text{otherwise}\end{cases}.
+\frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\\ 0, &\text{otherwise}\end{cases}.
 $$
 
 **By assign**
