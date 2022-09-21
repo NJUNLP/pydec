@@ -55,7 +55,9 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -73,7 +75,9 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors, 0, out=out._composition_tensor if out is not None else None,
+        c_tensors,
+        0,
+        out=out._composition_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = builtins.sum(r_tensors)
@@ -99,7 +103,9 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -187,17 +193,6 @@ def any(
     ...
 
 
-# @overload
-# def any(
-#     input: Composition,
-#     dim: Union[str, ellipsis, None],
-#     keepdim: _bool = False,
-#     *,
-#     out: Optional[Tensor] = None,
-# ) -> Tensor:
-#     ...
-
-
 def any(input: Composition, *args: Any, **kwargs: Any) -> Tensor:
     torch.any(input.c_sum(), *args, **kwargs)
 
@@ -216,17 +211,6 @@ def all(
     out: Optional[Tensor] = None,
 ) -> Tensor:
     ...
-
-
-# @overload
-# def all(
-#     input: Composition,
-#     dim: Union[str, ellipsis, None],
-#     keepdim: _bool = False,
-#     *,
-#     out: Optional[Tensor] = None,
-# ) -> Tensor:
-#     ...
 
 
 def all(input: Composition, *args: Any, **kwargs: Any) -> Tensor:
@@ -442,13 +426,6 @@ def scatter(
     ...
 
 
-# @overload
-# def scatter(
-#     input: Composition, dim: Union[str, ellipsis, None], index: Tensor, src: Tensor
-# ) -> Composition:
-#     ...
-
-
 @overload
 def scatter(
     input: Composition,
@@ -459,13 +436,6 @@ def scatter(
     out: Optional[Composition] = None,
 ) -> Composition:
     ...
-
-
-# @overload
-# def scatter(
-#     input: Composition, dim: Union[str, ellipsis, None], index: Tensor, value: Number
-# ) -> Composition:
-#     ...
 
 
 # TODO: to support 'out: Optional[Composition] = None'
@@ -491,3 +461,54 @@ def diagonal_scatter(
 ) -> Composition:
     return input.diagonal_scatter(src, offset, dim1, dim2)
 
+
+@overload
+def index_select(
+    input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None
+) -> Composition:
+    ...
+
+
+def index_select(
+    input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None
+) -> Composition:
+    out_composition_tensor = torch.index_select(
+        input._composition_tensor,
+        dim=_shift_dim(dim),
+        index=index,
+        out=out._composition_tensor,
+    )
+    out_residual_tensor = torch.index_select(
+        input._residual_tensor, dim=dim, index=index, out=out._residual_tensor
+    )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def masked_select(
+    input: Composition, mask: Tensor, *, out: Optional[Composition] = None
+) -> Composition:
+    out_composition_tensor = torch.masked_select(
+        input._composition_tensor, mask=mask[None], out=out._composition_tensor
+    )
+    out_residual_tensor = torch.masked_select(
+        input._residual_tensor, mask=mask, out=out._residual_tensor
+    )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+@overload
+def index_fill(
+    input: Composition, dim: _int, index: Tensor, value: Tensor
+) -> Composition:
+    ...
+
+
+@overload
+def index_fill(
+    input: Composition, dim: _int, index: Tensor, value: Number
+) -> Composition:
+    ...
+
+
+def index_fill(input: Composition, dim: _int, index: Tensor, value: Any) -> Composition:
+    return input.index_fill(dim=dim, index=index, value=value)

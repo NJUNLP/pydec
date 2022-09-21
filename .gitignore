@@ -2,6 +2,8 @@
 /.vscode
 /pydec.egg-info
 
+.coverage
+
 # JetBrains PyCharm IDE
 .idea/
 

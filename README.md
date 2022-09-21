@@ -97,30 +97,30 @@ In PyDec, we use the data structure (i.e., Composition) to store the components,
 
 ### Create a Composition
 ```python
-import pydec
+>>> import pydec
 ```
 
 **From size and component number**
 ```python
-size = (3, 2)
-component_num = 4
-c = pydec.Composition(size, component_num)
+>>> size = (3, 2)
+>>> component_num = 4
+>>> c = pydec.Composition(size, component_num)
 ```
 This creates a composition containing 4 tensors of size (3, 2), initialized with 0.
 
 **From another Composition**
 ```python
-c_copy = pydec.Composition(c)
+>>> c_copy = pydec.Composition(c)
 ```
 This will clone an identical c, but without preserving any computational graph.
 
 **From component tensors**
 ```python
-component_num = 4
-c_size = (component_num, 3, 2)
-t = torch.randn(c_size) # 4 x 3 x 2
+>>> component_num = 4
+>>> c_size = (component_num, 3, 2)
+>>> t = torch.randn(c_size) # 4 x 3 x 2
 
-c_tensor = pydec.Composition(t)
+>>> c_tensor = pydec.Composition(t)
 ```
 This also creates a composition containing 4 tensors of size (3, 2), initialized with tensor t.
 
@@ -128,19 +128,21 @@ This also creates a composition containing 4 tensors of size (3, 2), initialized
 After creating a Composition, we usually initialize the value of the Composition based on orthogonality, i.e.,
 
 $$
-\frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\\\boldsymbol{0}, &\text{otherwise}\end{cases}.
+\frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\\0, &\text{otherwise}\end{cases}.
 $$
 
 **By assign**
 
 ```python
-size = (3, 2)
-x0 = torch.randn(size)
-x1 = torch.randn(size)
-c = pydec.Composition(size, component_num=2)
-
-c[0] = x0
-c[1] = x2
+# The input consists of x0 and x1, each containing a tensor with a feature number of 2.
+>>> size = (2,)
+>>> x0 = torch.randn(size)
+>>> x1 = torch.randn(size)
+>>> c0 = pydec.Composition(size, component_num=2)
+>>> c1 = pydec.Composition(size, component_num=2)
+# Initialize by assign
+>>> c0[0] = x0
+>>> c1[1] = x1
 ```
 *You can access the components by indices, e.g. `c[0]` and `c[3:5]`.*
 
@@ -148,11 +150,11 @@ c[1] = x2
 
 In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the `torch.diagonal_scatter` function.
 ```python
-component_num = 3
-size = (3, 2)
-x = torch.randn(size)
-c = pydec.Composition(size, component_num)
-c = pydec.diagonal_init(c, src=x, dim=0)
+>>> component_num = 3
+>>> size = (3, 2)
+>>> x = torch.randn(size)
+>>> c = pydec.Composition(size, component_num)
+>>> c = pydec.diagonal_init(c, src=x, dim=0)
 ```
 Out:
 ```python
@@ -282,6 +284,45 @@ The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots
 PyDec has some built-in strategies to decompose bias, and they mostly calculate $p_i$ based on the value of $c_i$. By default, PyDec just adds bias to residual component without performing any bias decomposition. More details about the bias decomposition can be found here (TODO).
 
 ## Tracking forward propagation
+
+To obtain the decomposition of the output or intermediate variables, the input to the network is first wrapped with Composition, and then the linear transformations and operations defined by the network are applied to Composition. Composition automatically maintains the decomposition of the corresponding variables of the original network.
+
+### Initializing Compositions
+Create a corresponding Composition for each tensor that is fed into the network instead of for each input variable, e.g. if all inputs are organized in a certain dimension in a tensor, then only a Composition needs to be created for this tensor.
+
+The number of components in Composition is determined by the user's needs, such as creating a Composition with 2 components corresponding to the first 10 tokens and the remaining tokens of the sentence, or setting the number of components to the number of features to observe the impact of different features. For attribution analysis, a more common setup is to set the number of components to the number of tokens of text or the number of pixels of an image.
+
+Suppose the input is an embedding representation of a piece of text, with a batch size of 16, a text length of 20, and 512 embedding features:
+
+```python
+>>> input = torch.randn((16, 20, 512))
+```
+
+Initializing to decompose in the sentence length dimension：
+```python
+>>> c = pydec.Composition((16, 20, 512), component_num=20)
+>>> c = pydec.diagonal_init(c, src=input, dim=1)
+```
+
+Initializing to decompose in the characteristic dimension:
+```python
+>>> c = pydec.Composition((16, 20, 512), component_num=512)
+>>> c = pydec.diagonal_init(c, src=input, dim=2)
+```
+
+Initializing to decompose in the joint feature dimension and sentence length dimension:
+```python
+>>> c = pydec.Composition((16, 20, 512), component_num=20*512)
+>>> c = c.view(16, 20*512)
+>>> c = pydec.diagonal_init(c, src=input.view(16,20*512), dim=1)
+>>> c = c.view_as(input)
+```
+
+If you want to compute the decomposition in training and keep the computational graph of the components. Do not use the `requires_grad` parameter in the constructor of Composition, otherwise the initialization of Composition as a leaf node cannot be completed by assignment. It is recommended to assign the input with gradient to the Composition without gradient.
+
+### Forward Compositions
+
+Use the operations provided by PyDec to complete the forward computation. `pydec.nn` also provides some wrapped high-level components. Since the decomposition is usually done in the Inference phase, it is recommended to use the functions provided by `pydec.nn.functional`.
 
 
 # Documentation

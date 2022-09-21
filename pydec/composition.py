@@ -420,10 +420,6 @@ class Composition:
     def any(self, dim: _int, keepdim: _bool = False) -> Tensor:
         ...
 
-    @overload
-    def any(self, dim: Union[str, ellipsis, None], keepdim: _bool = False) -> Tensor:
-        ...
-
     def any(self, *args: Any, **kwargs: Any) -> Tensor:
         return self.c_sum().any(*args, **kwargs)
 
@@ -433,10 +429,6 @@ class Composition:
 
     @overload
     def all(self, dim: _int, keepdim: _bool = False) -> Tensor:
-        ...
-
-    @overload
-    def all(self, dim: Union[str, ellipsis, None], keepdim: _bool = False) -> Tensor:
         ...
 
     def all(self, *args: Any, **kwargs: Any) -> Tensor:
@@ -825,24 +817,12 @@ class Composition:
         ...
 
     @overload
-    def scatter(
-        self, dim: Union[str, ellipsis, None], index: Tensor, src: Tensor
-    ) -> Composition:
-        ...
-
-    @overload
     def scatter(self, dim: _int, index: Tensor, value: Number) -> Composition:
-        ...
-
-    @overload
-    def scatter(
-        self, dim: Union[str, ellipsis, None], index: Tensor, value: Number
-    ) -> Composition:
         ...
 
     def scatter(
         self,
-        dim: Any,
+        dim: _int,
         index: Tensor,
         src: Any = None,
         value: Any = None,
@@ -959,21 +939,45 @@ class Composition:
         return self._composition_tensor.is_cuda and self._residual_tensor.is_cuda
 
     @overload
-    def index_select(self, dim: _int, index: Tensor) -> Tensor:
+    def index_select(self, dim: _int, index: Tensor) -> Composition:
         ...
+
+    def index_select(self, dim: _int, index:Tensor):
+        out_composition_tensor = self._composition_tensor.index_select(dim=_shift_dim(dim), index=index)
+        out_residual_tensor = self._residual_tensor.index_select(dim=dim, index=index)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def masked_select(self, mask: Tensor) -> Composition:
+        out_composition_tensor = self._composition_tensor.masked_select(mask=mask[None])
+        out_residual_tensor = self._residual_tensor.masked_select(mask=mask)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
 
     @overload
-    def index_select(self, dim: Union[str, ellipsis, None], index: Tensor) -> Tensor:
-        ...
+    def index_fill(self, dim: _int, index: Tensor, value: Tensor) -> Composition: ...
+    @overload
+    def index_fill(self, dim: _int, index: Tensor, value: Number) -> Composition: ...
 
-    # TODO
-    def index_select(self):
-        ...
+    def index_fill(self, dim: _int, index: Tensor, value: Any) -> Composition:
+        r"""
+        Unsafe.
+        """
+        out_composition_tensor = self._composition_tensor.index_fill(dim=_shift_dim(dim), index=index, value=value)
+        out_residual_tensor = self._residual_tensor.index_fill(dim=dim, index=index, value=value)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
 
-    # TODO
-    def masked_select(self, mask: Tensor) -> Tensor:
-        ...
 
+    @overload
+    def index_fill_(self, dim: _int, index: Tensor, value: Tensor) -> Composition: ...
+    @overload
+    def index_fill_(self, dim: _int, index: Tensor, value: Number) -> Composition: ...
+
+    def index_fill_(self, dim: _int, index: Tensor, value: Number) -> Composition:
+        r"""
+        Unsafe.
+        """
+        self._composition_tensor.index_fill_(dim=_shift_dim(dim), index=index, value=value)
+        self._residual_tensor.index_fill_(dim=dim, index=index, value=value)
+        return self
 
 # original
 # bsz * self.num_heads x tgt_num x src_num

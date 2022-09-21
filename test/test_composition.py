@@ -81,9 +81,7 @@ class TestView:
     def test_view1(self):
         assert self.c.view(torch.float16)._composition_tensor.dtype == torch.float16
 
-        assert (
-            self.c.view(dtype=torch.float16)._composition_tensor.dtype == torch.float16
-        )
+        assert self.c.view(dtype=torch.float16)._composition_tensor.dtype == torch.float16
 
     def test_view2(self):
         assert self.c.view((3, 2)).size() == (3, 2)
@@ -141,11 +139,18 @@ class TestPlus:
         c = init_composition((2, 3))
         out = c + self.c
         assert torch.all(
-            self.c._composition_tensor + c._composition_tensor
-            == out._composition_tensor
+            self.c._composition_tensor + c._composition_tensor == out._composition_tensor
         )
 
 
+# input = torch.randn((16, 20, 512))
+
+# c = pydec.Composition((16, 20, 512), component_num=20*512)
+# c = c.view(16, 20*512)
+# c = pydec.diagonal_init(c, src=input.view(16,20*512), dim=1)
+# c = c.view_as(input)
+# torch.zeros(requires_grad=)
+pydec.nn.functional
 # import torch.nn as nn
 # from torch import Tensor
 
