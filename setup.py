@@ -17,7 +17,7 @@ DESCRIPTION = "Linear decomposition toolkit for neural network based on pytorch.
 URL = "https://github.com/"
 EMAIL = "yangsen@smail.nju.edu.cn"
 AUTHOR = "Sen Yang"
-REQUIRES_PYTHON = ">=3.6.0"
+REQUIRES_PYTHON = ">=3.7.0"
 VERSION = "0.1.0"
 
 # What packages are required for this module to be executed?

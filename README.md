@@ -12,7 +12,7 @@ PyDec is a linear decomposition toolkit for neural network based on [PyTorch](ht
 
 # Requirements and Installation
 * [PyTorch](https://pytorch.org/) version >= 1.11.0
-* Python version >= 3.6
+* Python version >= 3.7
 * To install PyDec and develop locally:
 
 ``` bash
@@ -306,7 +306,7 @@ Initializing to decompose in the sentence length dimension：
 >>> c = pydec.diagonal_init(c, src=input, dim=1)
 ```
 
-Initializing to decompose in the characteristic dimension:
+Initializing to decompose in the feature dimension:
 ```python
 >>> c = pydec.Composition((16, 20, 512), component_num=512)
 >>> c = pydec.diagonal_init(c, src=input, dim=2)
