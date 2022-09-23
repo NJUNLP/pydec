@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import torch
-from typing import Any, Union, List, Tuple, Sequence, Optional, Callable, overload
+from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, overload
 from torch import Tensor
 from torch._C import memory_format
 
@@ -60,7 +60,14 @@ class Composition:
     """
 
     @overload
-    def __init__(self, size: _size, component_num: _int, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        size: _size,
+        component_num: _int,
+        dtype: Optional[_dtype] = None,
+        device: Union[_device, str, None] = None,
+        requires_grad: _bool = False,
+    ) -> None:
         ...
 
     @overload
@@ -92,24 +99,44 @@ class Composition:
                     composition_tensor
                 )
 
-        if isinstance(args[0], (torch.Size, list, Tuple)):
-            if len(args) != 2:
-                raise args_error(Composition.__init__.__name__, args, kwargs)
-            size, component_num = args
-            self._composition_tensor = torch.zeros((component_num,) + size, **kwargs)
-            self._residual_tensor: Tensor = torch.zeros(size, **kwargs)
-        elif isinstance(args[0], Tensor):
-            if len(args) != 2 or len(kwargs) != 0:
-                raise args_error(Composition.__init__.__name__, args, kwargs)
-            composition_tensor, residual_tensor = args
-            init_from_tensor(composition_tensor, residual_tensor)
-        elif isinstance(args[0], Composition):
-            if len(args) != 1 or len(kwargs) != 0:
-                raise args_error(Composition.__init__.__name__, args, kwargs)
-            c: Composition = args[0]
-            init_from_tensor(c._composition_tensor, c._residual_tensor)
+        def init_from_size(
+            size: _size,
+            component_num: _int,
+            dtype: Optional[_dtype] = None,
+            device: Union[_device, str, None] = None,
+            requires_grad: _bool = False,
+        ):
+            self._composition_tensor = torch.zeros(
+                (component_num,) + size,
+                dtype=dtype,
+                device=device,
+                requires_grad=requires_grad,
+            )
+            self._residual_tensor: Tensor = torch.zeros(
+                size, dtype=dtype, device=device, requires_grad=requires_grad
+            )
+
+        def parse_args(args: list, key_list: List):
+            for i in range(len(args)):
+                kwargs[key_list[i]] = args[i]
+
+        if len(args) > 0:
+            if isinstance(args[0], (torch.Size, list, Tuple)):
+                parse_args(
+                    args, ["size", "component_num", "dtype", "device", "requires_grad"]
+                )
+            elif isinstance(args[0], Tensor):
+                parse_args(args, ["composition_tensor", "residual_tensor"])
+            else:
+                parse_args(args, ["composition"])
+
+        if "size" in kwargs:
+            init_from_size(**kwargs)
+        elif "composition_tensor" in kwargs:
+            init_from_tensor(**kwargs)
         else:
-            raise args_error(Composition.__init__.__name__, args, kwargs)
+            c: Composition = kwargs["composition"]
+            init_from_tensor(c._composition_tensor, c._residual_tensor)
 
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
@@ -411,6 +438,19 @@ class Composition:
         self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1
     ) -> Composition:
         return self.add_(-other, alpha=alpha)
+
+    def mul(
+        self, other: Union[Tensor, Number], *, out: Optional[Composition] = None
+    ) -> Composition:
+        out_composition_tensor = self._composition_tensor.mul(
+            other, out._composition_tensor
+        )
+        out_residual_tensor = self._residual_tensor.mul(other, out._residual_tensor)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def mul_(self, other: Union[Tensor, Number]) -> Composition:
+        self *= other
+        return self
 
     @overload
     def any(self) -> Tensor:
@@ -942,8 +982,10 @@ class Composition:
     def index_select(self, dim: _int, index: Tensor) -> Composition:
         ...
 
-    def index_select(self, dim: _int, index:Tensor):
-        out_composition_tensor = self._composition_tensor.index_select(dim=_shift_dim(dim), index=index)
+    def index_select(self, dim: _int, index: Tensor):
+        out_composition_tensor = self._composition_tensor.index_select(
+            dim=_shift_dim(dim), index=index
+        )
         out_residual_tensor = self._residual_tensor.index_select(dim=dim, index=index)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -953,31 +995,43 @@ class Composition:
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     @overload
-    def index_fill(self, dim: _int, index: Tensor, value: Tensor) -> Composition: ...
+    def index_fill(self, dim: _int, index: Tensor, value: Tensor) -> Composition:
+        ...
+
     @overload
-    def index_fill(self, dim: _int, index: Tensor, value: Number) -> Composition: ...
+    def index_fill(self, dim: _int, index: Tensor, value: Number) -> Composition:
+        ...
 
     def index_fill(self, dim: _int, index: Tensor, value: Any) -> Composition:
         r"""
         Unsafe.
         """
-        out_composition_tensor = self._composition_tensor.index_fill(dim=_shift_dim(dim), index=index, value=value)
-        out_residual_tensor = self._residual_tensor.index_fill(dim=dim, index=index, value=value)
+        out_composition_tensor = self._composition_tensor.index_fill(
+            dim=_shift_dim(dim), index=index, value=value
+        )
+        out_residual_tensor = self._residual_tensor.index_fill(
+            dim=dim, index=index, value=value
+        )
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
+    @overload
+    def index_fill_(self, dim: _int, index: Tensor, value: Tensor) -> Composition:
+        ...
 
     @overload
-    def index_fill_(self, dim: _int, index: Tensor, value: Tensor) -> Composition: ...
-    @overload
-    def index_fill_(self, dim: _int, index: Tensor, value: Number) -> Composition: ...
+    def index_fill_(self, dim: _int, index: Tensor, value: Number) -> Composition:
+        ...
 
     def index_fill_(self, dim: _int, index: Tensor, value: Number) -> Composition:
         r"""
         Unsafe.
         """
-        self._composition_tensor.index_fill_(dim=_shift_dim(dim), index=index, value=value)
+        self._composition_tensor.index_fill_(
+            dim=_shift_dim(dim), index=index, value=value
+        )
         self._residual_tensor.index_fill_(dim=dim, index=index, value=value)
         return self
+
 
 # original
 # bsz * self.num_heads x tgt_num x src_num

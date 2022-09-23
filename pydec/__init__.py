@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 
 # Fake import for type checking
 if TYPE_CHECKING:
-    from variable_functions import *
+    from .variable_functions import *
 
 for name in dir(_variable_functions):
     if name.startswith("__") or name in PRIVATE_NAME:

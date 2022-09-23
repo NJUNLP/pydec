@@ -177,6 +177,12 @@ def sub(
     return input.sub(other, alpha=alpha, out=out)
 
 
+def mul(
+    input: Composition, other: Union[Tensor, Number], *, out: Optional[Composition] = None
+) -> Composition:
+    return input.mul(other, out=out)
+
+
 @overload
 def any(input: Composition, *, out: Optional[Tensor] = None) -> Tensor:
     ...
