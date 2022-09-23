@@ -81,7 +81,9 @@ class Composition:
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        def init_from_tensor(composition_tensor: Tensor, residual_tensor: Tensor = None):
+        def init_from_tensor(
+            composition_tensor: Tensor, residual_tensor: Tensor = None
+        ):
             self._composition_tensor = torch.tensor(composition_tensor).to(
                 composition_tensor
             )
@@ -93,7 +95,9 @@ class Composition:
                         "composition",
                         "residual",
                     )
-                self._residual_tensor = torch.tensor(residual_tensor).to(residual_tensor)
+                self._residual_tensor = torch.tensor(residual_tensor).to(
+                    residual_tensor
+                )
             else:
                 self._residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
                     composition_tensor
@@ -120,6 +124,9 @@ class Composition:
             for i in range(len(args)):
                 kwargs[key_list[i]] = args[i]
 
+        self._composition_tensor: Tensor = None
+        self._residual_tensor: Tensor = None
+
         if len(args) > 0:
             if isinstance(args[0], (torch.Size, list, Tuple)):
                 parse_args(
@@ -140,15 +147,43 @@ class Composition:
 
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
-    ) -> Tensor:
-        return self._composition_tensor[indices]
+    ) -> Union[Composition, Tensor]:
+        if isinstance(indices, (type(None), _int, slice, Tensor)):
+            indices = (indices,)
+        if indices[0] is None:
+            raise arg_value_error(
+                "The first dimension of indices should not be NoneType."
+            )
+        if isinstance(indices[0], _int):
+            return self._composition_tensor[indices]
+        else:
+            out_composition_tensor = self._composition_tensor[indices]
+            out_residual_tensor = self._residual_tensor[indices[1:]]
+            return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def __setitem__(
         self,
         indices: Union[None, _int, slice, Tensor, List, Tuple],
-        val: Union[Tensor, Number],
+        val: Union[Composition, Tensor, Number],
     ) -> None:
-        self._composition_tensor[indices] = val
+        if isinstance(indices, (type(None), _int, slice, Tensor)):
+            indices = [indices]
+        if indices[0] is None:
+            raise arg_value_error(
+                "The first dimension of indices should not be NoneType."
+            )
+
+        if isinstance(val, (Tensor, _int, _float, _bool)):
+            self._composition_tensor[indices] = val
+            return
+        if isinstance(val, (Composition)):
+            if isinstance(indices[0], _int):
+                raise arg_value_error(
+                    f"A single component assignment is being made, and the right part of the equal sign should be (Tensor) or (Number), not ({type(val).__name__})."
+                )
+            else:
+                self._composition_tensor[indices] = val._composition_tensor
+                self._residual_tensor = val._residual_tensor
 
     def __len__(self):
         return self._composition_tensor.__len__()
@@ -262,7 +297,9 @@ class Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
                 raise component_num_error(self.numc(), other.numc())
-            out_composition_tensor = self._composition_tensor + other._composition_tensor
+            out_composition_tensor = (
+                self._composition_tensor + other._composition_tensor
+            )
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
@@ -712,7 +749,9 @@ class Composition:
             out_composition_tensor = self._composition_tensor.view(dtype)
             out_residual_tensor = self._residual_tensor.view(dtype)
         else:
-            out_composition_tensor = self._composition_tensor.view((self.numc(),) + size)
+            out_composition_tensor = self._composition_tensor.view(
+                (self.numc(),) + size
+            )
             out_residual_tensor = self._residual_tensor.view(size)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -966,7 +1005,9 @@ class Composition:
         ...
 
     @overload
-    def scatter_(self, dim: _int, index: Tensor, value: Number, *, reduce: str) -> Tensor:
+    def scatter_(
+        self, dim: _int, index: Tensor, value: Number, *, reduce: str
+    ) -> Tensor:
         ...
 
     @overload
@@ -1089,6 +1130,17 @@ class Composition:
         )
         self._residual_tensor.index_fill_(dim=dim, index=index, value=value)
         return self
+
+    @overload
+    def select(self, dim: _int, index: _int) -> Composition:
+        ...
+
+    def select(self, dim: _int, index: _int) -> Composition:
+        out_composition_tensor = self._composition_tensor.select(
+            dim=_shift_dim(dim), index=index
+        )
+        out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
 # original

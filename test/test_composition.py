@@ -81,7 +81,9 @@ class TestView:
     def test_view1(self):
         assert self.c.view(torch.float16)._composition_tensor.dtype == torch.float16
 
-        assert self.c.view(dtype=torch.float16)._composition_tensor.dtype == torch.float16
+        assert (
+            self.c.view(dtype=torch.float16)._composition_tensor.dtype == torch.float16
+        )
 
     def test_view2(self):
         assert self.c.view((3, 2)).size() == (3, 2)
@@ -139,7 +141,8 @@ class TestPlus:
         c = init_composition((2, 3))
         out = c + self.c
         assert torch.all(
-            self.c._composition_tensor + c._composition_tensor == out._composition_tensor
+            self.c._composition_tensor + c._composition_tensor
+            == out._composition_tensor
         )
 
 
