@@ -318,15 +318,34 @@ class Composition:
     def __imul__(self, other) -> Composition:
         if isinstance(other, Composition):
             raise unsupported_operand_error("*=", type(self), type(other))
-        self._composition_tensor *= other
-        self._residual_tensor *= other
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                self._composition_tensor = self._composition_tensor.view(new_size)
+            self._composition_tensor *= other
+            self._residual_tensor *= other
+        else:
+            self._composition_tensor *= other
+            self._residual_tensor *= other
         return self
 
     def __mul__(self, other) -> Composition:
         if isinstance(other, Composition):
             raise unsupported_operand_error("*", type(self), type(other))
-        out_composition_tensor = self._composition_tensor * other
-        out_residual_tensor = self._residual_tensor * other
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                out_composition_tensor = self._composition_tensor.view(new_size) * other
+            else:
+                out_composition_tensor = self._composition_tensor * other
+            out_residual_tensor = self._residual_tensor * other
+        else:
+            out_composition_tensor = self._composition_tensor * other
+            out_residual_tensor = self._residual_tensor * other
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def __rmul__(self, other) -> Composition:
@@ -334,6 +353,45 @@ class Composition:
             return self * other
         except TypeError:
             raise unsupported_operand_error("*", type(other), type(self))
+
+    def __idiv__(self, other: Any) -> Composition:
+        if isinstance(other, Composition):
+            raise unsupported_operand_error("/=", type(self), type(other))
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                self._composition_tensor = self._composition_tensor.view(new_size)
+            self._composition_tensor /= other
+            self._residual_tensor /= other
+        else:
+            self._composition_tensor /= other
+            self._residual_tensor /= other
+        return self
+
+    def __div__(self, other: Any) -> Composition:
+        if isinstance(other, Composition):
+            raise unsupported_operand_error("/", type(self), type(other))
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                out_composition_tensor = self._composition_tensor.view(new_size) / other
+            else:
+                out_composition_tensor = self._composition_tensor / other
+            out_residual_tensor = self._residual_tensor / other
+        else:
+            out_composition_tensor = self._composition_tensor / other
+            out_residual_tensor = self._residual_tensor / other
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def __rdiv__(self, other: Any) -> Composition:
+        try:
+            return self * other
+        except TypeError:
+            raise unsupported_operand_error("/", type(other), type(self))
 
     def __eq__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
