@@ -55,9 +55,7 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -75,9 +73,7 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors,
-        0,
-        out=out._composition_tensor if out is not None else None,
+        c_tensors, 0, out=out._composition_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = builtins.sum(r_tensors)
@@ -103,9 +99,7 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -178,7 +172,10 @@ def sub(
 
 
 def mul(
-    input: Composition, other: Union[Tensor, Number], *, out: Optional[Composition] = None
+    input: Composition,
+    other: Union[Tensor, Number],
+    *,
+    out: Optional[Composition] = None,
 ) -> Composition:
     return input.mul(other, out=out)
 
@@ -482,10 +479,13 @@ def index_select(
         input._composition_tensor,
         dim=_shift_dim(dim),
         index=index,
-        out=out._composition_tensor,
+        out=out._composition_tensor if out is not None else None,
     )
     out_residual_tensor = torch.index_select(
-        input._residual_tensor, dim=dim, index=index, out=out._residual_tensor
+        input._residual_tensor,
+        dim=dim,
+        index=index,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -494,11 +494,17 @@ def masked_select(
     input: Composition, mask: Tensor, *, out: Optional[Composition] = None
 ) -> Composition:
     out_composition_tensor = torch.masked_select(
-        input._composition_tensor, mask=mask[None], out=out._composition_tensor
-    )
+        input._composition_tensor,
+        mask=mask[None],
+        out=out._composition_tensor if out is not None else None,
+    ).reshape(input.numc(), -1)
     out_residual_tensor = torch.masked_select(
-        input._residual_tensor, mask=mask, out=out._residual_tensor
+        input._residual_tensor,
+        mask=mask,
+        out=out._residual_tensor if out is not None else None,
     )
+    if out is not None:
+        out._composition_tensor = out._composition_tensor.reshape(input.numc(), -1)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 

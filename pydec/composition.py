@@ -167,7 +167,7 @@ class Composition:
         val: Union[Composition, Tensor, Number],
     ) -> None:
         if isinstance(indices, (type(None), _int, slice, Tensor)):
-            indices = [indices]
+            indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
                 "The first dimension of indices should not be NoneType."
@@ -183,7 +183,7 @@ class Composition:
                 )
             else:
                 self._composition_tensor[indices] = val._composition_tensor
-                self._residual_tensor = val._residual_tensor
+                self._residual_tensor[indices[1:]] = val._residual_tensor
 
     def __len__(self):
         return self._composition_tensor.__len__()
@@ -1140,6 +1140,39 @@ class Composition:
             dim=_shift_dim(dim), index=index
         )
         out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    @overload
+    def type(self, dtype: None = None, non_blocking: _bool = False) -> str:
+        ...
+
+    @overload
+    def type(self, dtype: Union[str, _dtype], non_blocking: _bool = False) -> Tensor:
+        ...
+
+    def type(self, dtype=None, non_blocking: _bool = False):
+        if dtype is None:
+            return self._residual_tensor.type()
+        else:
+            out_composition_tensor = self._composition_tensor.type(
+                dtype=dtype, non_blocking=non_blocking
+            )
+            out_residual_tensor = self._residual_tensor.type(
+                dtype=dtype, non_blocking=non_blocking
+            )
+            return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def type_as(self, other: Union[Tensor, Composition]) -> Composition:
+        if isinstance(other, Composition):
+            out_composition_tensor = self._composition_tensor.type_as(
+                other._composition_tensor
+            )
+            out_residual_tensor = self._residual_tensor.type_as(
+                other._composition_tensor
+            )
+        else:
+            out_composition_tensor = self._composition_tensor.type_as(other)
+            out_residual_tensor = self._residual_tensor.type_as(other)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
