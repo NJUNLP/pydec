@@ -81,9 +81,7 @@ class Composition:
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        def init_from_tensor(
-            composition_tensor: Tensor, residual_tensor: Tensor = None
-        ):
+        def init_from_tensor(composition_tensor: Tensor, residual_tensor: Tensor = None):
             self._composition_tensor = torch.tensor(composition_tensor).to(
                 composition_tensor
             )
@@ -95,9 +93,7 @@ class Composition:
                         "composition",
                         "residual",
                     )
-                self._residual_tensor = torch.tensor(residual_tensor).to(
-                    residual_tensor
-                )
+                self._residual_tensor = torch.tensor(residual_tensor).to(residual_tensor)
             else:
                 self._residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
                     composition_tensor
@@ -280,7 +276,7 @@ class Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
                 raise component_num_error(self.numc(), other.numc())
-            self._composition_tensor += other.composition_tensor
+            self._composition_tensor += other._composition_tensor
             self._residual_tensor += other._residual_tensor
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
@@ -297,9 +293,7 @@ class Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
                 raise component_num_error(self.numc(), other.numc())
-            out_composition_tensor = (
-                self._composition_tensor + other._composition_tensor
-            )
+            out_composition_tensor = self._composition_tensor + other._composition_tensor
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
@@ -391,7 +385,7 @@ class Composition:
         except TypeError:
             raise unsupported_operand_error("*", type(other), type(self))
 
-    def __idiv__(self, other: Any) -> Composition:
+    def __itruediv__(self, other: Any) -> Composition:
         if isinstance(other, Composition):
             raise unsupported_operand_error("/=", type(self), type(other))
         if isinstance(other, Tensor):
@@ -407,7 +401,7 @@ class Composition:
             self._residual_tensor /= other
         return self
 
-    def __div__(self, other: Any) -> Composition:
+    def __truediv__(self, other: Any) -> Composition:
         if isinstance(other, Composition):
             raise unsupported_operand_error("/", type(self), type(other))
         if isinstance(other, Tensor):
@@ -424,7 +418,7 @@ class Composition:
             out_residual_tensor = self._residual_tensor / other
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
-    def __rdiv__(self, other: Any) -> Composition:
+    def __rtruediv__(self, other: Any) -> Composition:
         try:
             return self * other
         except TypeError:
@@ -749,9 +743,7 @@ class Composition:
             out_composition_tensor = self._composition_tensor.view(dtype)
             out_residual_tensor = self._residual_tensor.view(dtype)
         else:
-            out_composition_tensor = self._composition_tensor.view(
-                (self.numc(),) + size
-            )
+            out_composition_tensor = self._composition_tensor.view((self.numc(),) + size)
             out_residual_tensor = self._residual_tensor.view(size)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -1005,9 +997,7 @@ class Composition:
         ...
 
     @overload
-    def scatter_(
-        self, dim: _int, index: Tensor, value: Number, *, reduce: str
-    ) -> Tensor:
+    def scatter_(self, dim: _int, index: Tensor, value: Number, *, reduce: str) -> Tensor:
         ...
 
     @overload
@@ -1167,13 +1157,45 @@ class Composition:
             out_composition_tensor = self._composition_tensor.type_as(
                 other._composition_tensor
             )
-            out_residual_tensor = self._residual_tensor.type_as(
-                other._composition_tensor
-            )
+            out_residual_tensor = self._residual_tensor.type_as(other._composition_tensor)
         else:
             out_composition_tensor = self._composition_tensor.type_as(other)
             out_residual_tensor = self._residual_tensor.type_as(other)
         return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    @overload
+    def round(self) -> Composition:
+        ...
+
+    @overload
+    def round(self, *, decimals: _int) -> Composition:
+        ...
+
+    def round(self, *, decimals: _int = None):
+        if decimals is not None:
+            out_composition_tensor = self._composition_tensor.round(decimals=decimals)
+            out_residual_tensor = self._residual_tensor.round(decimals=decimals)
+        else:
+            out_composition_tensor = self._composition_tensor.round()
+            out_residual_tensor = self._residual_tensor.round()
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    @overload
+    def round_(self) -> Composition:
+        ...
+
+    @overload
+    def round_(self, *, decimals: _int) -> Composition:
+        ...
+
+    def round_(self, *, decimals: _int = None) -> Composition:
+        if decimals is not None:
+            self._composition_tensor.round_(decimals=decimals)
+            self._residual_tensor.round_(decimals=decimals)
+        else:
+            self._composition_tensor.round_()
+            self._residual_tensor.round_()
+        return self
 
 
 # original

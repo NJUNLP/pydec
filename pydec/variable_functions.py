@@ -55,7 +55,9 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -73,7 +75,9 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors, 0, out=out._composition_tensor if out is not None else None,
+        c_tensors,
+        0,
+        out=out._composition_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = builtins.sum(r_tensors)
@@ -99,7 +103,9 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -524,3 +530,52 @@ def index_fill(
 
 def index_fill(input: Composition, dim: _int, index: Tensor, value: Any) -> Composition:
     return input.index_fill(dim=dim, index=index, value=value)
+
+
+@overload
+def round(input: Composition, *, out: Optional[Composition] = None) -> Composition:
+    ...
+
+
+@overload
+def round(
+    input: Composition, *, decimals: _int, out: Optional[Composition] = None
+) -> Composition:
+    ...
+
+
+def round(
+    input: Composition, *, decimals: _int = None, out: Optional[Composition] = None
+) -> Composition:
+    if decimals is not None:
+        out_composition_tensor = torch.round(
+            input._composition_tensor,
+            decimals=decimals,
+            out=out._composition_tensor if out is not None else None,
+        )
+        out_residual_tensor = torch.round(
+            input._residual_tensor,
+            decimals=decimals,
+            out=out._residual_tensor if out is not None else None,
+        )
+    else:
+        out_composition_tensor = torch.round(
+            input._composition_tensor,
+            decimals=decimals,
+        )
+        out_residual_tensor = torch.round(
+            input._residual_tensor,
+            decimals=decimals,
+        )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+@overload
+def round_(input: Composition) -> Composition:
+    ...
+
+@overload
+def round_(input: Composition, *, decimals: _int) -> Composition:
+    ...
+def round_(input: Composition, *, decimals: _int = None) -> Composition:
+    return input.round_(decimals=decimals)
