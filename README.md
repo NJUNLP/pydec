@@ -326,6 +326,36 @@ If you want to compute the decomposition in training and keep the computational 
 
 Use the operations provided by PyDec to complete the forward computation. `pydec.nn` also provides some wrapped high-level components. Since the decomposition is usually done in the Inference phase, it is recommended to use the functions provided by `pydec.nn.functional`.
 
+To get a decomposition of the output or intermediate variables, mimic the operation you performed on the input in the forward function on the initialized Composition.
+
+For example, you get the tensor `h3` by the following operation:
+
+```python
+h3 = -h1 @ W + 3 * h2.permute(-1,0,1)
+```
+
+Then you need to perform the following operation on the Composition corresponding to `h1` and `h2` to get the Composition of `h3`.
+
+```python
+c3 = -c1 @ W + 3 * c2.permute(-1,0,1)
+```
+
+We have implemented a number of common functions for `pydec.Composition`. In most cases you just need to use the same functions and parameters to complete the trace. In most cases you just need to use the same functions and arguments to complete the trace. Other functions related to component operations start with `c_`. If you use a function not yet provided by PyDec, you may need to use other functions to do the equivalent operation or implement the function yourself (PR is welcome).
+
+## Error control
+
+Although in theory the recovery from Composition is exactly equivalent to the ground truth. However, in practice, there will be errors brought by the computer. Especially in deep networks, the error may be magnified to an unacceptable degree. We give some suggestions for reducing errors and provide tools for error checking.
+
+### Error reduction
+
+Our most recommended method for reducing errors is to use double precision computations, usually by simply adding `model=model.double()` after the model is loaded. If you enable double precision calculations, the error from the decomposition is almost negligible.
+
+When double precision computation cannot be enabled for speed and memory reasons, you may consider adding the error term to Composition as bias. Depending on the bias reallocation policy, the error is added to the residual or assigned to each component.
+
+You can even consider making the ground truth equal to Composition's recovery, but this may change the classification result of the network.
+
+### Error checking
+You can use `PyDec.check_error` to check the error of the given Composition and reference. In order to provide ground truth as a reference, you usually need to keep the forward process of the original network. We recommend that you use it often during development, not only for error control, but also to help you find bugs in your code.
 
 # Documentation
 
