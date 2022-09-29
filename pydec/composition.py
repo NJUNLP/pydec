@@ -1071,11 +1071,25 @@ class Composition:
     def index_select(self, dim: _int, index: Tensor) -> Composition:
         ...
 
-    def index_select(self, dim: _int, index: Tensor):
+    def index_select(self, dim: _int, index: Tensor) -> Composition:
         out_composition_tensor = self._composition_tensor.index_select(
             dim=_shift_dim(dim), index=index
         )
         out_residual_tensor = self._residual_tensor.index_select(dim=dim, index=index)
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    @overload
+    def c_index_select(self, index: Tensor, with_residual: _bool = True) -> Composition:
+        ...
+
+    def c_index_select(self, index: Tensor, with_residual: _bool = True) -> Composition:
+        out_composition_tensor = self._composition_tensor.index_select(dim=0, index=index)
+        if with_residual:
+            out_residual_tensor = self._residual_tensor.clone()
+        else:
+            out_residual_tensor = torch.zeros_like(self._residual_tensor).to(
+                self._residual_tensor
+            )
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def masked_select(self, mask: Tensor) -> Composition:

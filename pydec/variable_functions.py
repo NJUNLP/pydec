@@ -495,6 +495,31 @@ def index_select(
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
+@overload
+def c_index_select(
+    input: Composition, index: Tensor, with_residual: _bool = True, *, out: Optional[Composition] = None
+) -> Composition:
+    ...
+
+def c_index_select(
+    input: Composition, index: Tensor, with_residual: _bool = True, *, out: Optional[Composition] = None
+) -> Composition:
+    out_composition_tensor = torch.index_select(
+        input._composition_tensor,
+        dim=0,
+        index=index,
+        out=out._composition_tensor if out is not None else None,
+    )
+    if with_residual:
+        if out is not None:
+            out._residual_tensor = out._residual_tensor.reshape_as(input._residual_tensor)
+            out._residual_tensor[:] = input._residual_tensor
+        out_residual_tensor = input._residual_tensor.clone()
+    else:
+        out_residual_tensor = torch.zeros_like(input._residual_tensor).to(
+            input._residual_tensor
+        )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
 
 def masked_select(
     input: Composition, mask: Tensor, *, out: Optional[Composition] = None
