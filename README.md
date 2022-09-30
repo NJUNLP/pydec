@@ -15,7 +15,9 @@ PyDec is a linear decomposition toolkit for neural network based on [PyTorch](ht
 Contribution Heat maps of the Roberta model (fine-tuned on SST-2). Warm colors indicate high
 contribution while cool colors indicate low contribution. The outputs of the model were positive, negative and positive, but the latter two samples did not match the labels.
 
-![demo1](./docs/source/_static/img/pydec_demo1.png)
+<div align="center">
+<img src="./docs/source/_static/img/pydec_demo1.png" width="70%">
+</div>
 
 # Data flow visualization
 
