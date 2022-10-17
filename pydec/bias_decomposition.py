@@ -1,9 +1,10 @@
 from __future__ import annotations
-
+import functools
+import inspect
 import torch
 from torch import Tensor
 
-from typing import Union, Any, Callable, ContextManager, TYPE_CHECKING
+from typing import Dict, Union, Any, Callable, ContextManager, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .composition import Composition
@@ -22,13 +23,14 @@ from torch.types import (
 )
 
 
-from .variable_functions import _from_replce
+from .variable_functions import _from_replce, zeros_like
 
 _BIAS_DECOMPOSITION_FUNC_REGISTRY = {}
 
 
 class _BiasDecompositionState:
     bias_decomposition_name: str = None
+    bias_decomposition_args: Dict[str, Any] = {}
 
 
 def register_bias_decomposition_func(name):
@@ -55,8 +57,24 @@ def register_bias_decomposition_func(name):
         #             name
         #         )
         #     )
-        _BIAS_DECOMPOSITION_FUNC_REGISTRY[name] = func
-        return func
+
+        @functools.wraps(func)
+        def warp_bias_decomposition_func(*args, **kwargs):
+            bias_args = _BiasDecompositionState.bias_decomposition_args.copy()
+            bias_args.update(kwargs)
+            argspec = inspect.getfullargspec(func)
+            if argspec.varkw is None:
+                ignore_keys = []
+                for key in bias_args.keys():
+                    if key not in (argspec.args + argspec.kwonlyargs):
+                        ignore_keys.append(key)
+                for key in ignore_keys:
+                    bias_args.pop(key)
+            return func(*args, **bias_args)
+
+        _BIAS_DECOMPOSITION_FUNC_REGISTRY[name] = warp_bias_decomposition_func
+
+        return warp_bias_decomposition_func
 
     return register_func
 
@@ -73,7 +91,7 @@ def get_bias_decomposition_name() -> str:
     return _BiasDecompositionState.bias_decomposition_name
 
 
-def get_bias_decomposition_func(inplace: bool = False) -> Callable[..., Composition]:
+def get_bias_decomposition_func() -> Callable[..., Composition]:
     if (
         _BiasDecompositionState.bias_decomposition_name
         not in _BIAS_DECOMPOSITION_FUNC_REGISTRY
@@ -83,19 +101,7 @@ def get_bias_decomposition_func(inplace: bool = False) -> Callable[..., Composit
         current_bias_decomposition_func = _BIAS_DECOMPOSITION_FUNC_REGISTRY[
             _BiasDecompositionState.bias_decomposition_name
         ]
-        if inplace:
-            if _BiasDecompositionState.bias_decomposition_name.endswith("_"):
-                return current_bias_decomposition_func
-            else:
-                inplace_func_name = (
-                    _BiasDecompositionState.bias_decomposition_name + "_"
-                )
-                if inplace_func_name in _BIAS_DECOMPOSITION_FUNC_REGISTRY:
-                    return _BIAS_DECOMPOSITION_FUNC_REGISTRY[inplace_func_name]
-                else:
-                    return current_bias_decomposition_func
-        else:
-            return current_bias_decomposition_func
+        return current_bias_decomposition_func
 
 
 class using_bias_decomposition_func(ContextManager):
@@ -129,78 +135,75 @@ class no_bias_decomposition(ContextManager):
         _BiasDecompositionState.bias_decomposition_name = self.prev
 
 
+def set_bias_decomposition_args(update=True, **kwargs) -> None:
+    if update:
+        _BiasDecompositionState.bias_decomposition_args.update(kwargs)
+    else:
+        _BiasDecompositionState.bias_decomposition_args = kwargs
+
+
+def get_bias_decomposition_args() -> Dict[str, Any]:
+    return _BiasDecompositionState.bias_decomposition_args
+
+
+class using_bias_decomposition_args(ContextManager):
+    def __init__(self, update=True, **kwargs) -> None:
+        self.update = update
+        self.prev = None
+        self.using_args = kwargs
+
+    def __enter__(self):
+        self.prev = _BiasDecompositionState.bias_decomposition_args.copy()
+        if self.update:
+            _BiasDecompositionState.bias_decomposition_args.update(self.using_args)
+        else:
+            _BiasDecompositionState.bias_decomposition_args = self.using_args
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        _BiasDecompositionState.bias_decomposition_args = self.prev
+
+
 @register_bias_decomposition_func("none")
-def _none_decomposition(c: Composition, bias: Union[Number, Tensor] = None):
+def _none_decomposition(bias: Union[Number, Tensor], context: Composition):
     r"""
     Default decomposition with no_bias_decomposition. Just add the bias to residual.
     """
-    return _from_replce(c._composition_tensor, c._residual_tensor + bias)
-
-
-@register_bias_decomposition_func("none_")
-def _none_decomposition_(c: Composition, bias: Union[Number, Tensor] = None):
-    c._residual_tensor += bias
-    return c
+    out = zeros_like(context)
+    out._residual_tensor += bias
+    return out
 
 
 @register_bias_decomposition_func("abs_decomposition")
 def abs_decomposition(
-    c: Composition, bias: Union[Number, Tensor] = None, *, eps=1e-6, inplace=False
+    bias: Union[Number, Tensor],
+    context: Composition,
+    *,
+    eps=1e-6,
 ) -> Composition:
-    if bias is None:
-        bias = c._residual_tensor
-        out_residual_tensor = torch.zeros_like(c._residual_tensor).to(
-            c._residual_tensor
-        )
-    else:
-        out_residual_tensor = c._residual_tensor
-    compositions = c._composition_tensor
+    compositions = context._composition_tensor
     abs_compositions = compositions.abs()
     sum_compositions = abs_compositions.sum(dim=0, keepdim=True)
     sum_compositions[sum_compositions == 0] = eps
     weights = abs_compositions / sum_compositions
-    if inplace:
-        compositions += weights * bias
-        c._residual_tensor = out_residual_tensor
-        return c
-    else:
-        out_composition_tensor = compositions + weights * bias
-        return _from_replce(out_composition_tensor, out_residual_tensor)
-
-
-@register_bias_decomposition_func("abs_decomposition_")
-def abs_decomposition_(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
-    *,
-    eps=1e-6,
-) -> Composition:
-    return abs_decomposition(c, bias, eps=eps, inplace=True)
+    bias_composition_tensor = weights * bias
+    out = _from_replce(bias_composition_tensor)
+    return out
 
 
 @register_bias_decomposition_func("hybrid_decomposition")
 def hybrid_decomposition(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
+    bias: Union[Number, Tensor],
+    context: Composition,
     *,
-    threshold=0.4,
+    threshold=0.15,
     eps=1e-6,
-    inplace=False,
 ) -> Composition:
     def ratio_map(ratio: Tensor):
         zero_map = ratio < threshold
         ratio[zero_map] = 0
         ratio[~zero_map] = 1
 
-    if bias is None:
-        bias = c._residual_tensor
-        out_residual_tensor = torch.zeros_like(c._residual_tensor).to(
-            c._residual_tensor
-        )
-    else:
-        out_residual_tensor = c._residual_tensor
-
-    compositions = c._composition_tensor
+    compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
     abs_compositions = compositions.abs()
     abs_sum_compositions = abs_compositions.sum(dim=0, keepdim=True)
@@ -214,49 +217,25 @@ def hybrid_decomposition(
     weights = ratio * compositions / sum_compositions
     abs_weights = (1 - ratio) * abs_compositions / abs_sum_compositions
 
-    if inplace:
-        compositions += weights * bias + abs_weights * bias
-        c._residual_tensor = out_residual_tensor
-        return c
-    else:
-        out_composition_tensor = compositions + weights * bias + abs_weights * bias
-        return _from_replce(out_composition_tensor, out_residual_tensor)
-
-
-@register_bias_decomposition_func("hybrid_decomposition_")
-def hybrid_decomposition_(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
-    *,
-    threshold=0.4,
-    eps=1e-6,
-) -> Composition:
-    return hybrid_decomposition(c, bias, threshold=threshold, eps=eps, inplace=True)
+    bias_composition_tensor = weights * bias + abs_weights * bias
+    out = _from_replce(bias_composition_tensor)
+    return out
 
 
 @register_bias_decomposition_func("sign_decomposition")
 def sign_decomposition(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
+    bias: Union[Number, Tensor],
+    context: Composition,
     *,
     threshold=0.4,
     eps=1e-6,
-    inplace=False,
 ) -> Composition:
     def ratio_map(ratio: Tensor):
         zero_map = ratio < threshold
         ratio[zero_map] = 0
         ratio[~zero_map] = 1
 
-    if bias is None:
-        bias = c._residual_tensor
-        out_residual_tensor = torch.zeros_like(c._residual_tensor).to(
-            c._residual_tensor
-        )
-    else:
-        out_residual_tensor = c._residual_tensor
-
-    compositions = c._composition_tensor
+    compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
     abs_sum_compositions = compositions.abs().sum(dim=0, keepdim=True)
     ratio = sum_compositions.abs() / abs_sum_compositions
@@ -264,48 +243,45 @@ def sign_decomposition(
     sum_compositions[sum_compositions == 0] = eps
 
     ratio_map(ratio)
-
     weights = ratio * compositions / sum_compositions
+    bias_composition_tensor = weights * bias
+    bias_residula_tensor = (1 - weights.sum(dim=0)) * bias
 
-    if inplace:
-        compositions += weights * bias
-        c._residual_tensor = out_residual_tensor + (1 - ratio[0]) * bias
-        return c
-    else:
-        out_composition_tensor = compositions + weights * bias
-        out_residual_tensor = out_residual_tensor + (1 - ratio[0]) * bias
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+    out = _from_replce(bias_composition_tensor, bias_residula_tensor)
+    return out
 
 
-@register_bias_decomposition_func("sign_decomposition_")
-def sign_decomposition_(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
+@register_bias_decomposition_func("sign_decomposition_value_threshold")
+def sign_decomposition_value_threshold(
+    bias: Union[Number, Tensor],
+    context: Composition,
     *,
     threshold=0.4,
     eps=1e-6,
 ) -> Composition:
-    return sign_decomposition(c, bias, threshold=threshold, eps=eps, inplace=True)
+    compositions = context._composition_tensor
+    sum_compositions = compositions.sum(dim=0, keepdim=True)
+    ratio = (sum_compositions.abs() > threshold).to(torch.float)
+
+    sum_compositions[sum_compositions == 0] = eps
+
+    weights = ratio * compositions / sum_compositions
+
+    bias_composition_tensor = weights * bias
+    bias_residula_tensor = (1 - weights.sum(dim=0)) * bias
+    out = _from_replce(bias_composition_tensor, bias_residula_tensor)
+    return out
 
 
 @register_bias_decomposition_func("hybrid_decomposition_value_threshold")
 def hybrid_decomposition_value_threshold(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
+    bias: Union[Number, Tensor],
+    context: Composition,
     *,
-    threshold=0.4,
+    threshold=0.15,
     eps=1e-6,
-    inplace=False,
 ) -> Composition:
-    if bias is None:
-        bias = c._residual_tensor
-        out_residual_tensor = torch.zeros_like(c._residual_tensor).to(
-            c._residual_tensor
-        )
-    else:
-        out_residual_tensor = c._residual_tensor
-
-    compositions = c._composition_tensor
+    compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
     abs_compositions = compositions.abs()
     abs_sum_compositions = abs_compositions.sum(dim=0, keepdim=True)
@@ -318,70 +294,28 @@ def hybrid_decomposition_value_threshold(
     weights = ratio * compositions / sum_compositions
     abs_weights = (1 - ratio) * abs_compositions / abs_sum_compositions
 
-    if inplace:
-        compositions += weights * bias + abs_weights * bias
-        c._residual_tensor = out_residual_tensor
-        return c
-    else:
-        out_composition_tensor = compositions + weights * bias + abs_weights * bias
-        return _from_replce(out_composition_tensor, out_residual_tensor)
-
-
-@register_bias_decomposition_func("hybrid_decomposition_value_threshold_")
-def hybrid_decomposition_value_threshold_(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
-    *,
-    threshold=0.4,
-    eps=1e-6,
-) -> Composition:
-    return hybrid_decomposition_value_threshold(
-        c.bias, threshold=threshold, eps=eps, inplace=True
-    )
+    bias_composition_tensor = weights * bias + abs_weights * bias
+    out = _from_replce(bias_composition_tensor)
+    return out
 
 
 @register_bias_decomposition_func("norm_decomposition")
 def norm_decomposition(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
+    bias: Union[Number, Tensor],
+    context: Composition,
     *,
-    p=2,
+    p=float("inf"),  # 2,
     eps=1e-6,
-    inplace=False,
 ) -> Composition:
-    if bias is None:
-        bias = c._residual_tensor
-        out_residual_tensor = torch.zeros_like(c._residual_tensor).to(
-            c._residual_tensor
-        )
-    else:
-        out_residual_tensor = c._residual_tensor
-
-    compositions = c._composition_tensor
+    compositions = context._composition_tensor
     norm_compositions = torch.norm(compositions, p=p, dim=-1, keepdim=True)
     sum_compositions = norm_compositions.sum(dim=0, keepdim=True)
     sum_compositions[sum_compositions == 0] = eps
 
     weights = norm_compositions / sum_compositions
 
-    if inplace:
-        compositions += weights * bias
-        c._residual_tensor = out_residual_tensor
-        return c
-    else:
-        out_composition_tensor = compositions + weights * bias
-        return _from_replce(out_composition_tensor, out_residual_tensor)
-
-
-@register_bias_decomposition_func("norm_decomposition_")
-def norm_decomposition_(
-    c: Composition,
-    bias: Union[Number, Tensor] = None,
-    *,
-    p=2,
-    eps=1e-6,
-) -> Composition:
-    return norm_decomposition(c, bias, p=2, eps=eps, inplace=True)
+    bias_composition_tensor = weights * bias
+    return _from_replce(bias_composition_tensor)
 
 
 # @register_bias_decomposition_func("sparse_abs_decomposition")

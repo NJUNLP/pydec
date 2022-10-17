@@ -50,7 +50,7 @@ def _get_bias_decomposition_name() -> str:
     ...
 
 
-def _get_bias_decomposition_func(inplace: bool = False) -> Callable[..., Composition]:
+def _get_bias_decomposition_func() -> Callable[..., Composition]:
     ...
 
 
@@ -81,7 +81,9 @@ class Composition:
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        def init_from_tensor(composition_tensor: Tensor, residual_tensor: Tensor = None):
+        def init_from_tensor(
+            composition_tensor: Tensor, residual_tensor: Tensor = None
+        ):
             self._composition_tensor = torch.tensor(composition_tensor).to(
                 composition_tensor
             )
@@ -93,7 +95,9 @@ class Composition:
                         "composition",
                         "residual",
                     )
-                self._residual_tensor = torch.tensor(residual_tensor).to(residual_tensor)
+                self._residual_tensor = torch.tensor(residual_tensor).to(
+                    residual_tensor
+                )
             else:
                 self._residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
                     composition_tensor
@@ -280,9 +284,11 @@ class Composition:
             self._residual_tensor += other._residual_tensor
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_bias_decomposition_func(inplace=True)
+            decomposition_func = _get_bias_decomposition_func()
             if decomposition_func is not None:
-                self = decomposition_func(self, other)
+                bias_composition = decomposition_func(bias=other, context=self)
+                assert isinstance(bias_composition, Composition)
+                self += bias_composition
             else:
                 raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
             return self
@@ -293,13 +299,17 @@ class Composition:
         if isinstance(other, Composition):
             if self.numc() != other.numc():
                 raise component_num_error(self.numc(), other.numc())
-            out_composition_tensor = self._composition_tensor + other._composition_tensor
+            out_composition_tensor = (
+                self._composition_tensor + other._composition_tensor
+            )
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             decomposition_func = _get_bias_decomposition_func()
             if decomposition_func is not None:
-                return decomposition_func(self, other)
+                bias_composition = decomposition_func(bias=other, context=self)
+                assert isinstance(bias_composition, Composition)
+                return self + bias_composition
             else:
                 raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
         else:
@@ -484,7 +494,11 @@ class Composition:
             decomposition_func = _get_bias_decomposition_func()
             if decomposition_func is not None:
                 kwargs["out"] = out
-                return decomposition_func(self, alpha * other, **kwargs)
+                bias_composition = decomposition_func(
+                    bias=alpha * other, context=self, **kwargs
+                )
+                assert isinstance(bias_composition, Composition)
+                return self.add(bias_composition)
             else:
                 raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
         else:
@@ -504,12 +518,15 @@ class Composition:
             self._residual_tensor.add_(other._residual_tensor, alpha=alpha)
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_bias_decomposition_func(inplace=True)
+            decomposition_func = _get_bias_decomposition_func()
             if decomposition_func is not None:
-                self = decomposition_func(self, alpha * other, **kwargs)
+                bias_composition = decomposition_func(
+                    bias=alpha * other, context=self, **kwargs
+                )
+                assert isinstance(bias_composition, Composition)
+                return self.add_(bias_composition)
             else:
                 raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
-            return self
         else:
             raise unsupported_operand_error("add_", type(self), type(other))
 
@@ -743,7 +760,9 @@ class Composition:
             out_composition_tensor = self._composition_tensor.view(dtype)
             out_residual_tensor = self._residual_tensor.view(dtype)
         else:
-            out_composition_tensor = self._composition_tensor.view((self.numc(),) + size)
+            out_composition_tensor = self._composition_tensor.view(
+                (self.numc(),) + size
+            )
             out_residual_tensor = self._residual_tensor.view(size)
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -997,7 +1016,9 @@ class Composition:
         ...
 
     @overload
-    def scatter_(self, dim: _int, index: Tensor, value: Number, *, reduce: str) -> Tensor:
+    def scatter_(
+        self, dim: _int, index: Tensor, value: Number, *, reduce: str
+    ) -> Tensor:
         ...
 
     @overload
@@ -1083,7 +1104,9 @@ class Composition:
         ...
 
     def c_index_select(self, index: Tensor, with_residual: _bool = True) -> Composition:
-        out_composition_tensor = self._composition_tensor.index_select(dim=0, index=index)
+        out_composition_tensor = self._composition_tensor.index_select(
+            dim=0, index=index
+        )
         if with_residual:
             out_residual_tensor = self._residual_tensor.clone()
         else:
@@ -1171,7 +1194,9 @@ class Composition:
             out_composition_tensor = self._composition_tensor.type_as(
                 other._composition_tensor
             )
-            out_residual_tensor = self._residual_tensor.type_as(other._composition_tensor)
+            out_residual_tensor = self._residual_tensor.type_as(
+                other._composition_tensor
+            )
         else:
             out_composition_tensor = self._composition_tensor.type_as(other)
             out_residual_tensor = self._residual_tensor.type_as(other)

@@ -19,7 +19,7 @@ contribution while cool colors indicate low contribution. The outputs of the mod
 <img src="./docs/source/_static/img/pydec_demo1.png" width="70%">
 </div>
 
-# Data flow visualization
+## Data flow visualization
 
 ![demo2](./docs/source/_static/img/pydec_demo2_1.gif)
 

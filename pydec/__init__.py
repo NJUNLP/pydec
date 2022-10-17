@@ -7,6 +7,9 @@ from .bias_decomposition import (
     get_bias_decomposition_func,
     using_bias_decomposition_func,
     no_bias_decomposition,
+    set_bias_decomposition_args,
+    get_bias_decomposition_args,
+    using_bias_decomposition_args,
 )
 
 from .error_check import no_error_check, error_check, check_error
@@ -22,7 +25,7 @@ __all__ = [
 import typing as _typing
 import torch.types as _types
 
-PRIVATE_NAME = ["memory_format"]
+PRIVATE_NAME = ["memory_format", "strided"]
 PRIVATE_NAME.extend(dir(_typing))
 PRIVATE_NAME.extend(dir(_types))
 

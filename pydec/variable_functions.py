@@ -23,6 +23,8 @@ from torch.types import (
     SymInt,
 )
 
+from torch import strided
+
 from pydec.utils import _shift_dim, _shift_dims
 from pydec.exception_utils import arg_value_error
 import builtins
@@ -37,6 +39,10 @@ def _from_replce(
 ) -> Composition:
     out = void()
     out._composition_tensor = composition_tensor
+    if residual_tensor is None:
+        residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
+            composition_tensor
+        )
     out._residual_tensor = residual_tensor
     return out
 
@@ -495,14 +501,24 @@ def index_select(
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
+
 @overload
 def c_index_select(
-    input: Composition, index: Tensor, with_residual: _bool = True, *, out: Optional[Composition] = None
+    input: Composition,
+    index: Tensor,
+    with_residual: _bool = True,
+    *,
+    out: Optional[Composition] = None,
 ) -> Composition:
     ...
 
+
 def c_index_select(
-    input: Composition, index: Tensor, with_residual: _bool = True, *, out: Optional[Composition] = None
+    input: Composition,
+    index: Tensor,
+    with_residual: _bool = True,
+    *,
+    out: Optional[Composition] = None,
 ) -> Composition:
     out_composition_tensor = torch.index_select(
         input._composition_tensor,
@@ -512,7 +528,9 @@ def c_index_select(
     )
     if with_residual:
         if out is not None:
-            out._residual_tensor = out._residual_tensor.reshape_as(input._residual_tensor)
+            out._residual_tensor = out._residual_tensor.reshape_as(
+                input._residual_tensor
+            )
             out._residual_tensor[:] = input._residual_tensor
         out_residual_tensor = input._residual_tensor.clone()
     else:
@@ -520,6 +538,7 @@ def c_index_select(
             input._residual_tensor
         )
     return _from_replce(out_composition_tensor, out_residual_tensor)
+
 
 def masked_select(
     input: Composition, mask: Tensor, *, out: Optional[Composition] = None
@@ -599,8 +618,42 @@ def round(
 def round_(input: Composition) -> Composition:
     ...
 
+
 @overload
 def round_(input: Composition, *, decimals: _int) -> Composition:
     ...
+
+
 def round_(input: Composition, *, decimals: _int = None) -> Composition:
     return input.round_(decimals=decimals)
+
+
+def zeros_like(
+    input: Composition,
+    *,
+    memory_format: Optional[memory_format] = None,
+    dtype: _dtype = None,
+    layout: Optional[_layout] = strided,
+    device: Union[_device, str, None] = None,
+    pin_memory: _bool = False,
+    requires_grad: _bool = False,
+) -> Composition:
+    out_composition_tensor = torch.zeros_like(
+        input._composition_tensor,
+        memory_format=memory_format,
+        dtype=dtype,
+        layout=layout,
+        device=device,
+        pin_memory=pin_memory,
+        requires_grad=requires_grad,
+    )
+    out_residual_tensor = torch.zeros_like(
+        input._residual_tensor,
+        memory_format=memory_format,
+        dtype=dtype,
+        layout=layout,
+        device=device,
+        pin_memory=pin_memory,
+        requires_grad=requires_grad,
+    )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
