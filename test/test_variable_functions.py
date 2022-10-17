@@ -2,15 +2,9 @@ import pydec
 from pydec import Composition
 import torch
 import pytest
+from .test_composition import init_composition
 
 torch.manual_seed(114514)
-
-
-def init_composition(size, c_num=3, requires_grad=False):
-    c = Composition(size, c_num, dtype=torch.float)
-    for i in range(c_num):
-        c[i] = torch.randn(size, requires_grad=requires_grad)
-    return c
 
 
 @pytest.mark.filterwarnings("ignore:An output with one or more elements was resized")

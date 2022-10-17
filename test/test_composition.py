@@ -153,7 +153,6 @@ class TestPlus:
 # c = pydec.diagonal_init(c, src=input.view(16,20*512), dim=1)
 # c = c.view_as(input)
 # torch.zeros(requires_grad=)
-pydec.nn.functional
 # import torch.nn as nn
 # from torch import Tensor
 
