@@ -3,7 +3,10 @@ r"""Functional interface"""
 import torch
 from torch import Tensor
 from ..composition import Composition
-from ..bias_decomposition import get_bias_decomposition_func, get_bias_decomposition_name
+from ..bias_decomposition import (
+    get_bias_decomposition_func,
+    get_bias_decomposition_name,
+)
 from ..exception_utils import none_bias_decomposition_func_error
 
 from typing import Optional
@@ -22,7 +25,9 @@ def linear(input: Composition, weight: Tensor, bias: Tensor = None) -> Compositi
     if bias is not None:
         decomposition_func = get_bias_decomposition_func()
         if decomposition_func is not None:
-            return decomposition_func(out, bias)
+            bias_composition = decomposition_func(bias, context=out)
+            out = out + bias_composition
+            return out
         else:
             raise none_bias_decomposition_func_error(get_bias_decomposition_name())
     else:
@@ -46,7 +51,9 @@ def layer_norm_1d(
     if bias is not None:
         decomposition_func = get_bias_decomposition_func()
         if decomposition_func is not None:
-            return decomposition_func(out, bias)
+            bias_composition = decomposition_func(bias, context=out)
+            out = out + bias_composition
+            return out
         else:
             raise none_bias_decomposition_func_error(get_bias_decomposition_name())
     else:
