@@ -300,8 +300,10 @@ In order to reallocate bias term, PyDec will assign them to components other tha
 Assume that $h^\prime=h+b$ and $h$ is denoted as the sum of $m$ components, i.e., $h=c_1+\cdots+c_m$. Then $b$ is decomposed into $m$ parts and added to each of the $m$ components:
 
 $$
-b=p_1+\cdots+p_m \newline
-c^\prime_i=c_i+p_i.
+\begin{split}
+b=&p_1+\cdots+p_m,\newline
+c^\prime_i=&c_i+p_i.
+\end{split}
 $$
 
 The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
