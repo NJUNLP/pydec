@@ -303,6 +303,7 @@ $$
 b=p_1+\cdots+p_m \newline
 c^\prime_i=c_i+p_i.
 $$
+
 The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
 
 PyDec has some built-in strategies to decompose bias, and they mostly calculate $p_i$ based on the value of $c_i$. By default, PyDec just adds bias to residual component without performing any bias decomposition. More details about the bias decomposition can be found here (TODO).
