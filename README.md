@@ -37,6 +37,11 @@ cd pydec
 pip install --editable ./
 ```
 
+* To install the latest stable release:
+``` bash
+pip install pydec
+```
+
 # Getting Started
 
 ## Example: deompose a tiny network
@@ -146,7 +151,7 @@ This also creates a composition containing 4 tensors of size (3, 2), initialized
 After creating a Composition, we usually initialize the value of the Composition based on orthogonality, i.e.,
 
 $$
-\frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\\ 0, &\text{otherwise}\end{cases}.
+\frac{\mathscr{D}x_i}{\mathscr{D}x_j}=\begin{cases}x_i, &\text{if}\ i=j\newline 0, &\text{otherwise}\end{cases}.
 $$
 
 **By assign**
@@ -293,8 +298,9 @@ composition 0:
 In order to reallocate bias term, PyDec will assign them to components other than residual whenever it encounters bias addition operation.
 
 Assume that $h^\prime=h+b$ and $h$ is denoted as the sum of $m$ components, i.e., $h=c_1+\cdots+c_m$. Then $b$ is decomposed into $m$ parts and added to each of the $m$ components:
+
 $$
-b=p_1+\cdots+p_m \\
+b=p_1+\cdots+p_m \newline
 c^\prime_i=c_i+p_i.
 $$
 The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
