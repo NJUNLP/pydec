@@ -14,7 +14,7 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = "pydec"
 DESCRIPTION = "Linear decomposition toolkit for neural network based on pytorch."
-URL = "https://github.com/"
+URL = "https://github.com/DoubleVII/pydec/"
 EMAIL = "yangsen@smail.nju.edu.cn"
 AUTHOR = "Sen Yang"
 REQUIRES_PYTHON = ">=3.7.0"
@@ -122,7 +122,5 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
     # $ setup.py publish support.
-    cmdclass={
-        "upload": UploadCommand,
-    },
+    cmdclass={"upload": UploadCommand,},
 )
