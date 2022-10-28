@@ -1,4 +1,10 @@
-# Tracking Forward Propagation
+---
+layout: page
+title:  "Tracking Forward Propagation"
+category: notes
+date: 2022-10-29 1:00:00
+order: 2
+---
 
 To obtain the decomposition of the output or intermediate variables, the input to the network is first wrapped with Composition, and then the linear transformations and operations defined by the network are applied to Composition. Composition automatically maintains the decomposition of the corresponding variables of the original network.
 

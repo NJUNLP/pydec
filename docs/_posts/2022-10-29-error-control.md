@@ -1,4 +1,10 @@
-# Error Control
+---
+layout: page
+title:  "Error Control"
+category: notes
+date: 2022-10-29 1:00:00
+order: 3
+---
 
 Although in theory the recovery from Composition is exactly equivalent to the ground truth. However, in practice, there will be errors brought by the computer. Especially in deep networks, the error may be magnified to an unacceptable degree. We give some suggestions for reducing errors and provide tools for error checking.
 

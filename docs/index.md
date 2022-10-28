@@ -1,18 +1,25 @@
 ---
 layout: default
-title: "Jekyll Docs Template"
+title: "PyDec Documentation Home"
 ---
 
-### Get Started
+PyDec is a linear decomposition toolkit for neural network based on [PyTorch](https://pytorch.org/), which can decompose the tensor in the forward process into given components with a small amount of code. The result of decomposition can be applied to tasks such as attribution analysis.
 
-Start by [creating a new post](http://jekyllrb.com/docs/posts/) one of the categories listed in `_config.yml`. It will appear in the navigation on the left once recompiled. Or use the supplied script to make creating pages easier:
+# Examples
+TODO
 
-```bash
-ruby bin/jekyll-page "Some Page Title" ref
-```
+# Tutorials
 
-#### Don't Forget
+## [Understand Composition](./tutorials/UnderstandComposition.md)
 
-- Add your own content to this page (i.e. `index.md`) and change the `title`
-- Change `title` and `subtitle` defined in `config.yml` for your site
-- Set the `baseurl` in `_config.yml` for your repo if deploying to GitHub pages
+# Notes
+
+## [Bias Decomposition](./notes/BiasDecomposition.md)
+
+## [Tracking Forward Propagation](./notes/TrackingForwardPropagation.md)
+
+## [Error Control](./notes/ErrorControl.md)
+
+# Python API
+TODO
+

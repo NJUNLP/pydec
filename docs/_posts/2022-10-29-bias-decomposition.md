@@ -1,4 +1,10 @@
-# Bias Decomposition
+---
+layout: page
+title:  "Bias Decomposition"
+category: notes
+date: 2022-10-29 1:00:00
+order: 1
+---
 
 In order to reallocate bias term, PyDec will assign them to components other than residual whenever it encounters bias addition operation.
 

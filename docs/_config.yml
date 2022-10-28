@@ -1,6 +1,6 @@
 # Site title and subtitle. This is used in _includes/header.html
-title: 'PyDec documentation'
-subtitle: ''
+title: 'PyDec'
+subtitle: 'documentation'
 
 # if you wish to integrate disqus on pages set your shortname here
 disqus_shortname: ''
@@ -23,7 +23,8 @@ sections: [
     ['tut', 'Tutorial'],
     ['ref', 'Reference'],
     ['dev', 'Developers'],
-    ['post', 'Posts']
+    ['post', 'Posts'],
+    ['notes', 'Notes']
 ]
 
 # Keep as an empty string if served up at the root. If served up at a specific

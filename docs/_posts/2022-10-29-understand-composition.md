@@ -1,4 +1,9 @@
-# Tutorials: Understand Composition
+---
+layout: page
+title:  "Tutorials: Understand Composition"
+category: tut
+date: 2022-10-29 1:00:00
+---
 
 ## Decomposition
 
