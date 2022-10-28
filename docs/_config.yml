@@ -1,58 +1,115 @@
-# Site title and subtitle. This is used in _includes/header.html
-title: 'PyDec'
-subtitle: 'documentation'
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing these this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'jekyll serve'. If you change this file, please restart the server process.
 
-# if you wish to integrate disqus on pages set your shortname here
-disqus_shortname: ''
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
 
-# if you use google analytics, add your tracking id here
-google_analytics_id: ''
+title: PyDec
+email: yangsen@smail.nju.edu.cn
+author: Sen Yang
+description: > # this means to ignore newlines until "baseurl:"
+  PyDec is a linear decomposition toolkit for neural network based on PyTorch, 
+  which can decompose the tensor in the forward process into given components 
+  with a small amount of code. The result of decomposition can be applied to 
+  tasks such as attribution analysis.
 
-# Enable/show navigation. There are there options:
-#   0 - always hide
-#   1 - always show
-#   2 - show only if posts are present
-navigation: 2
+# Add your baseurl here (your repository) but DO NOT CHANGE THE LINE NUMBER without editing .circleci/circle_urls.sh
+baseurl: "/pydec" # the subpath of your site, e.g. /blog
 
-# URL to source code, used in _includes/footer.html
-codeurl: 'https://github.com/DoubleVII/pydec'
+# This is mostly for testing
+url: "https://doublevii.github.io/" # the base hostname & protocol for your site
 
-# Default categories (in order) to appear in the navigation
-sections: [
-    ['doc', 'Documentation'],
-    ['tut', 'Tutorial'],
-    ['ref', 'Reference'],
-    ['dev', 'Developers'],
-    ['post', 'Posts'],
-    ['notes', 'Notes']
-]
+# Social (First three Required)
+repo: "https://github.com/DoubleVII/pydec"
+github_user: "DoubleVII"
+github_repo: "pydec"
+github_branch: "master"
 
-# Keep as an empty string if served up at the root. If served up at a specific
-# path (e.g. on GitHub pages) leave off the trailing slash, e.g. /my-project
-baseurl: '/pydec'
+# Optional
+twitter:
+linkedin:
+dockerhub:
 
-# Dates are not included in permalinks
-permalink: none
+# These options are used to configure the locations of your version history when you want to serve versioned documents
+version_params:
+  version_menu: "Release"
+  version_dir: Archive
+  tocversion_dir: versions
+  versioning: true
 
-# Syntax highlighting
-highlighter: rouge
+  # Disable so older versions cannot be searched
+  allow_search: true  
 
-# Since these are pages, it doesn't really matter
-future: true
+  # Allow these versions to be searched
+  search_versions:
+    - Previous
+  latest: Current
+  versions:
+    - Current
+    - Previous
 
-# Exclude non-site files
-exclude: ['bin', 'README.md']
+# Should there be feedback buttons at the bottom of pages?
+feedback: true
 
-# Use the kramdown Markdown renderer
+# Link to a privacy policy in footer, uncomment and define if wanted
+# privacy: https://domain.com/privacy
+
+# google-analytics: UA-XXXXXXXXXX
+# Image and (square) dimension for logo (don't start with /)
+# If commented, will use material hat theme
+# logo: "assets/img/logo/SRCC-square-red.png"
+logo_pixels: 34
+color: "#30638e"
+# color: "#8c1515" # primary color for header, buttons
+
+# Build settings
 markdown: kramdown
-redcarpet:
-    extensions: [
-        'no_intra_emphasis',
-        'fenced_code_blocks',
-        'autolink',
-        'strikethrough',
-        'superscript',
-        'with_toc_data',
-        'tables',
-        'hardwrap'
-    ]
+
+# If you add tags to pages, define this variable to link them to some external search
+# If you want to link to tags locally on the site, leave this commented out
+# tag_search_endpoint: https://ask.cyberinfrastructure.org/search?q=
+tag_color: primary # danger, success, warning, primary, info, secondary
+
+accentColor: red # purple, green, etc.
+themeColor: red # purple, green, blue, orange, purple, grey
+fixedNav: 'true' # true or false
+
+permalink: /:year/:title/
+markdown: kramdown
+exclude: [_site, CHANGELOG.md, LICENSE, README.md, vendor]
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:path
+
+# Defaults
+defaults:
+  - scope:
+      path: "_docs"
+      type: "docs"
+    values:
+      layout: page
+  -
+    scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+  -
+    scope:
+      path: "posts"
+      type: "posts"
+    values:
+      layout: "post"

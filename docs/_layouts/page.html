@@ -1,22 +1,7 @@
 ---
 layout: default
 ---
-
-<div class="page-header">
-    <h2>{{ page.title }}
-        {% if page.subtitle %}<small>{{ page.subtitle }}</small>{% endif %}
-    </h2>
-</div>
-
 {{ content }}
-
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<script>
-    MathJax = {
-        tex: {
-            inlineMath: [['$', '$']],
-            processEscapes: true
-        }
-    };
-</script>
+{% include toc.html %}
+{% include permalinks.html %}
+{% include tags.html %}

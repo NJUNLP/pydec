@@ -1,0 +1,43 @@
+- title: Tutorials
+  url: "docs/tutorials"
+  links:
+    - title: "Tutorials: Understand Composition"
+    - url: "docs/tutorials/understand-composition"
+- title: Notes
+  url: docs/notes
+  links:
+    - title: "Bias Decomposition"
+      url: "docs/notes/bias-decomposition"
+    - title: "Tracking Forward Propagation"
+      url: "docs/notes/tracking-forward-propagation"
+    - title: "Overloaded Operators"
+      url: "docs/notes/overloaded-operators"
+    - title: "Error Control"
+      url: "docs/notes/error-control"
+    - title: "Overloaded Operators"
+      url: "docs/notes/overloaded-operators"
+- title: "Docsy jekyll theme Documentation"
+  url: docs
+  links:
+    - title: "Getting Started"
+      url: "docs/getting-started"
+      children:
+        - title: Features
+          url: "docs/getting-started#getting-started"
+        - title: Development
+          url: "docs/getting-started#development"
+        - title: Customization
+          url: "docs/getting-started#customization"
+    - title: Versioning
+      url: "docs/versioning"
+    - title: "About"
+      url: "about"
+    - title: "News"
+      url: "news"
+- title: "Extras"
+  url: "docs/extras"
+  links:
+    - title: Quizzes
+      url: "docs/extras/example-quiz"
+    - title: Tags Page
+      url: "tags"

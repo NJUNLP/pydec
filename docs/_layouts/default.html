@@ -1,123 +1,98 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport" content="width=device-width">
-
-        <title>{{ site.title }}{% if page.title %} : {{ page.title }}{% endif %}</title>
-        <meta name="description" content="{{ site.subtitle }}">
-
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="{{ site.baseurl }}/css/syntax.css">
-        <link rel="stylesheet" href="{{ site.baseurl }}/css/main.css">
-    </head>
-    <body>
-
-        <div class="container">
-            <div class="row">
-                <div id="header" class="col-sm-12">
-                    {% include header.html %}
-                </div>
-            </div>
-
-            <div class="row">
-                {% assign post_count = site.posts|size %}
-                {% if site.navigation != 0 and site.navigation == 1 or post_count > 0 %}
-                    <div id="navigation" class="col-sm-2">
-                        {% include navigation.html %}
-                    </div>
-
-                    <div id="content" class="col-sm-10">
-                        {{ content }}
-                    </div>
-                {% else %}
-                    <div id="content" class="col-sm-12">
-                        {{ content }}
-                    </div>
+<html lang="en" class="no-js">
+  <!-- Copyright 2019-2021 Vanessa Sochat-->
+  {% include head.html %}
+  {% include google-analytics.html %}
+  {% if site.version_params.versioning == true %}
+    {% assign pageversion = page.url | append: "/"  | replace: '//', '/' | split: '/' %}
+    {% assign currentpageversion = pageversion[3] %}
+    {% comment %}
+      Let's check to see if we have one of the versions in the URL if not then we are on the latest version
+    {% endcomment %}
+      {% if site.version_params.versions contains currentpageversion %}
+        {% assign currentpageversionpath = site.version_params.version_dir | append: '/' | append: pageversion[3] | append: '/' %}
+        {% comment %}
+          Remove the version from the URL to get the latest document url for use in the alerts etc
+        {% endcomment %}        
+        {% assign latestversion = page.url | replace: currentpageversionpath, '' %}
+      {% else %}
+        {% comment %}
+          Otherwise we are using the latest version
+        {% endcomment %}
+        {% assign latestversion = page.url %}
+        {% assign currentpageversion = site.version_params.latest %}
+      {% endif %}
+  {% endif %}
+  <body class="td-section">
+    {% include header.html %}
+    <div class="container-fluid td-outer">
+      <div class="td-main">
+        <div class="row flex-xl-nowrap">
+          <div class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+          {% include sidebar.html %}
+          </div>
+          <div class="d-none d-xl-block col-xl-2 td-toc d-print-none">
+              <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+                  {% include editable.html %}
+              </div>
+              <nav id="TableOfContents"><ul>
+              <li><ul id="TOC">
+                <!-- Links will be appended here-->
+              </ul></li>
+              </ul></nav>
+          </div>
+          <main class="col-12 col-md-9 col-xl-8 pl-md-5" role="main">
+            <nav aria-label="breadcrumb" class="d-none d-md-block d-print-none">
+	      <ol class="breadcrumb spb-1">
+              {% assign crumbs = page.url | append: "/"  | replace: '//', '/' | split: '/' %}
+              {% for crumb in crumbs offset: 1 %}
+                {% if crumb != "index" %}
+                  {% if forloop.last %}
+                    <li class="breadcrumb-item active" aria-current="page">
+                      <a href="{{ site.url }}{{ site.baseurl }}{{ page.url }}">{{ page.title }}</a>
+                    </li>
+                  {% else %}
+                    {% if page.url != "/docs/" %}
+                      {% if site.version_params.versioning == true and crumb == currentpageversion or crumb == site.version_params.version_dir %}
+                      <!-- Don't display the version number or directory in the breadcrumb -->
+                      {% else %}
+                      <li class="breadcrumb-item">
+                        <a href="{{ site.url }}{{ site.baseurl }}{% assign crumb_limit = forloop.index | plus: 1 %}{% for crumb in crumbs limit: crumb_limit %}{{ crumb | append: '/' }}{% endfor %}">{% if crumb == "docs" %}Documentation{% else %}{{ crumb | replace:'-',' ' | remove:'.html' | capitalize }}{% endif %}</a>
+                      </li>
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
                 {% endif %}
-            </div>
-
-            {% if page.disqus == 1 %}
-            <div class="row">
-              {% if site.navigation == 1 or post_count > 0 %}
-                <div id="navigation" class="col-sm-2"></div>
-                <div id="disqus" class="col-sm-10">
-                    {% include disqus.html %}
-                </div>
-              {% else %}
-                <div id="disqus" class="col-sm-12">
-                    {% include disqus.html %}
-                </div>
+              {% endfor %}
+	      </ol>
+           </nav>
+           <div class="td-content">        
+            {% if site.version_params.versioning == true %}
+              {% if site.version_params.latest != currentpageversion %}
+              {% capture civersion %}
+                {{- currentpageversion | downcase | strip -}}
+              {% endcapture %}
+                {% include versionalert.html %}
               {% endif %}
-            </div>
             {% endif %}
-
-            <div class="row">
-                <div id="footer" class="col-sm-12">
-                    {% include footer.html %}
-                </div>
-            </div>
+            
+	      {{ content }}	
+              {% if section.links %}<div class="section-index">
+               <hr class="panel-line">{% for child in section.links %}
+                 <div class="entry">
+                    <h5>
+                        <a href="{% if child.url %}{{ site.baseurl }}{{ child.url }}{% else %}{{ child.external_url }}{% endif %}">{{ child.title }}</a>
+                    </h5>
+                    <p>{{ child.description }}</p>
+                 </div>{% endfor %}
+              </div>{% endif %}
+              {% include feedback.html %}
+           </div>
+          </main>
         </div>
-
-        <script>
-            function orderNav() {
-                var list,
-                    section,
-                    header,
-                    sections = [],
-                    lists = {},
-                    headers = {};
-                
-                var locationObj = document.location.href;
-                
-                var navUl = document.querySelectorAll('#navigation ul')[0],
-                    navLis = document.querySelectorAll('#navigation ul li');
-
-                if (!navUl) return;
-
-                for (var i = 0; i < navLis.length; i++) {
-                    var order, li = navLis[i];
-
-                    if (li.classList.contains('nav-header')) {
-                        section = li.textContent || li.innerText;
-                        sections.push(section);
-                        headers[section] = li;
-                        continue;
-                    }
-
-                    var link = li.childNodes[0];
-                    if (locationObj && link && locationObj.endsWith(link.getAttribute('href'))) {
-                        li.classList.add('active');
-                    }
-                    
-                    if (!lists[section]) {
-                        lists[section] = [];
-                    }
-
-                    order = parseFloat(li.getAttribute('data-order'))
-                    lists[section].push([order, li]);
-                }
-
-                for (var i = 0; i < sections.length; i++) {
-                    section = sections[i];
-                    list = lists[section].sort(function(a, b) {
-                        return a[0] - b[0];
-                    });
-
-                    if (header = headers[section]) {
-                        navUl.appendChild(header);
-                    }
-                    for (var j = 0; j < list.length; j++) {
-                        navUl.appendChild(list[j][1]);
-                    }
-                }
-            }
-
-            if (document.querySelectorAll) orderNav();
-        </script>
-        {% if site.google_analytics_id != "" %}
-        {% include google_analytics.html %}
-        {% endif %}
-    </body>
+      </div>
+      {% include footer.html %}
+    </div>
+    {% include scripts.html %}
+  </body>
 </html>

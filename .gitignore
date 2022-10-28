@@ -116,6 +116,6 @@ ENV/
 .mypy_cache/
 
 
-*.sw?
+vendor
 _site
-_pages
+Gemfile.lock
