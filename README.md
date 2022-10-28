@@ -17,14 +17,14 @@ Contribution Heat maps of the Roberta model (fine-tuned on SST-2). Warm colors i
 contribution while cool colors indicate low contribution. The outputs of the model were positive, negative and positive, but the latter two samples did not match the labels.
 
 <div align="center">
-<img src="./docs/source/_static/img/pydec_demo1.png" width="70%">
+<img src="./docs/assets/img/pydec_demo1.png" width="70%">
 </div>
 
 ## Data flow visualization
 
-![demo2](./docs/source/_static/img/pydec_demo2_1.gif)
+![demo2](./docs/assets/img/pydec_demo2_1.gif)
 
-![demo2](./docs/source/_static/img/pydec_demo2_2.gif)
+![demo2](./docs/assets/img/pydec_demo2_2.gif)
 
 # Requirements and Installation
 * [PyTorch](https://pytorch.org/) version >= 1.11.0
