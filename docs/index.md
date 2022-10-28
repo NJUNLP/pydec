@@ -5,21 +5,21 @@ title: "PyDec Documentation Home"
 
 PyDec is a linear decomposition toolkit for neural network based on [PyTorch](https://pytorch.org/), which can decompose the tensor in the forward process into given components with a small amount of code. The result of decomposition can be applied to tasks such as attribution analysis.
 
-# Examples
+## Examples
 TODO
 
-# Tutorials
+## Tutorials
 
-## [Understand Composition](./tutorials/UnderstandComposition.md)
+### Understand Composition
 
-# Notes
+## Notes
 
-## [Bias Decomposition](./notes/BiasDecomposition.md)
+### Bias Decomposition
 
-## [Tracking Forward Propagation](./notes/TrackingForwardPropagation.md)
+### Tracking Forward Propagation
 
-## [Error Control](./notes/ErrorControl.md)
+### Error Control
 
-# Python API
+## Python API
 TODO
 

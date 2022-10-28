@@ -105,4 +105,4 @@ In the above example, each composition consists of two components whose sum is a
 
 # Documentation
 
-The [full documentation](./docs/README.md) contains examples of implementations on realistic models, tutorials, notes and Python API.
+The [full documentation](https://doublevii.github.io/pydec/) contains examples of implementations on realistic models, tutorials, notes and Python API.
