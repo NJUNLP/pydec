@@ -136,14 +136,14 @@ $$
 
 where $b$ is the bias parameters of the model. 
 
-By default, the term $\frac{\mathscr{D}h}{\mathscr{D}b^1\cdots\mathscr{D}b^L}$ is saved to `Composition._residual`. PyDec configures some strategies to reallocate the bias term to the components corresponding to the input (see Bias Decomposition, so the residual may be 0 or some other value (depending on the reallocation strategy).
+By default, the term $\frac{\mathscr{D}h}{\mathscr{D}b^1\cdots\mathscr{D}b^L}$ is saved to `Composition._residual`. PyDec configures some strategies to reallocate the bias term to the components corresponding to the input (see {% include doc.html name="Bias Decomposition" path="notes/bias-decomposition" %}, so the residual may be 0 or some other value (depending on the reallocation strategy).
 
 
 ## Operations on Compositions
 
 We have implemented some common operations on Compositions, including arithmetic, linear algebra, matrix manipulation (transposing, indexing, slicing).
 
-Most of the operations are the same as tensor operations, and a convenient expression to understand is that performing one operation on a composition is equivalent to performing the same operation for all components of the composition, including the residual component. More details about the operations can be found here.
+Most of the operations are the same as tensor operations, and a convenient expression to understand is that performing one operation on a composition is equivalent to performing the same operation for all components of the composition, including the residual component. More details about the operations can be found {% include doc.html name="here" path="notes/overloaded-operators" %}.
 
 Example:
 ```python
