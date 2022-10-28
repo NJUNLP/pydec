@@ -120,6 +120,7 @@ def diagonal_init(
     input: Composition, src: Tensor, dim: _int, offset: _int = 0
 ) -> Composition:
     permute_dims = list(range(src.dim()))
+    dim = (dim + src.dim()) % src.dim() # Converted to a positive number
     permute_dims.remove(dim)
     permute_dims.append(dim)
     src = src.permute(permute_dims)
