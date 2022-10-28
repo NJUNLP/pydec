@@ -114,3 +114,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+
+*.sw?
+_site
+_pages
