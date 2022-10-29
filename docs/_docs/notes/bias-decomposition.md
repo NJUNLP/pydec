@@ -19,3 +19,16 @@ $$
 The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
 
 PyDec has some built-in strategies to decompose bias, and they mostly calculate $p_i$ based on the value of $c_i$. By default, PyDec just adds bias to residual component without performing any bias decomposition. More details about the bias decomposition can be found here (TODO).
+
+## Using Bias Decomposition
+
+Usually you do not need to call an explicit interface to use bias decomposition. PyDec overloads the [addition operator](TODO), whenever `pydec.Composition` is added with `torch.Tensor`, PyDec recognizes it automatically as bias addition and calls the configured bias decomposition.
+
+## Configuring Bias Decomposition
+TODO
+
+## Explicit Interface
+TODO
+
+## Customizing Bias Decomposition
+TODO
