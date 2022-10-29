@@ -148,6 +148,7 @@ class Composition:
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
     ) -> Union[Composition, Tensor]:
+        # TODO: fix bug: Composition[None], Composition[List]
         if isinstance(indices, (type(None), _int, slice, Tensor)):
             indices = (indices,)
         if indices[0] is None:
