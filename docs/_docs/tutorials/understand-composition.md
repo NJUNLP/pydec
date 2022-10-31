@@ -114,7 +114,7 @@ Out:
 >>> c = pydec.Composition((3, 2), component_num=4)
 >>> c.size()
     torch.Size([3, 2])
->>> c.size()
+>>> c.c_size()
     torch.Size([4, 3, 2])
 ```
 
