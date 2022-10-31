@@ -14,7 +14,33 @@
       url: "docs/notes/error-control"
     - title: "Overloaded Operators"
       url: "docs/notes/overloaded-operators"
-- title: "Docsy jekyll theme Documentation"
+- title: "Python API"
+  url: "docs/pythonapi"
+  links:
+    - title: "pydec"
+      url: "docs/pythonapi/pydec"
+    - title: "pydec.Composition"
+      url: "docs/pythonapi/pydec.Composition"
+    - title: "pydec.bias_decomposition"
+      url: "docs/pythonapi/pydec.bias_decomposition"
+    - title: "pydec.nn"
+      url: "docs/pythonapi/pydec.nn"
+    - title: "pydec.nn"
+      url: "docs/pythonapi/pydec.nn.functional"
+  
+- title: "Extras"
+  url: "docs/extras"
+  links:
+    - title: "About"
+      url: "about"
+    - title: "News"
+      url: "news"
+    - title: Quizzes
+      url: "docs/extras/example-quiz"
+    - title: Tags Page
+      url: "tags"
+
+- title: "Docsy jekyll"
   url: docs
   links:
     - title: "Getting Started"
@@ -28,14 +54,5 @@
           url: "docs/getting-started#customization"
     - title: Versioning
       url: "docs/versioning"
-    - title: "About"
-      url: "about"
-    - title: "News"
-      url: "news"
-- title: "Extras"
-  url: "docs/extras"
-  links:
-    - title: Quizzes
-      url: "docs/extras/example-quiz"
-    - title: Tags Page
-      url: "tags"
+
+
