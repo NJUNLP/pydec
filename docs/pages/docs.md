@@ -17,6 +17,8 @@ particular page.
     <div class="entry">
     <h5><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></h5>
     <p>{{ post.description }}</p>
+    <p>{{ post.url }}</p>
+    <p>{{ path_segment }}</p>
     </div>
     {% endif %}
     {% endfor %}
