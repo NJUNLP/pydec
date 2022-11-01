@@ -25,7 +25,7 @@
       url: "docs/pythonapi/pydec.bias_decomposition"
     - title: "pydec.nn"
       url: "docs/pythonapi/pydec.nn"
-    - title: "pydec.nn"
+    - title: "pydec.nn.functional"
       url: "docs/pythonapi/pydec.nn.functional"
   
 - title: "Extras"
