@@ -12,7 +12,7 @@ particular page.
 <div class="section-index">
     <hr class="panel-line">
     {% for post in site.docs  %}
-    {% assign path_segment = post.url | split: "/" | slice: 1 %}
+    {% assign path_segment = post.url | split: "/" | slice: 2 %}
     {% if path_segment != "Archive" %}
     <div class="entry">
     <h5><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></h5>
