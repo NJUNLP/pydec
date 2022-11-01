@@ -13,15 +13,15 @@ PyDec is a linear decomposition toolkit for neural network based on [PyTorch](ht
 <div class="section-index">
     <hr class="panel-line">
     {% for post in site.docs  %}
-    {% assign path_segment = post.url | split: "/" | slice: 2 %}
-    {% assign debug_info = path_segment == "Archive" %}
-    {% if path_segment != "Archive" %}
+    <!-- {% assign path_segment = post.url | split: "/" | slice: 2 %} -->
+    {% assign path_segment = false %}
+    <!-- {% if path_segment != "Archive" %} -->
+    {% if path_segment %}
     <div class="entry">
     <h5><a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a></h5>
     <p>{{ post.description }}</p>
     <p>{{ post.url }}</p>
     <p>xxx{{ path_segment }}xxx</p>
-    <p>{{ debug_info }}</p>
     </div>
     {% endif %}
     {% endfor %}
