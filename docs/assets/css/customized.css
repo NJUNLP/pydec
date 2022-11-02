@@ -1,0 +1,11 @@
+.codelink {
+    color: #ee4c2c;
+    text-decoration: none;
+    background-color: transparent;
+    -webkit-text-decoration-skip: objects
+}
+
+
+.codelink:hover {
+    text-decoration: underline;
+}
