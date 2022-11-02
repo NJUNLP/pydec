@@ -19339,6 +19339,7 @@ linear-gradient(180deg, #4f7a9f, {
 .td-content p code,
 .td-content li>code,
 .td-content table code {
+    color: inherit;
     padding: .2em .4em;
     margin: 0;
     font-size: 85%;
