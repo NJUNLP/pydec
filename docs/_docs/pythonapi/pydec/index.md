@@ -16,11 +16,10 @@ The pydec package contains data structures for compositions and defines mathemat
 | {% include codelink.html name="numc" path="pythonapi/pydec/numc" %}       | Returns the number of components in the `input` composition.                                  |
 
 ## Creation Ops
+There is no creation ops implemented yet, to create compositions, use {% include codelink.html name="pydec.Composition" path="pythonapi/pydec.Composition" %}.
 
-{% include alert.html type="NOTE" content="To create Composition by class, please refer to {% include codelink.html name="pydec.Composition" path="pythonapi/pydec.Composition#composition-class-reference" %}" %}
+{% include alert.html type="NOTE" content="To create Composition by class, please refer to {% include codelink.html name="pydec.Composition" path="pythonapi/pydec.Composition" %}." %}
 
-
-<!-- There is no creation ops implemented yet, to create compositions, use . -->
 
 | API                                                                             | Description                                                                          |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
