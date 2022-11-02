@@ -7,5 +7,6 @@
 
 
 .codelink:hover {
+    color: #ee4c2c;
     text-decoration: underline;
 }
