@@ -17,9 +17,13 @@ from .error_check import no_error_check, error_check, check_error
 __all__ = [
     "Composition",
     "set_bias_decomposition_func",
+    "get_bias_decomposition_name",
     "get_bias_decomposition_func",
     "using_bias_decomposition_func",
     "no_bias_decomposition",
+    "set_bias_decomposition_args",
+    "get_bias_decomposition_args",
+    "using_bias_decomposition_args",
 ]
 
 import typing as _typing
