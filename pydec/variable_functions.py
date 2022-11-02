@@ -61,11 +61,27 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def concat(
+    compositions: Union[Tuple[Composition, ...], List[Composition]],
+    dim: _int = 0,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    return cat(compositions=compositions, dim=dim, out=out)
+
+
+def concatenate(
+    compositions: Union[Tuple[Composition, ...], List[Composition]],
+    dim: _int = 0,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    return cat(compositions=compositions, dim=dim, out=out)
 
 
 def c_cat(
@@ -81,9 +97,7 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors,
-        0,
-        out=out._composition_tensor if out is not None else None,
+        c_tensors, 0, out=out._composition_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = builtins.sum(r_tensors)
@@ -109,9 +123,7 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -120,7 +132,7 @@ def diagonal_init(
     input: Composition, src: Tensor, dim: _int, offset: _int = 0
 ) -> Composition:
     permute_dims = list(range(src.dim()))
-    dim = (dim + src.dim()) % src.dim() # Converted to a positive number
+    dim = (dim + src.dim()) % src.dim()  # Converted to a positive number
     permute_dims.remove(dim)
     permute_dims.append(dim)
     src = src.permute(permute_dims)
@@ -605,13 +617,9 @@ def round(
         )
     else:
         out_composition_tensor = torch.round(
-            input._composition_tensor,
-            decimals=decimals,
+            input._composition_tensor, decimals=decimals,
         )
-        out_residual_tensor = torch.round(
-            input._residual_tensor,
-            decimals=decimals,
-        )
+        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
