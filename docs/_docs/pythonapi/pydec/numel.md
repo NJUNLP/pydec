@@ -21,6 +21,3 @@ Example:
 >>> pydec.numel(a)
 16
 ```
-
-
-{% include class.html content="pydec.Composition" %}
