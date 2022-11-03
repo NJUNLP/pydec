@@ -10,3 +10,13 @@
     color: #ee4c2c;
     text-decoration: underline;
 }
+
+.function dt,
+.class dt {
+    position: relative;
+    background: #f3f4f7;
+    padding: 0.5rem;
+    border-left: 3px solid #ee4c2c;
+    word-wrap: break-word;
+    padding-right: 100px;
+}
