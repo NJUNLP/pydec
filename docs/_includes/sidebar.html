@@ -62,13 +62,16 @@
                   {% capture fullentryurl %} 
                     {{- "/" | append: entry.url | replace: 'docs', versionlink -}} 
                   {% endcapture %}
+                  {% capture fullentryurl_index %} 
+                    {{- "/" | append: entry.url | replace: 'docs', versionlink | append: '/index' -}} 
+                  {% endcapture %}
                   <li class="td-sidebar-nav__section-title">
                     <a href="{% if entry.url %}
                                 {{ site.baseurl }}/{{ entry.url | replace: 'docs', versionlink}}
                              {% else %}
                                 {{ entry.external_url }}
                              {% endif %}" 
-                       class="align-left pl-0 pr-2 td-sidebar-link td-sidebar-link__section {% if true or page.url == fullentryurl | strip or page.url == fullentryurl | strip | append: '/index' %}{{page.url}}_{{fullentryurl | strip | append: '/index'}}{% endif %}">{{ entry.title }}
+                       class="align-left pl-0 pr-2 td-sidebar-link td-sidebar-link__section {% if page.url == fullentryurl | strip or page.url == fullentryurl_index | strip %}active{% endif %}">{{ entry.title }}
                     </a>
                   </li>
                   {% if page.url contains fullentryurl or pageUrl == sectionUrl %}
