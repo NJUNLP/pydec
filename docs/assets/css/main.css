@@ -274,15 +274,15 @@ sup {
 }
 
 a {
-    color: #3176d9;
+    color: {{ site.color }};
     text-decoration: none;
     background-color: transparent;
     -webkit-text-decoration-skip: objects
 }
 
 a:hover {
-    color: #1e53a0;
-    text-decoration: none
+    color: {{ site.color }};
+    text-decoration: underline
 }
 
 a:not([href]):not([tabindex]) {
@@ -18091,7 +18091,7 @@ html body .md-typeset .headerlink {
 }
 
 .td-sidebar-nav__section-title a {
-    color: #222
+    color: {{ site.color }}
 }
 
 .td-sidebar-nav .td-sidebar-link {
@@ -18105,8 +18105,8 @@ html body .md-typeset .headerlink {
 }
 
 .td-sidebar-nav a:hover {
-    color: #72a1e5;
-    text-decoration: none
+    color: #222;
+    text-decoration: underline
 }
 
 .td-sidebar-nav a.active {
