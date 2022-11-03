@@ -20,3 +20,31 @@
     word-wrap: break-word;
     padding-right: 100px;
 }
+
+dl dt {
+    font-size: 1rem;
+    line-height: 1.375rem;
+    color: #262626;
+    letter-spacing: 0.01px;
+    font-weight: 500;
+}
+
+.function .anchorjs-link,
+.attribute .anchorjs-link,
+.class .anchorjs-link {
+    display: inline;
+    position: absolute;
+    right: 8px;
+    font-size: 1.5625rem !important;
+    padding-left: 0;
+}
+
+.function dt a,
+.attribute dt a,
+.class .attribute dt a,
+.class dt a {
+    right: 30px;
+    padding-right: 0;
+    top: 50%;
+    transform: perspective(1px) translateY(-50%);
+}
