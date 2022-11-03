@@ -2018,7 +2018,7 @@ pre code {
 .table,
 .td-box .row.section>table,
 .td-content>table {
-    width: 80%;
+    max-width: 900px;
     margin-bottom: 1rem;
     background-color: transparent
 }
@@ -2329,7 +2329,7 @@ pre code {
 .td-box .row.section>table,
 .td-content>table {
     display: block;
-    width: 80%;
+    max-width: 80%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     -ms-overflow-style: -ms-autohiding-scrollbar
