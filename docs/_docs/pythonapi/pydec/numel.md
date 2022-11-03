@@ -3,7 +3,7 @@ title: "numel"
 description: pydec.numel
 ---
 # PYDEC.NUMEL
-{% include function.html content="numel" path="#pydec.numel" %}
+{% include function.html content="pydec.numel(input) -> int" %}
 
 Returns the total number of elements in the individual components of the `input` composition.
 
@@ -21,3 +21,6 @@ Example:
 >>> pydec.numel(a)
 16
 ```
+
+
+{% include class.html content="pydec.Composition" %}
