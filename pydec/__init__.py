@@ -12,7 +12,12 @@ from .bias_decomposition import (
     using_bias_decomposition_args,
 )
 
-from .error_check import no_error_check, error_check, check_error
+from .error_check import (
+    no_error_check,
+    error_check,
+    check_error,
+    is_error_checking_enabled,
+)
 
 __all__ = [
     "Composition",
