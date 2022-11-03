@@ -61,7 +61,9 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -97,7 +99,9 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors, 0, out=out._composition_tensor if out is not None else None,
+        c_tensors,
+        0,
+        out=out._composition_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = builtins.sum(r_tensors)
@@ -123,7 +127,9 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -196,6 +202,32 @@ def sub(
     return input.sub(other, alpha=alpha, out=out)
 
 
+@overload
+def subtract(
+    input: Composition,
+    other: Tensor,
+    *,
+    alpha: Number = 1,
+    out: Optional[Tensor] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def subtract(input: Composition, other: Number, alpha: Number = 1) -> Composition:
+    ...
+
+
+def subtract(
+    input: Composition,
+    other: Any,
+    *,
+    alpha: Number = 1,
+    out: Optional[Tensor] = None,
+) -> Composition:
+    return sub(input, other=other, alpha=alpha, out=out)
+
+
 def mul(
     input: Composition,
     other: Union[Tensor, Number],
@@ -203,6 +235,70 @@ def mul(
     out: Optional[Composition] = None,
 ) -> Composition:
     return input.mul(other, out=out)
+
+
+@overload
+def multiply(
+    input: Composition, other: Tensor, *, out: Optional[Tensor] = None
+) -> Composition:
+    ...
+
+
+@overload
+def multiply(input: Composition, other: Number) -> Composition:
+    ...
+
+
+def multiply(
+    input: Composition, other: Any, *, out: Optional[Tensor] = None
+) -> Composition:
+    return mul(input, other=other, out=out)
+
+
+def div(
+    input: Composition,
+    other: Union[Tensor, Number],
+    *,
+    rounding_mode: Optional[str] = None,
+) -> Tensor:
+    return input.div(other, rounding_mode=rounding_mode)
+
+
+@overload
+def divide(
+    input: Composition,
+    other: Tensor,
+) -> Composition:
+    ...
+
+
+@overload
+def divide(
+    input: Composition,
+    other: Tensor,
+    *,
+    rounding_mode: Optional[str],
+) -> Composition:
+    ...
+
+
+@overload
+def divide(
+    input: Composition, other: Number, *, rounding_mode: Optional[str]
+) -> Composition:
+    ...
+
+
+@overload
+def divide(
+    input: Composition,
+    other: Number,
+) -> Composition:
+    ...
+
+
+def divide(input: Composition, other: Any, *, rounding_mode: Optional[str]):
+    return div(input, other=other, rounding_mode=rounding_mode)
 
 
 @overload
@@ -617,9 +713,13 @@ def round(
         )
     else:
         out_composition_tensor = torch.round(
-            input._composition_tensor, decimals=decimals,
+            input._composition_tensor,
+            decimals=decimals,
         )
-        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
+        out_residual_tensor = torch.round(
+            input._residual_tensor,
+            decimals=decimals,
+        )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
