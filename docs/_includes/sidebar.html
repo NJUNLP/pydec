@@ -42,7 +42,7 @@
         {% endif %}
         
         <li class="td-sidebar-nav__section-title">
-          <a  href="{% if section.url %}{{ site.baseurl }}/{{ section.url | replace: 'docs', versionlink }}{% else %}{{ section.external_url }}{% endif %}" class="align-left pl-0 pr-2 td-sidebar-link {% if page.url | slice: -1 == '/' and pageUrl == sectionUrl %}active{% endif %} td-sidebar-link__section">{{ section.title }}</a>
+          <a  href="{% if section.url %}{{ site.baseurl }}/{{ section.url | replace: 'docs', versionlink }}{% else %}{{ section.external_url }}{% endif %}" class="align-left pl-0 pr-2 td-sidebar-link {% if page.url | slice: -1 == '/' and pageUrl == sectionUrl %}{{pageUrl}} x {{sectionUrl}}{% endif %} td-sidebar-link__section">{{ section.title }}</a>
         </li>
         {% if section.links %}
           <ul>
