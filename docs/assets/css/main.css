@@ -18087,11 +18087,12 @@ html body .md-typeset .headerlink {
 }
 
 .td-sidebar-nav__section-title .active {
-    font-weight: 700
+    font-weight: 700;
+    color: {{ site.color }}
 }
 
 .td-sidebar-nav__section-title a {
-    color: {{ site.color }}
+    color: #222
 }
 
 .td-sidebar-nav .td-sidebar-link {
@@ -18105,7 +18106,7 @@ html body .md-typeset .headerlink {
 }
 
 .td-sidebar-nav a:hover {
-    color: #222;
+    color: {{ site.color }};
     text-decoration: underline
 }
 
