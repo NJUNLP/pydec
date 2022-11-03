@@ -23,6 +23,7 @@ def relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
 def linear(input: Composition, weight: Tensor, bias: Tensor = None) -> Composition:
     out = input @ weight.t()
     if bias is not None:
+        # TODO: replace by add
         decomposition_func = get_bias_decomposition_func()
         if decomposition_func is not None:
             bias_composition = decomposition_func(bias, context=out)
@@ -49,6 +50,7 @@ def layer_norm_1d(
     out = (input - input_mean) * weight / input_std
 
     if bias is not None:
+        # TODO: replace by add
         decomposition_func = get_bias_decomposition_func()
         if decomposition_func is not None:
             bias_composition = decomposition_func(bias, context=out)
