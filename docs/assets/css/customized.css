@@ -48,3 +48,23 @@ dl dt {
     top: 50%;
     transform: perspective(1px) translateY(-50%);
 }
+
+span.pre {
+    color: #6c6c6d;
+    background-color: #f3f4f7;
+    padding: 2px 0px;
+}
+
+.class dt em.property {
+    position: absolute;
+    left: 0.5rem;
+}
+
+.class em.property {
+    text-transform: uppercase;
+    font-style: normal;
+    color: #ee4c2c;
+    font-size: 1rem;
+    letter-spacing: 0;
+    padding-right: 0.75rem;
+}
