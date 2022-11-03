@@ -29,16 +29,6 @@ dl dt {
     font-weight: 500;
 }
 
-.function .anchorjs-link,
-.attribute .anchorjs-link,
-.class .anchorjs-link {
-    display: inline;
-    position: absolute;
-    right: 8px;
-    font-size: 1.5625rem !important;
-    padding-left: 0;
-}
-
 .function dt a,
 .attribute dt a,
 .class .attribute dt a,
@@ -53,6 +43,12 @@ span.pre {
     color: #6c6c6d;
     background-color: #f3f4f7;
     padding: 2px 0px;
+}
+
+.class dt {
+    border-left: none;
+    border-top: 3px solid #ee4c2c;
+    padding-left: 4em;
 }
 
 .class dt em.property {
