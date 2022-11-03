@@ -31,7 +31,7 @@ By default, PyDec does not perform any bias decomposition, but adds the bias dir
 
 ### Configuring by context
 
-If you need to temporarily use the specified bias decomposition method in a context, use `pydec.using_bias_decomposition_func` and pass in the name of the bias decomposition to create the context. `pydec.no_bias_decomposition` provides a context in which bias decomposition is not performed.
+If you need to locally use the specified bias decomposition method in a context, use `pydec.using_bias_decomposition_func` and pass in the name of the bias decomposition to create the context. `pydec.no_bias_decomposition` provides a context in which bias decomposition is not performed.
 
 Example:
 ```python
@@ -51,7 +51,7 @@ Some bias decomposition functions provide configurable hyperparameters, but the 
 
 You can avoid calling the addition operator by calling `pydec.add`, which supports passing in custom keyword arguments.
 
-We recommend using `pydec.set_bias_decomposition_args` to set the arguments of the bias decomposition function. We also provide the context manager to temporarily set parameters, using `pydec.using_bias_decomposition_args` to create contexts.
+We recommend using `pydec.set_bias_decomposition_args` to set the arguments of the bias decomposition function. We also provide the context manager to locally set parameters, using `pydec.using_bias_decomposition_args` to create contexts.
 
 ## Explicit Interface
 
