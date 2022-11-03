@@ -3,11 +3,11 @@ title: "numel"
 description: pydec.numel
 ---
 # PYDEC.NUMEL
-{% include function.html name="numel" path="#pydec.numel" %}
+{% include function.html content="numel" path="#pydec.numel" %}
 
 Returns the total number of elements in the individual components of the `input` composition.
 
-{% include function.html name="Parameters:" %}
+{% include function.html content="Parameters:" %}
 
 * **input**({% include codelink.html name="Composition" path="pythonapi/pydec.Composition" %}) - the input composition.
 
