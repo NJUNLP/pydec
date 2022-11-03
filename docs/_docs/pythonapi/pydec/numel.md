@@ -9,7 +9,7 @@ Returns the total number of elements in the individual components of the `input`
 
 {% include function.html content="Parameters:" %}
 
-* **input**({% include codelink.html name="Composition" path="pythonapi/pydec.Composition" %}) - the input composition.
+* **input** ({% include codelink.html name="Composition" path="pythonapi/pydec.Composition" %}) - the input composition.
 
 Example:
 ```
