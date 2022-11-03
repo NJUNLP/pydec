@@ -34,6 +34,9 @@
         {% capture pageUrl %} 
           {{ page.url | replace: "/", "" }} 
         {% endcapture %}
+        {% capture section_url_index %} 
+          {{- section.url | append: '/index' -}} 
+        {% endcapture %}
       
         {% if currentpageversion == site.version_params.latest %}
           {% assign versionlink = 'docs'  %}
@@ -42,7 +45,7 @@
         {% endif %}
         
         <li class="td-sidebar-nav__section-title">
-          <a  href="{% if section.url %}{{ site.baseurl }}/{{ section.url | replace: 'docs', versionlink }}{% else %}{{ section.external_url }}{% endif %}" class="align-left pl-0 pr-2 td-sidebar-link {% if page.url == section.url | append: '/index' %}active{% endif %} td-sidebar-link__section">{{ section.title }}</a>
+          <a  href="{% if section.url %}{{ site.baseurl }}/{{ section.url | replace: 'docs', versionlink }}{% else %}{{ section.external_url }}{% endif %}" class="align-left pl-0 pr-2 td-sidebar-link {% if page.url == section_url_index %}active{% endif %} td-sidebar-link__section">{{ section.title }}</a>
         </li>
         {% if section.links %}
           <ul>
