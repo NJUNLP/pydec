@@ -5,7 +5,7 @@ description: Python API
 
 # Python API
 
-The full API documentation is listed here.
+The full API documentation is listed here. Our documentation structure is referenced from Pytorch.
 
 ## Quick Jump
 <div class="section-index">

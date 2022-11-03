@@ -21,11 +21,11 @@ You can use `PyDec.check_error` to check the error of the given Composition and 
 
 ### Context management
 
-PyDec provides two contexts to temporarily enable or disable error checking, i.e., `pydec.error_check` and `no_error_check`. This way, you don't have to modify your code when you want to disable error checking in your production environment.
+PyDec provides two context managers to temporarily enable or disable error checking, i.e., `pydec.error_check` and `no_error_check`. This way, you don't have to modify your code when you want to disable error checking in your production environment.
 
 Example:
 ```python
-import pydec
+# The code here will perform error checking.
 ...
 with pydec.no_error_check():
     # The code here does not perform any error checking, even if you call `pydec.check_error`.
