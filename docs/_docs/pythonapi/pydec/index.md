@@ -28,8 +28,8 @@ To create Composition by class, use {% include codelink.html name="pydec.Composi
 | API                                                                                         | Description                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | {% include codelink.html name="cat" path="pythonapi/pydec/cat" %}                           | Concatenates every component of the given sequence of `seq` compositions in the given dimension.                                                             |
-| {% include codelink.html name="concat" path="pythonapi/pydec/concat" %}                     | Alias of {% include codelink.html name="pydec.cat" path="pythonapi/pydec/cat" %}.                                                                            |
-| {% include codelink.html name="concatenate" path="pythonapi/pydec/concatenate" %}           | Alias of {% include codelink.html name="pydec.cat" path="pythonapi/pydec/cat" %}.                                                                            |
+| {% include codelink.html name="concat" path="pythonapi/pydec/concat" %}                     | Alias of {% include codelink.html name="pydec.cat()" path="pythonapi/pydec/cat" %}.                                                                          |
+| {% include codelink.html name="concatenate" path="pythonapi/pydec/concatenate" %}           | Alias of {% include codelink.html name="pydec.cat()" path="pythonapi/pydec/cat" %}.                                                                          |
 | {% include codelink.html name="c_cat" path="pythonapi/pydec/c_cat" %}                       | Concatenates the given sequence of `seq` compositions in the component dimension.                                                                            |
 | {% include codelink.html name="gather" path="pythonapi/pydec/gather" %}                     | Gathers values along an axis specified by *dim*.                                                                                                             |
 | {% include codelink.html name="index_select" path="pythonapi/pydec/index_select" %}         | Returns a new composition which indexes the `input` tensor along dimension `dim` using the entries in `index` which is a LongTensor.                         |
@@ -44,6 +44,28 @@ To create Composition by class, use {% include codelink.html name="pydec.Composi
 | {% include codelink.html name="transpose" path="pythonapi/pydec/transpose" %}               | Returns a composition that is a transposed version of `input`.                                                                                               |
 | {% include codelink.html name="unsqueeze" path="pythonapi/pydec/unsqueeze" %}               | Returns a new composition with a dimension of size one inserted at the specified position of each component.                                                 |
 
+## Locally disabling error checking
 
+The context managers {% include codelink.html name="pydec.no_error_check()" path="pythonapi/pydec/no_error_check" %} and {% include codelink.html name="pydec.error_check()" path="pythonapi/pydec/error_check" %} are helpful for locally disabling and enabling error checking. See {% include codelink.html name="Error Control" path="notes/error-control" %} for more details on their usage.
+
+| API                                                                                                           | Description                                          |
+| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| {% include codelink.html name="no_error_check" path="pythonapi/pydec/no_error_check" %}                       | Context-manager that disabled error checking.        |
+| {% include codelink.html name="error_check" path="pythonapi/pydec/error_check" %}                             | Context-manager that enables error checking.         |
+| {% include codelink.html name="is_error_checking_enabled" path="pythonapi/pydec/is_error_checking_enabled" %} | Returns True if error checking is currently enabled. |
+
+## Math operations
+### Pointwise Ops
+
+| API                                                                         | Description                                                                          |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| {% include codelink.html name="add" path="pythonapi/pydec/add" %}           | Adds `other`, scaled by `alpha`, to `input`.                                         |
+| {% include codelink.html name="div" path="pythonapi/pydec/div" %}           | Divides each element of the `input` input by the corresponding element of `other`.   |
+| {% include codelink.html name="divide" path="pythonapi/pydec/divide" %}     | Alias for {% include codelink.html name="pydec.div()" path="pythonapi/pydec/div" %}. |
+| {% include codelink.html name="mul" path="pythonapi/pydec/mul" %}           | Multiplies `input` by `other`.                                                       |
+| {% include codelink.html name="multiply" path="pythonapi/pydec/multiply" %} | Alias for {% include codelink.html name="pydec.mul()" path="pythonapi/pydec/mul" %}. |
+| {% include codelink.html name="round" path="pythonapi/pydec/round" %}       | Rounds elements of `input` to the nearest integer.                                   |
+| {% include codelink.html name="sub" path="pythonapi/pydec/sub" %}           | Subtracts `other`, scaled by `alpha`, from `input`.                                  |
+| {% include codelink.html name="subtract" path="pythonapi/pydec/subtract" %} | Alias for {% include codelink.html name="pydec.sub()" path="pythonapi/pydec/sub" %}. |
 
 
