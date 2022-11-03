@@ -20,7 +20,7 @@ excluded_in_search: true
     padding-left: 1.2rem;
 }
 .gh-source:hover {
-    color: yellow;
+    color: #222;
 }
 .gh-source__icon+.gh-source__repository {
     margin-left: -4.4rem;
@@ -18226,7 +18226,7 @@ html body .md-typeset .headerlink {
 }
 
 .td-toc #TableOfContents a:hover {
-    color: #72a1e5;
+    color: {{ site.color }};
     text-decoration: none
 }
 
