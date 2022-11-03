@@ -83,3 +83,6 @@ The context managers {% include codelink.html name="pydec.no_error_check()" path
 | {% include codelink.html name="c_sum" path="pythonapi/pydec/c_sum" %} | Returns the sum of all components of the `input` composition.                        |
 
 
+## Other Operations
+
+Currently PyDec does not yet fully cover the API supported by PyTorch. As a workaround, PyDec provides the function {% include codelink.html name="pydec.call_torch_function()" path="pythonapi/pydec/call_torch_function" %}, which will call the specified PyTorch function and pass in the combined component tensor as an argument. This usually works on [Pointwise Ops](https://pytorch.org/docs/stable/torch.html#pointwise-ops), while errors may occur on other operations.

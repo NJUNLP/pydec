@@ -7,6 +7,15 @@ description: Python API
 
 The full API documentation is listed here. Our documentation structure is referenced from Pytorch.
 
+## Note
+
+One of the purposes of PyDec is to allow users to do tensor tracking based on the same API.
+Therefore, most of the APIs we designed are based on the rule that performing a certain operation on a composition is equivalent to performing the same operation on each of the composition's components.
+
+In addition, we have designed some APIs specifically for composition to manipulate it or to query related information in the component dimension.
+These APIs usually start with `c_`.
+
+
 ## Quick Jump
 <div class="section-index">
     <hr class="panel-line">
