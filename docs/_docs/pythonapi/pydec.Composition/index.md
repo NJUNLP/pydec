@@ -94,7 +94,7 @@ The contents of a conposition can be accessed and modified using Python’s inde
 
 The composition slicing behavior is not exactly the same as tensor, please refer to {% include codelink.html name="Composition.\_\_getitem\_\_" path="pythonapi/pydec.Composition/__getitem__" %} and {% include codelink.html name="Composition.\_\_setitem\_\_" path="pythonapi/pydec.Composition/__setitem__" %}.
 
-For more information about indexing, see {% include codelink.html name="Indexing, Slicing, Joining, Mutating Ops" path="ppythonapi/pydec/#indexing-slicing-joining-mutating-ops" %}
+For more information about indexing, see {% include codelink.html name="Indexing, Slicing, Joining, Mutating Ops" path="pythonapi/pydec/#indexing-slicing-joining-mutating-ops" %}
 
 If you want `torch.autograd` to record operations on composition for automatic differentiation. Do not use the `requires_grad` parameter in the constructor of Composition, otherwise the initialization of Composition as a leaf node cannot be completed by assignment. It is recommended to assign the input with gradient to the Composition without gradient.
 
