@@ -16,3 +16,10 @@ layout: default
         }
     };
 </script>
+<script>
+    var code_comments = $(".highlight .s")
+    for (code_comment in code_comments){
+        var removed_str = code_comment.innerHTML.slice(4,-4)
+        code_comment.innerHTML = removed_str
+    }
+</script>
