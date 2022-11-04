@@ -642,9 +642,13 @@ mark,
 }
 
 code {
+    color: {{ site.color }};
+    padding: .2em .4em;
+    margin: 0;
     font-size: 87.5%;
-    color: #952a1e;
-    word-break: break-word
+    word-break: normal;
+    background-color: #ffffff;
+    border-radius: .25rem
 }
 
 a>code {
@@ -17876,12 +17880,12 @@ a.text-dark:focus {
 .td-content p code,
 .td-content li>code,
 .td-content table code {
-    color: inherit;
+    color: {{ site.color }};
     padding: .2em .4em;
     margin: 0;
-    font-size: 85%;
+    font-size: 87.5%;
     word-break: normal;
-    background-color: rgba(0, 0, 0, .05);
+    background-color: #ffffff;
     border-radius: .25rem
 }
 
