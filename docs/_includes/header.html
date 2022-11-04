@@ -86,12 +86,15 @@
     });
   });
 </script>
+
+<!-- this script transfer comment code block to output style -->
 <script>
   $(document).ready(function () {
     var code_comments = $(".highlight .s")
     for (var i = 0; i < code_comments.length; i++) {
       var removed_str = code_comments[i].innerHTML.slice(4, -4)
       code_comments[i].innerHTML = removed_str
+      code_comments[i].className = 'go'
     }
   });
 </script>
