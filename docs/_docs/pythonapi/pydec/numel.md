@@ -12,7 +12,7 @@ Returns the total number of elements in the individual components of the `input`
 * **input** ({% include codelink.html name="Composition" path="pythonapi/pydec.Composition" %}) - the input composition.
 
 Example:
-```
+```python
 >>> a = pydec.Composition((1, 2, 3, 4, 5), component_num=4)
 >>> pydec.numel(a)
 120
