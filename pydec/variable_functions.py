@@ -30,8 +30,15 @@ from pydec.exception_utils import arg_value_error
 import builtins
 
 
-def void() -> Composition:
-    return Composition(tuple(), 0)
+def void(
+    *,
+    dtype: _dtype = None,
+    device: Union[_device, str, None] = None,
+    requires_grad: _bool = False,
+) -> Composition:
+    return Composition(
+        tuple(), 0, dtype=dtype, device=device, requires_grad=requires_grad
+    )
 
 
 def _from_replce(
