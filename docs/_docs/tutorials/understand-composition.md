@@ -44,7 +44,6 @@ This will clone an identical c, but without preserving any computational graph.
 >>> component_num = 4
 >>> c_size = (component_num, 3, 2)
 >>> t = torch.randn(c_size) # 4 x 3 x 2
-
 >>> c_tensor = pydec.Composition(t)
 ```
 This also creates a composition containing 4 tensors of size (3, 2), initialized with tensor t.
