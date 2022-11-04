@@ -89,9 +89,9 @@
 <script>
   $(document).ready(function () {
     var code_comments = $(".highlight .s")
-    for (code_comment in code_comments) {
-      var removed_str = code_comment.innerHTML.slice(4, -4)
-      code_comment.innerHTML = removed_str
+    for (var i = 0; i < code_comments.length; i++) {
+      var removed_str = code_comments[i].innerHTML.slice(4, -4)
+      code_comments[i].innerHTML = removed_str
     }
   });
 </script>
