@@ -37,7 +37,7 @@ This creates a composition containing 4 tensors of size (3, 2), initialized with
 ```python
 >>> c_copy = pydec.Composition(c)
 ```
-This will clone an identical c, but without preserving any computational graph.
+This will clone an identical `c`, but without preserving any computational graph.
 
 **From component tensors**
 ```python
@@ -72,7 +72,7 @@ $$
 
 **By diagonal scatter**
 
-In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the `torch.diagonal_scatter` function.
+In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the [`torch.diagonal_scatter`](https://pytorch.org/docs/stable/generated/torch.diagonal_scatter.html#torch.diagonal_scatter) function.
 ```python
 >>> component_num = 3
 >>> size = (3, 2)
@@ -107,7 +107,7 @@ tensor([[0., 0.],
 ## Attributes of a Composition
 **Size**
 
-`Composition.size()` returns the shape of each composition tensor, `Composition.c_size()` returns the shape whose first dimension is the number of components.
+{% include codelink.html name="Composition.size()" path="pythonapi/pydec.Composition/size" %} returns the shape of each composition tensor, {% include codelink.html name="Composition.c_size()" path="pythonapi/pydec.Composition/c_size" %} returns the shape whose first dimension is the number of components.
 ```python
 >>> c = pydec.Composition((3, 2), component_num=4)
 >>> c.size()
@@ -120,7 +120,7 @@ torch.Size([4, 3, 2])
 """
 ```
 
-`len()` and `Composition.numc()` return the number of components.
+`len()` and {% include codelink.html name="Composition.numc()" path="pythonapi/pydec.Composition/numc" %} return the number of components.
 ```python
 >>> len(c)
 """
