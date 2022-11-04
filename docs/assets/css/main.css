@@ -2046,14 +2046,11 @@ pre code {
 .td-box .row.section>table td,
 .td-content>table td {
     padding: .75rem;
-    vertical-align: top;
-    border-top: 1px solid #dee2e6
 }
 
 .table thead th,
 .td-box .row.section>table thead th,
 .td-content>table thead th {
-    vertical-align: bottom;
     border-bottom: 2px solid #dee2e6
 }
 
