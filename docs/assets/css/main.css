@@ -653,7 +653,7 @@ code {
     padding: 2px 0px;
     margin: 0;
     font-size: 87.5%;
-    word-break: break-word;
+    word-break: normal;
     background-color: #ffffff;
     border-radius: .25rem
 }
@@ -17891,7 +17891,7 @@ a.text-dark:focus {
     padding: 2px 0px;
     margin: 0;
     font-size: 87.5%;
-    word-break: break-word;
+    word-break: normal;
     background-color: #ffffff;
     border-radius: .25rem
 }
