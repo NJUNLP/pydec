@@ -30,7 +30,7 @@ tensor([[0., 0.],
 
 <div class="alert alert-warning" role="alert">
 <h4 class="alert-heading">WARNING</h4>
-We plan to migrate this interface to `pydec.zeros()`.
+We plan to migrate this interface to {% include inlinecode.html content="pydec.zeros()" %}.
 </div>
 
 
@@ -61,7 +61,7 @@ When you initialize the composition by tensor, each tensor in dimension <em>0</e
 
 <div class="alert alert-warning" role="alert">
 <h4 class="alert-heading">WARNING</h4>
-{% include codelink.html name="pydec.Composition()" path="pythonapi/pydec.Composition/#composition-class-reference" %} always copies data. If you have a Composition `data` and just want to change its `requires_grad` flag, use {% include codelink.html name="detach()" path="pythonapi/pydec.Composition/detach" %} to avoid a copy.
+{% include codelink.html name="pydec.Composition()" path="pythonapi/pydec.Composition/#composition-class-reference" %} always copies data. If you have a Composition {% include inlinecode.html content="data" %} and just want to change its {% include inlinecode.html content="requires_grad" %} flag, use {% include codelink.html name="detach()" path="pythonapi/pydec.Composition/detach" %} to avoid a copy.
 </div>
 
 A composition of specific data type can be constructed by passing a `torch.dtype` and/or a `torch.device` to a constructor or composition creation op:
@@ -92,7 +92,7 @@ The contents of a conposition can be accessed and modified using Python’s inde
 >>> c
 ```
 
-The composition slicing behavior is not exactly the same as tensor, please refer to {% include codelink.html name="Composition.\_\_getitem\_\_" path="pythonapi/pydec.Composition/\_\_getitem\_\_" %} and {% include codelink.html name="Composition.\_\_setitem\_\_" path="pythonapi/pydec.Composition/\_\_setitem\_\_" %}.
+The composition slicing behavior is not exactly the same as tensor, please refer to {% include codelink.html name="Composition.\_\_getitem\_\_" path="pythonapi/pydec.Composition/__getitem__" %} and {% include codelink.html name="Composition.\_\_setitem\_\_" path="pythonapi/pydec.Composition/__setitem__" %}.
 
 For more information about indexing, see {% include codelink.html name="Indexing, Slicing, Joining, Mutating Ops" path="ppythonapi/pydec/#indexing-slicing-joining-mutating-ops" %}
 
@@ -101,8 +101,14 @@ If you want `torch.autograd` to record operations on composition for automatic d
 
 <div class="alert alert-info" role="info">
 <h4 class="alert-heading">NOTE</h4>
-To change an existing composition's `torch.device` and/or `torch.dtype`, consider using {% include codelink.html name="to()" path="pythonapi/pydec.Composition/to" %} method on the composition.
+To change an existing composition's {% include inlinecode.html content="torch.device" %} and/or {% include inlinecode.html content="torch.dtype" %}, consider using {% include codelink.html name="to()" path="pythonapi/pydec.Composition/to" %} method on the composition.
 </div>
 
 ## Composition class reference
 {% include class.html content="pydec.Composition" %}
+There are a few main ways to create a composition, depending on your use case.
+* To create a composition with pre-existing data, pass in a tensor or composition as an argument.
+* To create a composition with specific size, pass in the size of the component and specify the number of components.
+* To create a composition with the same size (and similar types) as another composition, use `pydec.*_like` composition creation ops (see {% include codelink.html name="Creation Ops" path="pythonapi/pydec/#creation-ops" %}).
+
+
