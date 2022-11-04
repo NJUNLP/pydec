@@ -131,6 +131,6 @@ To change an existing composition's {% include inlinecode.html content="torch.de
 There are a few main ways to create a composition, depending on your use case.
 * To create a composition with pre-existing data, pass in a tensor or composition as an argument.
 * To create a composition with specific size, pass in the size of the component and specify the number of components.
-* To create a composition with the same size (and similar types) as another composition, use `pydec.*_like` composition creation ops (see {% include codelink.html name="Creation Ops" path="pythonapi/pydec/#creation-ops" %}).
+* To create a composition with the same size (and similar types) as another composition, use `pydec.*_like` composition creation ops (see {% include doc.html name="Creation Ops" path="pythonapi/pydec/#creation-ops" %}).
 
 
