@@ -12,7 +12,7 @@ Operators overloaded by PyDec:
 | Operator | API           | Description                      |
 | -------- | ------------- | -------------------------------- |
 | []       | `__getitem__` | Evaluation of `self[key]`        |
-| []       | `__setitem__` | Sssignment to `self[key]`        |
+| []       | `__setitem__` | Assignment to `self[key]`        |
 | +        | `__pos__`     | The unary arithmetic operations  |
 | -        | `__neg__`     | The unary arithmetic operations  |
 | +        | `__add__`     | The binary arithmetic operations |
