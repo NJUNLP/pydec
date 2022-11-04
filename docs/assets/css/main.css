@@ -650,7 +650,12 @@ mark,
 
 code {
     color: {{ site.color }};
-    padding: 2px 0px;
+    font-size: 87.5%;
+    word-break: normal;
+}
+
+code.inline-code {
+    color: {{ site.color }};
     margin: 0;
     font-size: 87.5%;
     word-break: normal;
@@ -17888,7 +17893,6 @@ a.text-dark:focus {
 .td-content li>code,
 .td-content table code {
     color: {{ site.color }};
-    padding: 2px 0px;
     margin: 0;
     font-size: 87.5%;
     word-break: normal;
