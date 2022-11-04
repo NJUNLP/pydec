@@ -14,6 +14,7 @@ A  composition of the specified size can be constructed using the `pydec.Composi
 >>> component_num = 2
 >>> c = pydec.Composition(size, component_num)
 >>> c
+"""
 composition 0:
 tensor([[0., 0.],
         [0., 0.],
@@ -26,6 +27,7 @@ residual:
 tensor([[0., 0.],
         [0., 0.],
         [0., 0.]])
+"""
 ```
 
 <div class="alert alert-warning" role="alert">
@@ -40,6 +42,7 @@ A  composition can be constructed from a tensor or another composition using the
 >>> c_size = (component_num, 3, 2)
 >>> t = torch.randn(c_size) # 4 x 3 x 2
 >>> pydec.Composition(t)
+"""
 composition 0:
 tensor([[ 0.6367,  0.8254],
         [ 1.0425, -0.1901],
@@ -52,6 +55,7 @@ residual:
 tensor([[0., 0.],
         [0., 0.],
         [0., 0.]])
+"""
 ```
 
 <div class="alert alert-info" role="info">
@@ -69,6 +73,7 @@ A composition of specific data type can be constructed by passing a `torch.dtype
 >>> size = (3, 2)
 >>> component_num = 2
 >>> pydec.Composition(size, component_num, dtype=torch.int32)
+"""
 composition 0:
 tensor([[0, 0],
         [0, 0],
@@ -81,15 +86,32 @@ residual:
 tensor([[0, 0],
         [0, 0],
         [0, 0]], dtype=torch.int32)
+"""
 ```
 
 The contents of a conposition can be accessed and modified using Python’s indexing and slicing notation:
 ```python
->>> x = torch.tensor([[1, 2, 3], [4, 5, 6]])
+>>> t = torch.tensor([[1, 2, 3], [4, 5, 6]])
 >>> c = pydec.Composition(t)
 >>> c[:,0]
+"""
+composition 0:
+tensor(1)
+composition 1:
+tensor(4)
+residual:
+tensor(0)
+"""
 >>> c[0] = 8
 >>> c
+"""
+composition 0:
+tensor([8, 8, 8])
+composition 1:
+tensor([4, 5, 6])
+residual:
+tensor([0, 0, 0])
+"""
 ```
 
 The composition slicing behavior is not exactly the same as tensor, please refer to {% include codelink.html name="Composition.\_\_getitem\_\_" path="pythonapi/pydec.Composition/__getitem__" %} and {% include codelink.html name="Composition.\_\_setitem\_\_" path="pythonapi/pydec.Composition/__setitem__" %}.

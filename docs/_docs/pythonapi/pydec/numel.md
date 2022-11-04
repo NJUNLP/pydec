@@ -15,9 +15,13 @@ Example:
 ```python
 >>> a = pydec.Composition((1, 2, 3, 4, 5), component_num=4)
 >>> pydec.numel(a)
+"""
 120
+"""
 >>> t = torch.zeros(3, 4, 4)
 >>> a = pydec.Composition(t)
 >>> pydec.numel(a)
+"""
 16
+"""
 ```

@@ -81,8 +81,10 @@ In practice, usually all inputs are batched into a tensor. Therefore a more usef
 tensor([[-0.4682,  1.2375],
         [ 0.7185,  0.2311],
         [-0.4043, -1.5946]])
+"""
 >>> c = pydec.Composition(size, component_num)
 >>> c = pydec.diagonal_init(c, src=x, dim=0)
+"""
 composition 0:
 tensor([[-0.4682,  1.2375],
         [ 0.0000,  0.0000],
@@ -109,17 +111,25 @@ tensor([[0., 0.],
 ```python
 >>> c = pydec.Composition((3, 2), component_num=4)
 >>> c.size()
+"""
 torch.Size([3, 2])
+"""
 >>> c.c_size()
+"""
 torch.Size([4, 3, 2])
+"""
 ```
 
 `len()` and `Composition.numc()` return the number of components.
 ```python
 >>> len(c)
+"""
 4
+"""
 >>> c.numc()
+"""
 4
+"""
 ```
 
 ## Residual of a Composition
@@ -144,6 +154,7 @@ Most of the operations are the same as tensor operations, and a convenient expre
 Example:
 ```python
 >>> c
+"""
 composition 0:
 tensor([[1., 1., 1., 1.],
         [0., 0., 0., 0.]])
@@ -153,7 +164,9 @@ tensor([[0., 0., 0., 0.],
 residual:
 tensor([[0., 0., 0., 0.],
         [0., 0., 0., 0.]])
+"""
 >>> 3 * c # multiply
+"""
 composition 0:
 tensor([[3., 3., 3., 3.],
         [0., 0., 0., 0.]])
@@ -163,7 +176,9 @@ tensor([[0., 0., 0., 0.],
 residual:
 tensor([[0., 0., 0., 0.],
         [0., 0., 0., 0.]])
+"""
 >>> c + c # add
+"""
 composition 0:
 tensor([[2., 2., 2., 2.],
         [0., 0., 0., 0.]])
@@ -173,13 +188,17 @@ tensor([[0., 0., 0., 0.],
 residual:
 tensor([[0., 0., 0., 0.],
         [0., 0., 0., 0.]])
+"""
 >>> W = torch.randn((4,3))
 >>> W
+"""
 tensor([[-0.4682,  1.2375,  0.7185],
         [ 0.2311, -0.4043, -1.5946],
         [-0.4981,  0.2654,  0.0849],
         [ 1.0203, -0.4293, -0.2616]])
+"""
 >>> c @ W # matmul
+"""
 composition 0:
 tensor([[ 0.2851,  0.6694, -1.0529],
         [ 0.0000,  0.0000,  0.0000]])
@@ -189,4 +208,5 @@ tensor([[ 0.0000,  0.0000,  0.0000],
 residual:
 tensor([[0., 0., 0.],
         [0., 0., 0.]])
+"""
 ```
