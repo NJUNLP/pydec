@@ -77,6 +77,7 @@ In practice, usually all inputs are batched into a tensor. Therefore a more usef
 >>> component_num = 3
 >>> size = (3, 2)
 >>> x = torch.randn(size)
+"""
 tensor([[-0.4682,  1.2375],
         [ 0.7185,  0.2311],
         [-0.4043, -1.5946]])
@@ -98,6 +99,7 @@ residual:
 tensor([[0., 0.],
         [0., 0.],
         [0., 0.]])
+"""
 ```
 
 ## Attributes of a Composition
