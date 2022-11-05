@@ -133,4 +133,30 @@ There are a few main ways to create a composition, depending on your use case.
 * To create a composition with specific size, pass in the size of the component and specify the number of components.
 * To create a composition with the same size (and similar types) as another composition, use `pydec.*_like` composition creation ops (see {% include doc.html name="Creation Ops" path="pythonapi/pydec/#creation-ops" %}).
 
+{% include attribute.html content="Composition._composition_tensor" %}
 
+This is the data structure inside composition that stores the components. Its first dimension represents the number of components and the subsequent dimensions represent the shape of the components, i.e.,
+
+`Composition._composition_tensor.size(0)` is equal to {% include codelink.html name="Composition.numc()" path="pythonapi/pydec.Composition/numc" %}.
+`Composition._composition_tensor.size()[1:]` is equal to {% include codelink.html name="Composition.size()" path="pythonapi/pydec.Composition/size" %}.
+
+{% include attribute.html content="Composition._residual_tensor" %}
+
+Special component for storing residuals. It has the same size as the other components within the composition.
+
+| API                                                                                                                 | Description                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| {% include codelink.html name="Composition.is_cuda" path="pythonapi/pydec.Composition/is_cuda" %}                   | Is `True` if the Composition is stored on the GPU, `False` otherwise.                                   |
+| {% include codelink.html name="Composition.add" path="pythonapi/pydec.Composition/add" %}                           | Add a scalar or tensor or composition to `self` composition.                                            |
+| {% include codelink.html name="Composition.add_" path="pythonapi/pydec.Composition/add_" %}                         | In-place version of {% include codelink.html name="add()" path="pythonapi/pydec.Composition/add" %}     |
+| {% include codelink.html name="Composition.all" path="pythonapi/pydec.Composition/all" %}                           | See {% include codelink.html name="pydec.all()" path="pythonapi/pydec/all" %}                           |
+| {% include codelink.html name="Composition.any" path="pythonapi/pydec.Composition/all" %}                           | See {% include codelink.html name="pydec.any()" path="pythonapi/pydec/any" %}                           |
+| {% include codelink.html name="Composition.clone" path="pythonapi/pydec.Composition/clone" %}                       | See {% include codelink.html name="pydec.clone()" path="pythonapi/pydec/clone" %}                       |
+| {% include codelink.html name="Composition.contiguous" path="pythonapi/pydec.Composition/contiguous" %}             | Returns a contiguous in memory composition containing the same data as `self` composition.              |
+| {% include codelink.html name="Composition.cpu" path="pythonapi/pydec.Composition/cpu" %}                           | Returns a copy of this object in CPU memory.                                                            |
+| {% include codelink.html name="Composition.cuda" path="pythonapi/pydec.Composition/cuda" %}                         | Returns a copy of this object in CUDA memory.                                                           |
+| {% include codelink.html name="Composition.diagonal_scatter" path="pythonapi/pydec.Composition/diagonal_scatter" %} | See {% include codelink.html name="pydec.diagonal_scatter()" path="pythonapi/pydec/diagonal_scatter" %} |
+| {% include codelink.html name="Composition.dim" path="pythonapi/pydec.Composition/dim" %}                           | Returns the number of dimensions of the individual components of `self` composition.                    |
+| {% include codelink.html name="Composition.div" path="pythonapi/pydec.Composition/div" %}                           | See {% include codelink.html name="pydec.div()" path="pythonapi/pydec/div" %}                           |
+| {% include codelink.html name="Composition.div_" path="pythonapi/pydec.Composition/div_" %}                         | In-place version of {% include codelink.html name="div()" path="pythonapi/pydec.Composition/div" %}     |
+| {% include codelink.html name="Composition.gather" path="pythonapi/pydec.Composition/gather" %}                     | See {% include codelink.html name="pydec.gather()" path="pythonapi/pydec/gather" %}                     |
