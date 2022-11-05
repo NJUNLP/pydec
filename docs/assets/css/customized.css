@@ -12,6 +12,8 @@
 }
 
 .function dt,
+.attribute dt,
+.class .attribute dt,
 .class dt {
     position: relative;
     background: #f3f4f7;
