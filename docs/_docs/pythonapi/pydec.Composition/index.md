@@ -8,7 +8,7 @@ description: API for the module pydec.Composition
 A `pydec.Composition` is a set of components, where each component is a tensor with the same size.
 
 ## Initializing and basic operations
-A  composition of the specified size can be constructed using the `pydec.Composition()` constructor:
+A  composition of the specified size can be constructed using the {% include codelink.html name="pydec.Composition()" path="pythonapi/pydec.Composition/#composition-class-reference" %} constructor:
 ```python
 >>> size = (3, 2)
 >>> component_num = 2
@@ -36,7 +36,7 @@ We plan to migrate this interface to {% include inlinecode.html content="pydec.z
 </div>
 
 
-A  composition can be constructed from a tensor or another composition using the `pydec.Composition()` constructor:
+A  composition can be constructed from a tensor or another composition using the {% include codelink.html name="pydec.Composition()" path="pythonapi/pydec.Composition/#composition-class-reference" %} constructor:
 ```python
 >>> component_num = 2
 >>> c_size = (component_num, 3, 2)
@@ -114,9 +114,9 @@ tensor([0, 0, 0])
 """
 ```
 
-The composition slicing behavior is not exactly the same as tensor, please refer to {% include codelink.html name="Composition.\_\_getitem\_\_" path="pythonapi/pydec.Composition/__getitem__" %} and {% include codelink.html name="Composition.\_\_setitem\_\_" path="pythonapi/pydec.Composition/__setitem__" %}.
+The composition slicing behavior is not exactly the same as tensor, please refer to {% include codelink.html name="Composition.__getitem__" path="pythonapi/pydec.Composition/__getitem__" %} and {% include codelink.html name="Composition.__setitem__" path="pythonapi/pydec.Composition/__setitem__" %}.
 
-For more information about indexing, see {% include codelink.html name="Indexing, Slicing, Joining, Mutating Ops" path="pythonapi/pydec/#indexing-slicing-joining-mutating-ops" %}
+For more information about indexing, see {% include doc.html name="Indexing, Slicing, Joining, Mutating Ops" path="pythonapi/pydec/#indexing-slicing-joining-mutating-ops" %}
 
 If you want `torch.autograd` to record operations on composition for automatic differentiation. Do not use the `requires_grad` parameter in the constructor of Composition, otherwise the initialization of Composition as a leaf node cannot be completed by assignment. It is recommended to assign the input with gradient to the Composition without gradient.
 
