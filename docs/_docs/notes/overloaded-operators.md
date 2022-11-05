@@ -26,4 +26,4 @@ Operators overloaded by PyDec:
 | >=       | `__ge__`      | The "rich comparison" methods    |
 | <=       | `__le__`      | The "rich comparison" methods    |
 
-The behavior of these operators is similar to the definition of pytoch, but some of them have been added with additional functionality. Refer to our API documentation (TODO) for detailed definitions.
+The behavior of these operators is similar to the definition of pytoch, but some of them have been added with additional functionality. Refer to {% include doc.html name="pydec.Composition()" path="pythonapi/pydec.Composition" %} for detailed definitions.
