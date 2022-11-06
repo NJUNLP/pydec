@@ -2034,7 +2034,7 @@ pre code {
 .table,
 .td-box .row.section>table,
 .td-content>table {
-    max-width: 900px;
+    width: 100%;
     margin-bottom: 1rem;
     background-color: transparent
 }
@@ -2342,7 +2342,7 @@ pre code {
 .td-box .row.section>table,
 .td-content>table {
     display: block;
-    max-width: 900px;
+    width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     -ms-overflow-style: -ms-autohiding-scrollbar
@@ -15549,7 +15549,7 @@ a.text-dark:focus {
     z-index: 1
 }
 
-@media(min-width:992px) {
+/* @media(min-width:992px) {
     .td-max-width-on-larger-screens,
     .td-content>pre,
     .td-content>.highlight,
@@ -15565,7 +15565,7 @@ a.text-dark:focus {
     .td-content>.alert {
         max-width: 80%
     }
-}
+} */
 
 .-bg-blue {
     color: #fff;
