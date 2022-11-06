@@ -18,10 +18,10 @@ The pydec package contains data structures for compositions and defines mathemat
 ## Creation Ops
 To create Composition by class, use {% include codelink.html name="pydec.Composition" path="pythonapi/pydec.Composition" %}.
 
-| API                                                                             | Description                                                                                             |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| {% include codelink.html name="void" path="pythonapi/pydec/void" %}             | Returns an empty composition.                                                                           |
-| {% include codelink.html name="zeros_like" path="pythonapi/pydec/zeros_like" %} | Returns a composition whose components filled with the scalar value *0*, with the same size as `input`. |
+| API                                                                             | Description                                                                                              |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| {% include codelink.html name="void" path="pythonapi/pydec/void" %}             | Returns an empty composition.                                                                            |
+| {% include codelink.html name="zeros_like" path="pythonapi/pydec/zeros_like" %} | Returns a composition whose components filled with the scalar value *0*, with the same shape as `input`. |
 
 ## Indexing, Slicing, Joining, Mutating Ops
 
