@@ -13,11 +13,11 @@ Returns a composition filled with the scalar value 0, with the same size as `inp
 
 {% include function.html content="Keyword Arguments:" %}
 
-* **dtype** ((torch.dtype)[https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype], optional) - the desired data type of returned composition. Default: if *None*, defaults to the dtype of input.
-* **layout** ((torch.layout)[https://pytorch.org/docs/stable/tensor_attributes.html#torch.layout], optional) – the desired layout of returned composition. Default: if *None*, defaults to the layout of *input*.
-* **device** ((torch.device)[https://pytorch.org/docs/stable/tensor_attributes.html#torch.device], optional) - the desired device of returned composition. Default: if *None*, defaults to the device of input.
+* **dtype** ([torch.dtype](https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype), optional) - the desired data type of returned composition. Default: if *None*, defaults to the dtype of input.
+* **layout** ([torch.layout](https://pytorch.org/docs/stable/tensor_attributes.html#torch.layout), optional) – the desired layout of returned composition. Default: if *None*, defaults to the layout of *input*.
+* **device** ([torch.device](https://pytorch.org/docs/stable/tensor_attributes.html#torch.device), optional) - the desired device of returned composition. Default: if *None*, defaults to the device of input.
 * **requires_grad** (bool, optional) - If autograd should record operations on the returned composition. Default: *False*.
-* **memory_format** ((torch.memory_format)[https://pytorch.org/docs/stable/tensor_attributes.html#torch.memory_format], optional) – the desired memory format of returned Tensor. Default: *torch.preserve_format*.
+* **memory_format** ([torch.memory_format](https://pytorch.org/docs/stable/tensor_attributes.html#torch.memory_format), optional) – the desired memory format of returned Tensor. Default: *torch.preserve_format*.
 
 Example:
 ```python
