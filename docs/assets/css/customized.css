@@ -66,3 +66,7 @@ span.pre {
     letter-spacing: 0;
     padding-right: 0.75rem;
 }
+
+.td-content{
+    max-width: 900px;
+}
