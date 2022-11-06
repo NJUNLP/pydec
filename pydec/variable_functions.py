@@ -160,8 +160,8 @@ def numel(input: Composition) -> _int:
     return input.numel()
 
 
-def c_numel(input: Composition) -> _int:
-    return input.c_numel()
+def c_numel(input: Composition, count_residual=False) -> _int:
+    return input.c_numel(count_residual=count_residual)
 
 
 def numc(input: Composition) -> _int:
@@ -731,6 +731,7 @@ def zeros_like(
     pin_memory: _bool = False,
     requires_grad: _bool = False,
 ) -> Composition:
+    # TODO: fix bug. Default: if None, defaults to the dtype of input.
     out_composition_tensor = torch.zeros_like(
         input._composition_tensor,
         memory_format=memory_format,
