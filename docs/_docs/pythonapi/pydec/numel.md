@@ -7,6 +7,11 @@ description: pydec.numel
 
 Returns the total number of elements in the individual components of the `input` composition.
 
+<div class="alert alert-info" role="info">
+<h4 class="alert-heading">NOTE</h4>
+To get the total number of elements of all components, use {% include codelink.html name="pydec.c_numel()" path="pythonapi/pydec/c_numel" %}.
+</div>
+
 {% include function.html content="Parameters:" %}
 
 * **input** ({% include doc.html name="Composition" path="pythonapi/pydec.Composition" %}) - the input composition.
