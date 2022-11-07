@@ -36,6 +36,7 @@ class _BiasDecompositionState:
 
 def register_bias_decomposition_func(name):
     """
+    TODO: need update
     New bias_decomposition_func can be added with the :func:`register_bias_decomposition_func`
     function decorator.
 
@@ -169,7 +170,9 @@ class using_bias_decomposition_args(_DecoratorContextManager):
 
 
 @register_bias_decomposition_func("none")
-def _none_decomposition(bias: Union[Number, Tensor], context: Composition):
+def _none_decomposition(
+    bias: Union[Number, Tensor], context: Composition
+) -> Composition:
     r"""
     Default decomposition with no_bias_decomposition. Just add the bias to residual.
     """
