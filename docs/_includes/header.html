@@ -92,9 +92,11 @@
   $(document).ready(function () {
     var code_comments = $(".highlight .s")
     for (var i = 0; i < code_comments.length; i++) {
-      var removed_str = code_comments[i].innerHTML.slice(4, -4)
-      code_comments[i].innerHTML = removed_str
-      code_comments[i].className = 'go'
+      if (code_comments[i].innerHTML.startsWith("\"\"\"\n") || code_comments[i].innerHTML.startsWith("\'\'\'\n")) {
+        var removed_str = code_comments[i].innerHTML.slice(4, -4)
+        code_comments[i].innerHTML = removed_str
+        code_comments[i].className = 'go'
+      }
     }
   });
 </script>
