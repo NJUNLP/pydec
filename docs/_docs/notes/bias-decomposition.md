@@ -59,4 +59,4 @@ You can get the bias decomposition function in the current context via `pydec.ge
 
 ## Customizing Bias Decomposition
 
-TODO
+See {% include doc.html name="Customizing bias decomposition" path="pythonapi/pydec.bias_decomposition/#customizing-bias-decomposition" %}.

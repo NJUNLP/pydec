@@ -70,8 +70,9 @@ To use a customized bias decomposition algorithm, you need to register your func
 
 {% include function.html content="pydec.bias_decomposition.register_bias_decomposition_func(name)" %}
 
-Register a bias decomposition function named `name`.
+Register a bias decomposition function named `name`, cannot be the same name of the already registered algorithms.
 
+Take the decomposition described below as an example:
 
 <blockquote>
 Assume that $h^\prime=h+b$ and $h$ is denoted as the sum of $m$ components, i.e., $h=c_1+\cdots+c_m$. Then $b$ is decomposed into $m$ parts and added to each of the $m$ components:
@@ -86,14 +87,18 @@ $$
 The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
 </blockquote>
 
-
 Your bias decomposition function should have a similar signature like:
 ```python
 def customized_decomposition(bias: Union[Number, Tensor], context: Composition) -> Composition:
     ...
 ```
 
+* **bias** - The bias to be decomposed, i.e., $b$.
+* **context** - The composition context of decomposition, i.e., $c_1,\cdots,c_m$.
+* Other arguments can be defined as keyword arguments after the `bias` and `context` arguments. To specify these parameters, see [Specify the arguments for bias decomposition](#specify-the-arguments-for-bias-decomposition).
 
+Return the composition obtained by bias decomposition, i.e., $p_1,\cdots,p_m$. The returned composition should be the same shape as the `context` composition and have the same number of components. Also, the sum of all components should be equal to `bias`.
 
+{% include function.html content="Parameters:" %}
 
-
+* **name** ([str](https://docs.python.org/3/library/stdtypes.html#str)) - The registered name of the algorithm.
