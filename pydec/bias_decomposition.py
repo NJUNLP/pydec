@@ -3,8 +3,9 @@ import functools
 import inspect
 import torch
 from torch import Tensor
+from torch.autograd.grad_mode import _DecoratorContextManager
 
-from typing import Dict, Union, Any, Callable, ContextManager, TYPE_CHECKING
+from typing import Dict, Union, Any, Callable, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .composition import Composition
@@ -104,7 +105,7 @@ def get_bias_decomposition_func() -> Callable[..., Composition]:
         return current_bias_decomposition_func
 
 
-class using_bias_decomposition_func(ContextManager):
+class using_bias_decomposition_func(_DecoratorContextManager):
     def __init__(self, name: str) -> None:
         if name not in _BIAS_DECOMPOSITION_FUNC_REGISTRY:
             raise ValueError(
@@ -120,11 +121,12 @@ class using_bias_decomposition_func(ContextManager):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         _BiasDecompositionState.bias_decomposition_name = self.prev
 
+    def clone(self):
+        return self.__class__(self.using_name)
 
-class no_bias_decomposition(ContextManager):
-    def __init__(
-        self,
-    ) -> None:
+
+class no_bias_decomposition(_DecoratorContextManager):
+    def __init__(self,) -> None:
         self.prev = None
 
     def __enter__(self):
@@ -146,7 +148,7 @@ def get_bias_decomposition_args() -> Dict[str, Any]:
     return _BiasDecompositionState.bias_decomposition_args
 
 
-class using_bias_decomposition_args(ContextManager):
+class using_bias_decomposition_args(_DecoratorContextManager):
     def __init__(self, update=True, **kwargs) -> None:
         self.update = update
         self.prev = None
@@ -162,6 +164,9 @@ class using_bias_decomposition_args(ContextManager):
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         _BiasDecompositionState.bias_decomposition_args = self.prev
 
+    def clone(self):
+        return self.__class__(self.update, **self.using_args)
+
 
 @register_bias_decomposition_func("none")
 def _none_decomposition(bias: Union[Number, Tensor], context: Composition):
@@ -175,10 +180,7 @@ def _none_decomposition(bias: Union[Number, Tensor], context: Composition):
 
 @register_bias_decomposition_func("abs_decomposition")
 def abs_decomposition(
-    bias: Union[Number, Tensor],
-    context: Composition,
-    *,
-    eps=1e-6,
+    bias: Union[Number, Tensor], context: Composition, *, eps=1e-6,
 ) -> Composition:
     compositions = context._composition_tensor
     abs_compositions = compositions.abs()
@@ -192,11 +194,7 @@ def abs_decomposition(
 
 @register_bias_decomposition_func("hybrid_decomposition")
 def hybrid_decomposition(
-    bias: Union[Number, Tensor],
-    context: Composition,
-    *,
-    threshold=0.15,
-    eps=1e-6,
+    bias: Union[Number, Tensor], context: Composition, *, threshold=0.15, eps=1e-6,
 ) -> Composition:
     def ratio_map(ratio: Tensor):
         zero_map = ratio < threshold
@@ -224,11 +222,7 @@ def hybrid_decomposition(
 
 @register_bias_decomposition_func("sign_decomposition")
 def sign_decomposition(
-    bias: Union[Number, Tensor],
-    context: Composition,
-    *,
-    threshold=0.4,
-    eps=1e-6,
+    bias: Union[Number, Tensor], context: Composition, *, threshold=0.4, eps=1e-6,
 ) -> Composition:
     def ratio_map(ratio: Tensor):
         zero_map = ratio < threshold
@@ -253,11 +247,7 @@ def sign_decomposition(
 
 @register_bias_decomposition_func("sign_decomposition_value_threshold")
 def sign_decomposition_value_threshold(
-    bias: Union[Number, Tensor],
-    context: Composition,
-    *,
-    threshold=0.4,
-    eps=1e-6,
+    bias: Union[Number, Tensor], context: Composition, *, threshold=0.4, eps=1e-6,
 ) -> Composition:
     compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
@@ -275,11 +265,7 @@ def sign_decomposition_value_threshold(
 
 @register_bias_decomposition_func("hybrid_decomposition_value_threshold")
 def hybrid_decomposition_value_threshold(
-    bias: Union[Number, Tensor],
-    context: Composition,
-    *,
-    threshold=0.15,
-    eps=1e-6,
+    bias: Union[Number, Tensor], context: Composition, *, threshold=0.15, eps=1e-6,
 ) -> Composition:
     compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
