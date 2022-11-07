@@ -5,7 +5,7 @@ description: API for the module pydec.Composition
 
 # pydec.Composition
 
-A `pydec.Composition` is a set of components, where each component is a tensor with the same shape.
+A {% include codelink.html name="pydec.Composition" path="pythonapi/pydec.Composition/#composition-class-reference" %} is a set of components, where each component is a tensor with the same shape.
 
 ## Initializing and basic operations
 A  composition of the specified shape can be constructed using the {% include codelink.html name="pydec.Composition()" path="pythonapi/pydec.Composition/#composition-class-reference" %} constructor:
