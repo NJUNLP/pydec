@@ -16,11 +16,11 @@ If you have specified a bias decomposition algorithm for PyDec, PyDec will autom
 
 By default, PyDec does not perform any bias decomposition, but adds the bias directly to `Composition._residual`. In this case, Pydec uses the algorithm named {% include codelink.html name="none" path="pythonapi/pydec.bias_decomposition/none" %}.
 
-To specify the default bias decomposition algorithm, use {% include codelink.html name="pydec.set_bias_decomposition_func" path="pythonapi/pydec/set_bias_decomposition_func" %}.
+To specify the default bias decomposition algorithm, use {% include codelink.html name="pydec.set_bias_decomposition_func()" path="pythonapi/pydec/set_bias_decomposition_func" %}.
 
-To use the specified bias decomposition algorithm in a local context, use {% include codelink.html name="pydec.using_bias_decomposition_func" path="pythonapi/pydec/using_bias_decomposition_func" %}.
+To use the specified bias decomposition algorithm in a local context, use {% include codelink.html name="pydec.using_bias_decomposition_func()" path="pythonapi/pydec/using_bias_decomposition_func" %}.
 
-To disable bias decomposition locally, use {% include codelink.html name="pydec.no_bias_decomposition" path="pythonapi/pydec/no_bias_decomposition" %}
+To disable bias decomposition locally, use {% include codelink.html name="pydec.no_bias_decomposition()" path="pythonapi/pydec/no_bias_decomposition" %}
 
 ### Specify the arguments for bias decomposition
 
@@ -60,6 +60,40 @@ tensor([0., 0.])
 """
 ```
 
-To set the default arguments of the bias decomposition algorithm, use {% include codelink.html name="pydec.set_bias_decomposition_args" path="pythonapi/pydec/set_bias_decomposition_args" %}.
+To set the default arguments of the bias decomposition algorithm, use {% include codelink.html name="pydec.set_bias_decomposition_args()" path="pythonapi/pydec/set_bias_decomposition_args" %}.
 
-To use the specified arguments of the bias decomposition algorithm in a local context, use {% include codelink.html name="pydec.using_bias_decomposition_args" path="pythonapi/pydec/using_bias_decomposition_args" %}.
+To use the specified arguments of the bias decomposition algorithm in a local context, use {% include codelink.html name="pydec.using_bias_decomposition_args()" path="pythonapi/pydec/using_bias_decomposition_args" %}.
+
+## Customizing bias decomposition
+
+To use a customized bias decomposition algorithm, you need to register your function using {% include codelink.html name="pydec.bias_decomposition.register_bias_decomposition_func" path="pythonapi/pydec.bias_decomposition#register_bias_decomposition_func" %} decorator.
+
+{% include function.html content="pydec.bias_decomposition.register_bias_decomposition_func(name)" %}
+
+Register a bias decomposition function named `name`.
+
+
+<blockquote>
+Assume that $h^\prime=h+b$ and $h$ is denoted as the sum of $m$ components, i.e., $h=c_1+\cdots+c_m$. Then $b$ is decomposed into $m$ parts and added to each of the $m$ components:
+
+$$
+\begin{split}
+b=&p_1+\cdots+p_m,\newline
+c^\prime_i=&c_i+p_i.
+\end{split}
+$$
+
+The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
+</blockquote>
+
+
+Your bias decomposition function should have a similar signature like:
+```python
+def customized_decomposition(bias: Union[Number, Tensor], context: Composition) -> Composition:
+    ...
+```
+
+
+
+
+
