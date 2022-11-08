@@ -35,10 +35,10 @@ If you need to locally use the specified bias decomposition method in a context,
 
 Example:
 ```python
-pydec.set_bias_decomposition_func("norm_decomposition")
+pydec.set_bias_decomposition_func('norm_decomposition')
 # The code here uses the method called 'norm_decomposition'.
 ...
-with pydec.using_bias_decomposition_func("abs_decomposition"):
+with pydec.using_bias_decomposition_func('abs_decomposition'):
     # The code here uses the method called 'abs_decomposition'.
     ...
     with pydec.no_bias_decomposition():

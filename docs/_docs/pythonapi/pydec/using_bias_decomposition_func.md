@@ -36,7 +36,7 @@ tensor([1.])
 residual:
 tensor([1.])
 """
->>> with pydec.using_bias_decomposition_func("abs_decomposition"):
+>>> with pydec.using_bias_decomposition_func('abs_decomposition'):
 ...     c + 1
 """
 composition 0:
@@ -46,7 +46,7 @@ tensor([1.5000])
 residual:
 tensor([0.])
 """
->>> @pydec.using_bias_decomposition_func("abs_decomposition")
+>>> @pydec.using_bias_decomposition_func('abs_decomposition')
 ... def add1(c):
 ...     return c + 1
 >>> add1(c) 
