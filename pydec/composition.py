@@ -494,12 +494,11 @@ class Composition:
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             decomposition_func = _get_bias_decomposition_func()
             if decomposition_func is not None:
-                kwargs["out"] = out
                 bias_composition = decomposition_func(
                     bias=alpha * other, context=self, **kwargs
                 )
                 assert isinstance(bias_composition, Composition)
-                return self.add(bias_composition)
+                return self.add(bias_composition, out=out, **kwargs)
             else:
                 raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
         else:
