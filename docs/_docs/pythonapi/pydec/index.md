@@ -59,13 +59,16 @@ The context managers {% include codelink.html name="pydec.no_error_check()" path
 
 ## Bias Decomposition
 
-| API                                                                                                                   | Description                                                                 |
-| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| {% include codelink.html name="set_bias_decomposition_func" path="pythonapi/pydec/set_bias_decomposition_func" %}     | Specify PyDec's default bias decomposition algorithm.                       |
-| {% include codelink.html name="no_bias_decomposition" path="pythonapi/pydec/no_bias_decomposition" %}                 | Context-manager that disable bias decomposition.                            |
-| {% include codelink.html name="using_bias_decomposition_func" path="pythonapi/pydec/using_bias_decomposition_func" %} | Context-manager that set the bias decomposition algorithm.                  |
-| {% include codelink.html name="set_bias_decomposition_args" path="pythonapi/pydec/set_bias_decomposition_args" %}     | Set the default arguments of the bias decomposition algorithm.              |
-| {% include codelink.html name="using_bias_decomposition_args" path="pythonapi/pydec/using_bias_decomposition_args" %} | Context-manager that set the arguments of the bias decomposition algorithm. |
+| API                                                                                                                   | Description                                                                       |
+| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| {% include codelink.html name="set_bias_decomposition_func" path="pythonapi/pydec/set_bias_decomposition_func" %}     | Specify PyDec's default bias decomposition algorithm.                             |
+| {% include codelink.html name="get_bias_decomposition_func" path="pythonapi/pydec/get_bias_decomposition_func" %}     | Returns the currently enabled bias decomposition function.                        |
+| {% include codelink.html name="get_bias_decomposition_name" path="pythonapi/pydec/get_bias_decomposition_name" %}     | Returns the registered name of the currently enabled bias decomposition function. |
+| {% include codelink.html name="no_bias_decomposition" path="pythonapi/pydec/no_bias_decomposition" %}                 | Context-manager that disable bias decomposition.                                  |
+| {% include codelink.html name="using_bias_decomposition_func" path="pythonapi/pydec/using_bias_decomposition_func" %} | Context-manager that set the bias decomposition algorithm.                        |
+| {% include codelink.html name="set_bias_decomposition_args" path="pythonapi/pydec/set_bias_decomposition_args" %}     | Set the default arguments of the bias decomposition algorithm.                    |
+| {% include codelink.html name="get_bias_decomposition_args" path="pythonapi/pydec/get_bias_decomposition_args" %}     | Returns the currently set bias decomposition arguments.                           |
+| {% include codelink.html name="using_bias_decomposition_args" path="pythonapi/pydec/using_bias_decomposition_args" %} | Context-manager that set the arguments of the bias decomposition algorithm.       |
 
 ## Math operations
 ### Pointwise Ops
