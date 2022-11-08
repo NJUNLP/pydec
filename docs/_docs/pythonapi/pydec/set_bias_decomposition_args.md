@@ -14,7 +14,7 @@ Set the default arguments of the bias decomposition algorithm.
 
 {% include function.html content="Keyword Arguments:" %}
 
-Any number of keyword parameters to set. Do not use the keyword named `updat.
+Any number of keyword parameters to set. Do not use the keyword named `update`.
 
 Examples:
 ```python
