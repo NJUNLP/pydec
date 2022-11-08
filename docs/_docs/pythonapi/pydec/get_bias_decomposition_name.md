@@ -4,7 +4,7 @@ description: pydec.get_bias_decomposition_name
 ---
 # PYDEC.GET_BIAS_DECOMPOSITION_NAME
 
-{% include function.html content="pydec.get_bias_decomposition_name()" %}
+{% include function.html content="pydec.get_bias_decomposition_name() -> str" %}
 
 Returns the registered name of the currently enabled bias decomposition function, which may not be the registered name of the default bias decomposition function if the calling is located in the context of {% include codelink.html name="pydec.using_bias_decomposition_func()" path="pythonapi/pydec/using_bias_decomposition_func" %}.
 
