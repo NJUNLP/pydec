@@ -6,44 +6,31 @@ description: pydec.set_bias_decomposition_args
 
 {% include function.html content="pydec.set_bias_decomposition_args(update=True, **kwargs)" %}
 
-Set the default bias decomposition algorithm.
-
-When PyDec is initialized its default bias decomposition algorithm is {% include codelink.html name="none" path="pythonapi/pydec.bias_decomposition/none" %}.
+Set the default arguments of the bias decomposition algorithm.
 
 {% include function.html content="Parameters:" %}
 
-* **name** ([str](https://docs.python.org/3/library/stdtypes.html#str)) - Specifies the name of the bias decomposition algorithm used by Pydec. Must be the name of a registered algorithm.
+* **update** ([bool](https://docs.python.org/3/library/functions.html#bool), optional) - If *true*, set the arguments by dictionary update. Otherwise, the previously set arguments are discarded. Default: *False*.
+
+{% include function.html content="Keyword Arguments:" %}
+
+Any number of keyword parameters to set. Do not use the keyword named `updat.
 
 Examples:
 ```python
->>> c = pydec.Composition((1,), 2) 
->>> c[:]=1.0
->>> c
+>>> pydec.set_bias_decomposition_args(arg1=2, arg2='foo') 
+>>> pydec.get_bias_decomposition_args()
 """
-composition 0:
-tensor([1.])  
-composition 1:
-tensor([1.])  
-residual:     
-tensor([0.])
+{'arg1': 2, 'arg2': 'foo'}
 """
->>> c + 1
+>>> pydec.set_bias_decomposition_args(arg1=4, arg3=True)  
+>>> pydec.get_bias_decomposition_args()
 """
-composition 0:
-tensor([1.])
-composition 1:
-tensor([1.])
-residual:
-tensor([1.])
+{'arg1': 4, 'arg2': 'foo', 'arg3': True}
 """
->>> pydec.set_bias_decomposition_func('abs_decomposition')
->>> c + 1
+>>> pydec.set_bias_decomposition_args(update=False, arg1=0) 
+>>> pydec.get_bias_decomposition_args()
 """
-composition 0:
-tensor([1.5000])
-composition 1:
-tensor([1.5000])
-residual:
-tensor([0.])
+{'arg1': 0}
 """
 ```
