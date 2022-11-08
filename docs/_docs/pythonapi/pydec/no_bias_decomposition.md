@@ -4,7 +4,7 @@ description: pydec.no_bias_decomposition
 ---
 # PYDEC.NO_BIAS_DECOMPOSITION
 
-{% include function.html content="pydec.using_bias_decomposition_func(name)" %}
+{% include class.html content="pydec.using_bias_decomposition_func(name)" %}
 
 Context-manager that disable bias decomposition.
 

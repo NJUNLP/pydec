@@ -4,7 +4,7 @@ description: pydec.using_bias_decomposition_func
 ---
 # PYDEC.USING_BIAS_DECOMPOSITION_FUNC
 
-{% include function.html content="pydec.using_bias_decomposition_func(name)" %}
+{% include class.html content="pydec.using_bias_decomposition_func(name)" %}
 
 Context-manager that set the bias decomposition algorithm.
 
