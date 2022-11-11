@@ -14,7 +14,7 @@ If you have specified a bias decomposition algorithm for PyDec, PyDec will autom
 
 ### Configuring bias decomposition
 
-By default, PyDec does not perform any bias decomposition, but adds the bias directly to `Composition._residual`. In this case, Pydec uses the algorithm named {% include codelink.html name="none" path="pythonapi/pydec.bias_decomposition/none" %}.
+By default, PyDec does not perform any bias decomposition, but adds the bias directly to `Composition._residual`. In this case, Pydec uses the algorithm named {% include codelink.html name="none" path="pythonapi/pydec.bias_decomposition/_none_decomposition" %}.
 
 To specify the default bias decomposition algorithm, use {% include codelink.html name="pydec.set_bias_decomposition_func()" path="pythonapi/pydec/set_bias_decomposition_func" %}.
 
