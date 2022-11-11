@@ -127,7 +127,9 @@ class using_bias_decomposition_func(_DecoratorContextManager):
 
 
 class no_bias_decomposition(_DecoratorContextManager):
-    def __init__(self,) -> None:
+    def __init__(
+        self,
+    ) -> None:
         self.prev = None
 
     def __enter__(self):
@@ -183,7 +185,10 @@ def _none_decomposition(
 
 @register_bias_decomposition_func("abs_decomposition")
 def abs_decomposition(
-    bias: Union[Number, Tensor], context: Composition, *, eps=1e-6,
+    bias: Union[Number, Tensor],
+    context: Composition,
+    *,
+    eps=1e-6,
 ) -> Composition:
     compositions = context._composition_tensor
     abs_compositions = compositions.abs()
@@ -197,7 +202,11 @@ def abs_decomposition(
 
 @register_bias_decomposition_func("hybrid_decomposition")
 def hybrid_decomposition(
-    bias: Union[Number, Tensor], context: Composition, *, threshold=0.15, eps=1e-6,
+    bias: Union[Number, Tensor],
+    context: Composition,
+    *,
+    threshold=0.15,
+    eps=1e-6,
 ) -> Composition:
     def ratio_map(ratio: Tensor):
         zero_map = ratio < threshold
@@ -225,7 +234,11 @@ def hybrid_decomposition(
 
 @register_bias_decomposition_func("sign_decomposition")
 def sign_decomposition(
-    bias: Union[Number, Tensor], context: Composition, *, threshold=0.4, eps=1e-6,
+    bias: Union[Number, Tensor],
+    context: Composition,
+    *,
+    threshold=0.4,
+    eps=1e-6,
 ) -> Composition:
     def ratio_map(ratio: Tensor):
         zero_map = ratio < threshold
@@ -250,7 +263,11 @@ def sign_decomposition(
 
 @register_bias_decomposition_func("sign_decomposition_value_threshold")
 def sign_decomposition_value_threshold(
-    bias: Union[Number, Tensor], context: Composition, *, threshold=0.4, eps=1e-6,
+    bias: Union[Number, Tensor],
+    context: Composition,
+    *,
+    threshold=0.4,
+    eps=1e-6,
 ) -> Composition:
     compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
@@ -266,9 +283,13 @@ def sign_decomposition_value_threshold(
     return out
 
 
-@register_bias_decomposition_func("hybrid_decomposition_value_threshold")
-def hybrid_decomposition_value_threshold(
-    bias: Union[Number, Tensor], context: Composition, *, threshold=0.15, eps=1e-6,
+@register_bias_decomposition_func("hybrid_decomposition_threshold")
+def hybrid_decomposition_threshold(
+    bias: Union[Number, Tensor],
+    context: Composition,
+    *,
+    threshold=0.15,
+    eps=1e-6,
 ) -> Composition:
     compositions = context._composition_tensor
     sum_compositions = compositions.sum(dim=0, keepdim=True)
