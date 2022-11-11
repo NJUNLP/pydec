@@ -1,4 +1,4 @@
-![PyPI](https://img.shields.io/pypi/v/pydec)
+[![PyPI](https://img.shields.io/pypi/v/pydec)](https://pypi.org/project/pydec/)
 [![Test](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml)
 [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/DoubleVII/pydec/pages%20build%20and%20deployment?label=docs)](https://doublevii.github.io/pydec/)
 ![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/DoubleVII/pydec/python-coverage-comment-action-data/endpoint.json)
