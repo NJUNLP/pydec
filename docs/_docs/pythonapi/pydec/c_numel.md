@@ -10,7 +10,7 @@ Returns the the total number of elements of all components of the `input` compos
 {% include function.html content="Parameters:" %}
 
 * **input** ({% include doc.html name="Composition" path="pythonapi/pydec.Composition" %}) - the input composition.
-* **count_residual** ([bool](https://docs.python.org/3/library/functions.html#bool)) - whether the result is to include residual component or not. Default: *False*.
+* **count_residual** ([bool](https://docs.python.org/3/library/functions.html#bool), optional) - whether the result is to include residual component or not. Default: *False*.
 
 Example:
 ```python
