@@ -261,8 +261,8 @@ def sign_decomposition(
     return out
 
 
-@register_bias_decomposition_func("sign_decomposition_value_threshold")
-def sign_decomposition_value_threshold(
+@register_bias_decomposition_func("sign_decomposition_threshold")
+def sign_decomposition_threshold(
     bias: Union[Number, Tensor],
     context: Composition,
     *,
