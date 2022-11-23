@@ -13,5 +13,16 @@ Critical items to know are:
  - migration guidance
  - changed behaviour
 
-## [master](https://github.com/DoubleVII/pydec/tree/master)
-TODO
+## PyDec 0.1.1
+* Update doc notes and api documentation.
+* Improve doc site style.
+* Add decorator feature to bias decomposition context managers.
+* Simplify bias decomposition algorithm names.
+* Make `Composition.mul()` support `out` argument.
+* Add `Composition.div()` and `Composition.div_`().
+* Add `is_error_checking_enabled()`.
+* Add alias `concat()` and `concatenate()`.
+* Add alias `subtract()` and `multiply()`.
+* Add `count_residual()` argument for `c_numel()`.
+* Add `div()` and `divide()`.
+* Fix bugs.

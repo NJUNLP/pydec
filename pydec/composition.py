@@ -494,12 +494,11 @@ class Composition:
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             decomposition_func = _get_bias_decomposition_func()
             if decomposition_func is not None:
-                kwargs["out"] = out
                 bias_composition = decomposition_func(
                     bias=alpha * other, context=self, **kwargs
                 )
                 assert isinstance(bias_composition, Composition)
-                return self.add(bias_composition)
+                return self.add(bias_composition, out=out, **kwargs)
             else:
                 raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
         else:
@@ -549,14 +548,84 @@ class Composition:
     def mul(
         self, other: Union[Tensor, Number], *, out: Optional[Composition] = None
     ) -> Composition:
-        out_composition_tensor = self._composition_tensor.mul(
-            other, out._composition_tensor
-        )
-        out_residual_tensor = self._residual_tensor.mul(other, out._residual_tensor)
+        if isinstance(other, Composition):
+            raise args_error(Composition.mul.__name__, self, other, out=out)
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                out_composition_tensor = self._composition_tensor.view(new_size).mul(
+                    other, out=out._composition_tensor
+                )
+            else:
+                out_composition_tensor = self._composition_tensor.mul(
+                    other, out=out._composition_tensor
+                )
+            out_residual_tensor = self._residual_tensor.mul(
+                other, out=out._residual_tensor
+            )
+        else:
+            out_composition_tensor = self._composition_tensor * other
+            out_residual_tensor = self._residual_tensor * other
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
     def mul_(self, other: Union[Tensor, Number]) -> Composition:
         self *= other
+        return self
+
+    def div(
+        self, other: Union[Tensor, Number], *, rounding_mode: Optional[str] = None
+    ) -> Composition:
+        if isinstance(other, Composition):
+            raise args_error(
+                Composition.div.__name__, self, other, rounding_mode=rounding_mode
+            )
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                out_composition_tensor = self._composition_tensor.view(new_size).div(
+                    other, rounding_mode=rounding_mode
+                )
+            else:
+                out_composition_tensor = self._composition_tensor.div(
+                    other, rounding_mode == rounding_mode
+                )
+            out_residual_tensor = self._residual_tensor.div(
+                other, rounding_mode=rounding_mode
+            )
+        else:
+            out_composition_tensor = self._composition_tensor.div(
+                other, rounding_mode=rounding_mode
+            )
+            out_residual_tensor = self._residual_tensor.div(
+                other, rounding_mode=rounding_mode
+            )
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def div_(
+        self, other: Union[Tensor, Number], *, rounding_mode: Optional[str] = None
+    ) -> Composition:
+        if isinstance(other, Composition):
+            raise args_error(
+                Composition.div_.__name__, self, other, rounding_mode=rounding_mode
+            )
+        if isinstance(other, Tensor):
+            if other.dim() > self.dim():
+                new_size = (
+                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
+                )
+                self._composition_tensor.view(new_size).div_(
+                    other, rounding_mode=rounding_mode
+                )
+            else:
+                self._composition_tensor.div_(other, rounding_mode == rounding_mode)
+            self._residual_tensor.div_(other, rounding_mode=rounding_mode)
+        else:
+            self._composition_tensor.div_(other, rounding_mode=rounding_mode)
+            self._residual_tensor.div_(other, rounding_mode=rounding_mode)
         return self
 
     @overload

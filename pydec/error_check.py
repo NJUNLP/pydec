@@ -59,6 +59,10 @@ class error_check(ContextManager):
         _ErrorCheckState.bypass_check = self.prev
 
 
+def is_error_checking_enabled():
+    return not _ErrorCheckState.bypass_check
+
+
 def check_error(
     c: Composition,
     ref: Tensor,

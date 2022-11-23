@@ -123,7 +123,7 @@ class TestPlus:
         c = self.c + 3
         assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
 
-        set_bias_decomposition_func("hybrid_decomposition_value_threshold")
+        set_bias_decomposition_func("hybrid_decomposition_threshold")
         c = self.c + 3
         assert (self.c._composition_tensor + 1 == c._composition_tensor).all()
 

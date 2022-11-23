@@ -59,7 +59,7 @@ version_params:
     - Previous
 
 # Should there be feedback buttons at the bottom of pages?
-feedback: true
+feedback: false
 
 # Link to a privacy policy in footer, uncomment and define if wanted
 # privacy: https://domain.com/privacy
@@ -69,7 +69,7 @@ feedback: true
 # If commented, will use material hat theme
 # logo: "assets/img/logo/SRCC-square-red.png"
 logo_pixels: 34
-color: "#30638e"
+color: "#ee4c2c"
 # color: "#8c1515" # primary color for header, buttons
 
 # Build settings

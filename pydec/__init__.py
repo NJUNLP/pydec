@@ -12,14 +12,23 @@ from .bias_decomposition import (
     using_bias_decomposition_args,
 )
 
-from .error_check import no_error_check, error_check, check_error
+from .error_check import (
+    no_error_check,
+    error_check,
+    check_error,
+    is_error_checking_enabled,
+)
 
 __all__ = [
     "Composition",
     "set_bias_decomposition_func",
+    "get_bias_decomposition_name",
     "get_bias_decomposition_func",
     "using_bias_decomposition_func",
     "no_bias_decomposition",
+    "set_bias_decomposition_args",
+    "get_bias_decomposition_args",
+    "using_bias_decomposition_args",
 ]
 
 import typing as _typing

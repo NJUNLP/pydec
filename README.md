@@ -1,5 +1,6 @@
-![PyPI](https://img.shields.io/pypi/v/pydec)
+[![PyPI](https://img.shields.io/pypi/v/pydec)](https://pypi.org/project/pydec/)
 [![Test](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/DoubleVII/pydec/pages%20build%20and%20deployment?label=docs)](https://doublevii.github.io/pydec/)
 ![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/DoubleVII/pydec/python-coverage-comment-action-data/endpoint.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -10,6 +11,11 @@
 </h1>
 
 PyDec is a linear decomposition toolkit for neural network based on [PyTorch](https://pytorch.org/), which can decompose the tensor in the forward process into given components with a small amount of code. The result of decomposition can be applied to tasks such as attribution analysis.
+
+### Features:
+* Fast. Compute decomposition in foward process and benefit from GPU acceleration.
+* Real-time. Outputs attribution along with the model output results.
+* Applicable to networks such as Transformer, CNN and RNN.
 
 # Examples
 ## Attribution

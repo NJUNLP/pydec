@@ -34,6 +34,9 @@
         {% capture pageUrl %} 
           {{ page.url | replace: "/", "" }} 
         {% endcapture %}
+        {% capture section_url_index %} 
+          {{- "/" | append: section.url | append: "/index" -}} 
+        {% endcapture %}
       
         {% if currentpageversion == site.version_params.latest %}
           {% assign versionlink = 'docs'  %}
@@ -42,7 +45,7 @@
         {% endif %}
         
         <li class="td-sidebar-nav__section-title">
-          <a  href="{% if section.url %}{{ site.baseurl }}/{{ section.url | replace: 'docs', versionlink }}{% else %}{{ section.external_url }}{% endif %}" class="align-left pl-0 pr-2 active td-sidebar-link td-sidebar-link__section">{{ section.title }}</a>
+          <a  href="{% if section.url %}{{ site.baseurl }}/{{ section.url | replace: 'docs', versionlink }}{% else %}{{ section.external_url }}{% endif %}" class="align-left pl-0 pr-2 td-sidebar-link {% if page.url == section_url_index %}active{% endif %} td-sidebar-link__section">{{ section.title }}</a>
         </li>
         {% if section.links %}
           <ul>
@@ -62,13 +65,16 @@
                   {% capture fullentryurl %} 
                     {{- "/" | append: entry.url | replace: 'docs', versionlink -}} 
                   {% endcapture %}
+                  {% capture fullentryurl_index %} 
+                    {{- "/" | append: entry.url | replace: 'docs', versionlink | append: '/index' -}} 
+                  {% endcapture %}
                   <li class="td-sidebar-nav__section-title">
                     <a href="{% if entry.url %}
                                 {{ site.baseurl }}/{{ entry.url | replace: 'docs', versionlink}}
                              {% else %}
                                 {{ entry.external_url }}
                              {% endif %}" 
-                       class="align-left pl-0 pr-2 td-sidebar-link td-sidebar-link__section {% if page.url == fullentryurl | strip %}active{% endif %}">{{ entry.title }}
+                       class="align-left pl-0 pr-2 td-sidebar-link td-sidebar-link__section {% if page.url == fullentryurl | strip or page.url == fullentryurl_index | strip %}active{% endif %}">{{ entry.title }}
                     </a>
                   </li>
                   {% if page.url contains fullentryurl or pageUrl == sectionUrl %}

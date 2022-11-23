@@ -37,14 +37,13 @@ This creates a composition containing 4 tensors of size (3, 2), initialized with
 ```python
 >>> c_copy = pydec.Composition(c)
 ```
-This will clone an identical c, but without preserving any computational graph.
+This will clone an identical `c`, but without preserving any computational graph.
 
 **From component tensors**
 ```python
 >>> component_num = 4
 >>> c_size = (component_num, 3, 2)
 >>> t = torch.randn(c_size) # 4 x 3 x 2
-
 >>> c_tensor = pydec.Composition(t)
 ```
 This also creates a composition containing 4 tensors of size (3, 2), initialized with tensor t.
@@ -73,16 +72,19 @@ $$
 
 **By diagonal scatter**
 
-In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the `torch.diagonal_scatter` function.
+In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the [`torch.diagonal_scatter`](https://pytorch.org/docs/stable/generated/torch.diagonal_scatter.html#torch.diagonal_scatter) function.
 ```python
 >>> component_num = 3
 >>> size = (3, 2)
 >>> x = torch.randn(size)
+"""
 tensor([[-0.4682,  1.2375],
         [ 0.7185,  0.2311],
         [-0.4043, -1.5946]])
+"""
 >>> c = pydec.Composition(size, component_num)
 >>> c = pydec.diagonal_init(c, src=x, dim=0)
+"""
 composition 0:
 tensor([[-0.4682,  1.2375],
         [ 0.0000,  0.0000],
@@ -99,26 +101,35 @@ residual:
 tensor([[0., 0.],
         [0., 0.],
         [0., 0.]])
+"""
 ```
 
 ## Attributes of a Composition
 **Size**
 
-`Composition.size()` returns the shape of each composition tensor, `Composition.c_size()` returns the shape whose first dimension is the number of components.
+{% include codelink.html name="Composition.size()" path="pythonapi/pydec.Composition/size" %} returns the shape of each composition tensor, {% include codelink.html name="Composition.c_size()" path="pythonapi/pydec.Composition/c_size" %} returns the shape whose first dimension is the number of components.
 ```python
 >>> c = pydec.Composition((3, 2), component_num=4)
 >>> c.size()
+"""
 torch.Size([3, 2])
+"""
 >>> c.c_size()
+"""
 torch.Size([4, 3, 2])
+"""
 ```
 
-`len()` and `Composition.numc()` return the number of components.
+`len()` and {% include codelink.html name="Composition.numc()" path="pythonapi/pydec.Composition/numc" %} return the number of components.
 ```python
 >>> len(c)
+"""
 4
+"""
 >>> c.numc()
+"""
 4
+"""
 ```
 
 ## Residual of a Composition
@@ -143,6 +154,7 @@ Most of the operations are the same as tensor operations, and a convenient expre
 Example:
 ```python
 >>> c
+"""
 composition 0:
 tensor([[1., 1., 1., 1.],
         [0., 0., 0., 0.]])
@@ -152,7 +164,9 @@ tensor([[0., 0., 0., 0.],
 residual:
 tensor([[0., 0., 0., 0.],
         [0., 0., 0., 0.]])
+"""
 >>> 3 * c # multiply
+"""
 composition 0:
 tensor([[3., 3., 3., 3.],
         [0., 0., 0., 0.]])
@@ -162,7 +176,9 @@ tensor([[0., 0., 0., 0.],
 residual:
 tensor([[0., 0., 0., 0.],
         [0., 0., 0., 0.]])
+"""
 >>> c + c # add
+"""
 composition 0:
 tensor([[2., 2., 2., 2.],
         [0., 0., 0., 0.]])
@@ -172,13 +188,17 @@ tensor([[0., 0., 0., 0.],
 residual:
 tensor([[0., 0., 0., 0.],
         [0., 0., 0., 0.]])
+"""
 >>> W = torch.randn((4,3))
 >>> W
+"""
 tensor([[-0.4682,  1.2375,  0.7185],
         [ 0.2311, -0.4043, -1.5946],
         [-0.4981,  0.2654,  0.0849],
         [ 1.0203, -0.4293, -0.2616]])
+"""
 >>> c @ W # matmul
+"""
 composition 0:
 tensor([[ 0.2851,  0.6694, -1.0529],
         [ 0.0000,  0.0000,  0.0000]])
@@ -188,4 +208,5 @@ tensor([[ 0.0000,  0.0000,  0.0000],
 residual:
 tensor([[0., 0., 0.],
         [0., 0., 0.]])
+"""
 ```

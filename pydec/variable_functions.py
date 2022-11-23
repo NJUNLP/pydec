@@ -30,8 +30,15 @@ from pydec.exception_utils import arg_value_error
 import builtins
 
 
-def void() -> Composition:
-    return Composition(tuple(), 0)
+def void(
+    *,
+    dtype: _dtype = None,
+    device: Union[_device, str, None] = None,
+    requires_grad: _bool = False,
+) -> Composition:
+    return Composition(
+        tuple(), 0, dtype=dtype, device=device, requires_grad=requires_grad
+    )
 
 
 def _from_replce(
@@ -61,11 +68,27 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def concat(
+    compositions: Union[Tuple[Composition, ...], List[Composition]],
+    dim: _int = 0,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    return cat(compositions=compositions, dim=dim, out=out)
+
+
+def concatenate(
+    compositions: Union[Tuple[Composition, ...], List[Composition]],
+    dim: _int = 0,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    return cat(compositions=compositions, dim=dim, out=out)
 
 
 def c_cat(
@@ -81,9 +104,7 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors,
-        0,
-        out=out._composition_tensor if out is not None else None,
+        c_tensors, 0, out=out._composition_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = builtins.sum(r_tensors)
@@ -109,9 +130,7 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -120,7 +139,7 @@ def diagonal_init(
     input: Composition, src: Tensor, dim: _int, offset: _int = 0
 ) -> Composition:
     permute_dims = list(range(src.dim()))
-    dim = (dim + src.dim()) % src.dim() # Converted to a positive number
+    dim = (dim + src.dim()) % src.dim()  # Converted to a positive number
     permute_dims.remove(dim)
     permute_dims.append(dim)
     src = src.permute(permute_dims)
@@ -141,8 +160,8 @@ def numel(input: Composition) -> _int:
     return input.numel()
 
 
-def c_numel(input: Composition) -> _int:
-    return input.c_numel()
+def c_numel(input: Composition, count_residual=False) -> _int:
+    return input.c_numel(count_residual=count_residual)
 
 
 def numc(input: Composition) -> _int:
@@ -184,6 +203,28 @@ def sub(
     return input.sub(other, alpha=alpha, out=out)
 
 
+@overload
+def subtract(
+    input: Composition,
+    other: Tensor,
+    *,
+    alpha: Number = 1,
+    out: Optional[Tensor] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def subtract(input: Composition, other: Number, alpha: Number = 1) -> Composition:
+    ...
+
+
+def subtract(
+    input: Composition, other: Any, *, alpha: Number = 1, out: Optional[Tensor] = None,
+) -> Composition:
+    return sub(input, other=other, alpha=alpha, out=out)
+
+
 def mul(
     input: Composition,
     other: Union[Tensor, Number],
@@ -191,6 +232,61 @@ def mul(
     out: Optional[Composition] = None,
 ) -> Composition:
     return input.mul(other, out=out)
+
+
+@overload
+def multiply(
+    input: Composition, other: Tensor, *, out: Optional[Tensor] = None
+) -> Composition:
+    ...
+
+
+@overload
+def multiply(input: Composition, other: Number) -> Composition:
+    ...
+
+
+def multiply(
+    input: Composition, other: Any, *, out: Optional[Tensor] = None
+) -> Composition:
+    return mul(input, other=other, out=out)
+
+
+def div(
+    input: Composition,
+    other: Union[Tensor, Number],
+    *,
+    rounding_mode: Optional[str] = None,
+) -> Tensor:
+    return input.div(other, rounding_mode=rounding_mode)
+
+
+@overload
+def divide(input: Composition, other: Tensor,) -> Composition:
+    ...
+
+
+@overload
+def divide(
+    input: Composition, other: Tensor, *, rounding_mode: Optional[str],
+) -> Composition:
+    ...
+
+
+@overload
+def divide(
+    input: Composition, other: Number, *, rounding_mode: Optional[str]
+) -> Composition:
+    ...
+
+
+@overload
+def divide(input: Composition, other: Number,) -> Composition:
+    ...
+
+
+def divide(input: Composition, other: Any, *, rounding_mode: Optional[str]):
+    return div(input, other=other, rounding_mode=rounding_mode)
 
 
 @overload
@@ -293,7 +389,7 @@ def sum(
 
 
 def c_sum(input: Composition, *, dtype: Optional[_dtype] = None) -> Tensor:
-    return input.c_sum()
+    return input.c_sum(dtype=dtype)
 
 
 @overload
@@ -605,13 +701,9 @@ def round(
         )
     else:
         out_composition_tensor = torch.round(
-            input._composition_tensor,
-            decimals=decimals,
+            input._composition_tensor, decimals=decimals,
         )
-        out_residual_tensor = torch.round(
-            input._residual_tensor,
-            decimals=decimals,
-        )
+        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
@@ -639,6 +731,7 @@ def zeros_like(
     pin_memory: _bool = False,
     requires_grad: _bool = False,
 ) -> Composition:
+    # TODO: fix bug. Default: if None, defaults to the dtype of input.
     out_composition_tensor = torch.zeros_like(
         input._composition_tensor,
         memory_format=memory_format,

@@ -20,7 +20,7 @@ excluded_in_search: true
     padding-left: 1.2rem;
 }
 .gh-source:hover {
-    color: yellow;
+    color: #222;
 }
 .gh-source__icon+.gh-source__repository {
     margin-left: -4.4rem;
@@ -138,12 +138,19 @@ excluded_in_search: true
 }
 
 html {
+    font-size: 12px;
     font-family: sans-serif;
     line-height: 1.15;
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
     -ms-overflow-style: scrollbar;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0)
+}
+
+@media screen and (min-width: 768px) {
+    html {
+      font-size: 16px;
+    }
 }
 
 @-ms-viewport {
@@ -165,7 +172,7 @@ section {
 
 body {
     margin: 0;
-    font-family: open sans, -apple-system, BlinkMacSystemFont, segoe ui, Roboto, helvetica neue, Arial, sans-serif, apple color emoji, segoe ui emoji, segoe ui symbol;
+    font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
@@ -274,15 +281,15 @@ sup {
 }
 
 a {
-    color: #3176d9;
+    color: {{ site.color }};
     text-decoration: none;
     background-color: transparent;
     -webkit-text-decoration-skip: objects
 }
 
 a:hover {
-    color: #1e53a0;
-    text-decoration: none
+    color: {{ site.color }};
+    text-decoration: underline
 }
 
 a:not([href]):not([tabindex]) {
@@ -642,9 +649,18 @@ mark,
 }
 
 code {
+    color: {{ site.color }};
     font-size: 87.5%;
-    color: #952a1e;
-    word-break: break-word
+    word-break: normal;
+}
+
+code.inline-code {
+    color: {{ site.color }};
+    margin: 0;
+    font-size: 87.5%;
+    word-break: normal;
+    background-color: #ffffff;
+    border-radius: .25rem
 }
 
 a>code {
@@ -2030,14 +2046,11 @@ pre code {
 .td-box .row.section>table td,
 .td-content>table td {
     padding: .75rem;
-    vertical-align: top;
-    border-top: 1px solid #dee2e6
 }
 
 .table thead th,
 .td-box .row.section>table thead th,
 .td-content>table thead th {
-    vertical-align: bottom;
     border-bottom: 2px solid #dee2e6
 }
 
@@ -2090,7 +2103,7 @@ pre code {
 .table-striped tbody tr:nth-of-type(odd),
 .td-box .row.section>table tbody tr:nth-of-type(odd),
 .td-content>table tbody tr:nth-of-type(odd) {
-    background-color: rgba(0, 0, 0, .05)
+    background-color: #f3f4f7
 }
 
 .table-hover tbody tr:hover {
@@ -3110,7 +3123,7 @@ fieldset:disabled a.btn {
 
 .btn-info {
     color: #fff;
-    background-color: #479de7;
+    background-color: #54c7ec;
 }
 
 .btn-info:hover {
@@ -5947,7 +5960,7 @@ input[type=button].btn-block {
 
 .badge-info {
     color: #fff;
-    background-color: #479de7
+    background-color: #54c7ec
 }
 
 .badge-info[href]:hover,
@@ -15536,7 +15549,7 @@ a.text-dark:focus {
     z-index: 1
 }
 
-@media(min-width:992px) {
+/* @media(min-width:992px) {
     .td-max-width-on-larger-screens,
     .td-content>pre,
     .td-content>.highlight,
@@ -15552,7 +15565,7 @@ a.text-dark:focus {
     .td-content>.alert {
         max-width: 80%
     }
-}
+} */
 
 .-bg-blue {
     color: #fff;
@@ -17876,12 +17889,11 @@ a.text-dark:focus {
 .td-content p code,
 .td-content li>code,
 .td-content table code {
-    color: inherit;
-    padding: .2em .4em;
+    color: {{ site.color }};
     margin: 0;
-    font-size: 85%;
+    font-size: 87.5%;
     word-break: normal;
-    background-color: rgba(0, 0, 0, .05);
+    background-color: #ffffff;
     border-radius: .25rem
 }
 
@@ -18087,7 +18099,8 @@ html body .md-typeset .headerlink {
 }
 
 .td-sidebar-nav__section-title .active {
-    font-weight: 700
+    font-weight: 700;
+    color: {{ site.color }}
 }
 
 .td-sidebar-nav__section-title a {
@@ -18105,8 +18118,8 @@ html body .md-typeset .headerlink {
 }
 
 .td-sidebar-nav a:hover {
-    color: #72a1e5;
-    text-decoration: none
+    color: {{ site.color }};
+    text-decoration: underline
 }
 
 .td-sidebar-nav a.active {
@@ -18225,7 +18238,7 @@ html body .md-typeset .headerlink {
 }
 
 .td-toc #TableOfContents a:hover {
-    color: #72a1e5;
+    color: {{ site.color }};
     text-decoration: none
 }
 
@@ -18292,12 +18305,12 @@ html body .md-typeset .headerlink {
 
 .alert-info {
     border-style: solid;
-    border-color: #479de7;
+    border-color: #54c7ec;
     border-width: 0 0 0 4px
 }
 
 .alert-info .alert-heading {
-    color: #479de7;
+    color: #54c7ec;
 }
 
 .alert-warning {
