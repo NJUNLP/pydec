@@ -18,7 +18,7 @@ URL = "https://github.com/DoubleVII/pydec/"
 EMAIL = "yangsen@smail.nju.edu.cn"
 AUTHOR = "Sen Yang"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.1.0"
+VERSION = "1.0.0"
 
 # What packages are required for this module to be executed?
 REQUIRED = ["torch>=1.11.0", "numpy"]
@@ -122,5 +122,7 @@ setup(
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
     # $ setup.py publish support.
-    cmdclass={"upload": UploadCommand,},
+    cmdclass={
+        "upload": UploadCommand,
+    },
 )
