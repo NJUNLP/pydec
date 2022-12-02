@@ -8,8 +8,41 @@ from ..decomposition import (
     get_decomposition_func,
     get_decomposition_name,
 )
-from ..exception_utils import none_decomposition_func_error
-from typing import Optional
+from ..exception_utils import none_decomposition_func_error, arg_value_error
+
+# In some cases, these basic types are shadowed by corresponding
+# top-level values.  The underscore variants let us refer to these
+# types.  See https://github.com/python/mypy/issues/4146 for why these
+# workarounds is necessary
+from torch.types import (
+    _int,
+    _float,
+    _bool,
+    Number,
+    _dtype,
+    _device,
+    _qscheme,
+    _size,
+    _layout,
+    SymInt,
+)
+
+from typing import (
+    List,
+    Tuple,
+    Optional,
+    Union,
+    Any,
+    ContextManager,
+    Callable,
+    overload,
+    Iterator,
+    NamedTuple,
+    Sequence,
+    TypeVar,
+)
+
+from ..variable_functions import _from_replce
 
 
 def relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
@@ -62,13 +95,135 @@ def layer_norm_1d(
         return out
 
 
+@overload
+def conv2d(
+    input: Composition,
+    weight: Tensor,
+    bias: Optional[Tensor] = None,
+    stride: Union[_int, _size] = 1,
+    padding: Union[_int, _size] = 0,
+    dilation: Union[_int, _size] = 1,
+    groups: _int = 1,
+) -> Composition:
+    ...
+
+
+@overload
+def conv2d(
+    input: Composition,
+    weight: Tensor,
+    bias: Optional[Tensor] = None,
+    stride: Union[_int, _size] = 1,
+    padding: str = "valid",
+    dilation: Union[_int, _size] = 1,
+    groups: _int = 1,
+) -> Composition:
+    ...
+
+
+def conv2d(
+    input: Composition,
+    weight: Tensor,
+    bias: Optional[Tensor] = None,
+    stride: Union[_int, _size] = 1,
+    padding: Any = 0,
+    dilation: Union[_int, _size] = 1,
+    groups: _int = 1,
+):
+    """
+    Applies a 2D convolution over an input composition.
+    """
+    if len(input.size()) != 4 or len(input.size()) != 3:
+        raise arg_value_error(
+            f"Expected 3D (unbatched) or 4D (batched) input to conv2d, but got input of size: [{len(input.size())}]"
+        )
+    if len(input.size()) == 3:
+        out_composition_tensor = F.conv2d(
+            input._composition_tensor, weight, None, stride, padding, dilation, groups,
+        )
+        out_residual_tensor = F.conv2d(
+            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+        )
+    else:
+        out_composition_tensor = F.conv2d(
+            input._composition_tensor.view((-1,) + input.size()[1:]),
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
+        ).view((-1,) + input.size())
+        out_residual_tensor = F.conv2d(
+            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+        )
+    out_residual_tensor += bias
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def max_pool2d(
+    input: Composition,
+    kernel_size: Union[_int, Tuple[_int, _int]],
+    stride: Union[_int, Tuple[_int, _int]] = None,
+    padding: Union[_int, Tuple[_int, _int]] = 0,
+    dilation: Union[_int, Tuple[_int, _int]] = 1,
+    ceil_mode: _bool = False,
+    return_indices: _bool = False,
+):
+    """
+    Applies a 2D max pooling over an input composition.
+    """
+    if len(input.size()) != 4 or len(input.size()) != 3:
+        raise arg_value_error(
+            f"Expected 3D (unbatched) or 4D (batched) input to conv2d, but got input of size: [{len(input.size())}]"
+        )
+    recovery = input.c_sum()
+    _, indices = F.max_pool2d(
+        recovery,
+        kernel_size=kernel_size,
+        stride=stride,
+        padding=padding,
+        dilation=dilation,
+        ceil_mode=ceil_mode,
+        return_indices=True,
+    )
+
+    out = max_pool2d_with_indices(input, indices=indices)
+    if return_indices:
+        return out, indices
+    else:
+        return out
+
+
+def max_pool2d_with_indices(
+    input: Composition,
+    indices: Tensor,
+    kernel_size: Union[_int, Tuple[_int, _int]],
+    stride: Union[_int, Tuple[_int, _int]] = None,
+    padding: Union[_int, Tuple[_int, _int]] = 0,
+    dilation: Union[_int, Tuple[_int, _int]] = 1,
+    ceil_mode: _bool = False,
+):
+    """
+    Applies a 2D max pooling over an input composition.
+    TODO: need to support arguments [kernel_size, stride, padding, dilation, ceil_mode]
+    """
+    if len(input.size()) != 4 or len(input.size()) != 3:
+        raise arg_value_error(
+            f"Expected 3D (unbatched) or 4D (batched) input to conv2d, but got input of size: [{len(input.size())}]"
+        )
+    flat_input = input.view(input.size()[:-2] + (-1,))
+    H_out, W_out = indices.size()[-2:]
+
+    out = flat_input.gather(dim=-1, index=indices.view(indices.size()[:-2] + (-1,)))
+    out = out.view(out.size()[:-1] + (H_out, W_out))
+
+    return out
+
+
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
     def hybrid_decomposition(
-        bias,
-        context: Composition,
-        *,
-        threshold=0.15,
-        eps=1e-6,
+        bias, context: Composition, *, threshold=0.15, eps=1e-6,
     ) -> Composition:
         def ratio_map(ratio: Tensor):
             zero_map = ratio < threshold
