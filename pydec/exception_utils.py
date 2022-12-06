@@ -54,3 +54,16 @@ def none_decomposition_func_error(func_name: str = None) -> RuntimeError:
     return RuntimeError(
         f"Cannot find the currently used decomposition function with key name ({func_name})."
     )
+
+
+def args_error_not_in_tracing(*args, **kwargs):
+    error_msg = (
+        "received Composition type argument but not in the tracing mode - got ({}).\nTo fix this error: "
+        "(1) input tensor instead if you do not want to do tracing or (2) set tracing enabled by Tracer.trace() or pydec.set_tracing_enabled()"
+    )
+    arg_types = tuple(type(arg).__name__ for arg in args)
+    kwarg_types = tuple(
+        f"{key}={type(value).__name__}" for key, value in kwargs.items()
+    )
+    type_str = ", ".join(arg_types + kwarg_types)
+    return RuntimeError(error_msg.format(type_str))
