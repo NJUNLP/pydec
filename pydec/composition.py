@@ -46,14 +46,6 @@ def _from_replce(
     ...
 
 
-def _get_bias_decomposition_name() -> str:
-    ...
-
-
-def _get_decomposition_func() -> Callable[..., Composition]:
-    ...
-
-
 class Composition:
     __doc__ = r"""
     Composition doc
@@ -149,6 +141,7 @@ class Composition:
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
     ) -> Union[Composition, Tensor]:
         # TODO: fix bug: Composition[None], Composition[List]
+        # TODO: support autotracing
         if isinstance(indices, (type(None), _int, slice, Tensor)):
             indices = (indices,)
         if indices[0] is None:
@@ -285,13 +278,7 @@ class Composition:
             self._residual_tensor += other._residual_tensor
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(bias=other, context=self)
-                assert isinstance(bias_composition, Composition)
-                self += bias_composition
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            self._residual_tensor += other
             return self
         else:
             raise unsupported_operand_error("+=", type(self), type(other))
@@ -306,13 +293,9 @@ class Composition:
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(bias=other, context=self)
-                assert isinstance(bias_composition, Composition)
-                return self + bias_composition
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            out_composition_tensor = self._composition_tensor.clone()
+            out_residual_tensor = self._residual_tensor + other
+            return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("+", type(self), type(other))
 
@@ -492,15 +475,13 @@ class Composition:
                 )
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(
-                    bias=alpha * other, context=self, **kwargs
-                )
-                assert isinstance(bias_composition, Composition)
-                return self.add(bias_composition, out=out, **kwargs)
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            out_composition_tensor = self._composition_tensor.clone()
+            out_residual_tensor = self._residual_tensor.add(
+                other, alpha=alpha, out=out._residual_tensor
+            )
+            if out is not None:
+                out._composition_tensor[:] = out_composition_tensor
+            return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("add", type(self), type(other))
 
@@ -518,15 +499,8 @@ class Composition:
             self._residual_tensor.add_(other._residual_tensor, alpha=alpha)
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(
-                    bias=alpha * other, context=self, **kwargs
-                )
-                assert isinstance(bias_composition, Composition)
-                return self.add_(bias_composition)
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            self._residual_tensor.add_(other, alpha=alpha)
+            return self
         else:
             raise unsupported_operand_error("add_", type(self), type(other))
 
