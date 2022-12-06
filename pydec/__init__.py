@@ -17,6 +17,13 @@ from .error_check import (
     check_error,
     is_error_checking_enabled,
 )
+from .autotracing import (
+    no_tracing,
+    enable_tracing,
+    set_tracing_enabled,
+    is_tracing_enabled,
+)
+
 
 __all__ = [
     "Composition",
@@ -27,6 +34,14 @@ __all__ = [
     "set_decomposition_args",
     "get_decomposition_args",
     "using_decomposition_args",
+    "no_error_check",
+    "error_check",
+    "check_error",
+    "is_error_checking_enabled",
+    "no_tracing",
+    "enable_tracing",
+    "set_tracing_enabled",
+    "is_tracing_enabled",
 ]
 
 import typing as _typing
@@ -56,5 +71,3 @@ for name in dir(_variable_functions):
 # initialization
 
 _composition._from_replce = _variable_functions._from_replce
-_composition._get_decomposition_name = get_decomposition_name
-_composition._get_decomposition_func = get_decomposition_func
