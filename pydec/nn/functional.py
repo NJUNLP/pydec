@@ -269,7 +269,7 @@ def max_pool2d_with_indices(
 
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
     def hybrid_decomposition_(
-        sum_value, context: Composition, *, threshold=0.15, eps=1e-6,
+        sum_value, context: Composition, *, threshold=0.2, eps=1e-6,
     ) -> Composition:
 
         composition = context._composition_tensor
@@ -283,6 +283,7 @@ def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition
 
         multiplier = sum_value / composition.sum(dim=0)
         context._composition_tensor *= multiplier
+        context._residual_tensor = 0.0
         return context
 
     # return legacy_relu(input, ref)
@@ -300,3 +301,4 @@ def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition
     out._residual_tensor = isolated_relu_out
     out = out + delta_composition
     return out
+
