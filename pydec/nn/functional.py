@@ -45,7 +45,53 @@ from typing import (
 from ..variable_functions import _from_replce
 
 
-def relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+def relu(
+    input: Composition, inplace=False, ref: Optional[Tensor] = None
+) -> Composition:
+    decomposition_func = get_decomposition_func()
+    if decomposition_func is not None:
+        out = decomposition_func(
+            input=input, func=torch.nn.functional.relu, ref=ref, inplace=inplace
+        )
+        assert isinstance(out, Composition)
+        return out
+    else:
+        raise none_decomposition_func_error(get_decomposition_name())
+
+
+def relu_(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+    return relu(input=input, inplace=True, ref=ref)
+
+
+def leaky_relu(
+    input: Composition, inplace=False, ref: Optional[Tensor] = None
+) -> Composition:
+    decomposition_func = get_decomposition_func()
+    if decomposition_func is not None:
+        out = decomposition_func(
+            input=input, func=torch.nn.functional.relu, ref=ref, inplace=inplace
+        )
+        assert isinstance(out, Composition)
+        return out
+    else:
+        raise none_decomposition_func_error(get_decomposition_name())
+
+
+def leaky_relu_(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+    return leaky_relu(input=input, inplace=True, ref=ref)
+
+
+def gelu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+    decomposition_func = get_decomposition_func()
+    if decomposition_func is not None:
+        out = decomposition_func(input=input, func=torch.nn.functional.gelu, ref=ref)
+        assert isinstance(out, Composition)
+        return out
+    else:
+        raise none_decomposition_func_error(get_decomposition_name())
+
+
+def tanh(input: Composition, ref: Optional[Tensor] = None) -> Composition:
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         out = decomposition_func(input=input, func=torch.nn.functional.relu, ref=ref)
@@ -55,10 +101,10 @@ def relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
         raise none_decomposition_func_error(get_decomposition_name())
 
 
-def gelu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+def sigmoid(input: Composition, ref: Optional[Tensor] = None) -> Composition:
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.nn.functional.gelu, ref=ref)
+        out = decomposition_func(input=input, func=torch.nn.functional.relu, ref=ref)
         assert isinstance(out, Composition)
         return out
     else:
