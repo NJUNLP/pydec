@@ -268,33 +268,22 @@ def max_pool2d_with_indices(
 
 
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
-    def hybrid_decomposition(
-        bias, context: Composition, *, threshold=0.15, eps=1e-6,
+    def hybrid_decomposition_(
+        sum_value, context: Composition, *, threshold=0.15, eps=1e-6,
     ) -> Composition:
-        def ratio_map(ratio: Tensor):
-            zero_map = ratio < threshold
-            ratio[zero_map] = 0
-            ratio[~zero_map] = 1
 
-        compositions = context._composition_tensor
-        sum_compositions = compositions.sum(dim=0, keepdim=True)
-        abs_compositions = compositions.abs()
-        abs_sum_compositions = abs_compositions.sum(dim=0, keepdim=True)
-        ratio = sum_compositions.abs() / abs_sum_compositions
+        composition = context._composition_tensor
+        sum_composition = composition.sum(dim=0)
+        abs_composition = composition.abs()
+        abs_sum_composition = abs_composition.sum(dim=0, keepdim=True)
+        instability_ratio = sum_composition.abs() / abs_sum_composition
+        mask = (instability_ratio < threshold).expand_as(composition)
 
-        sum_compositions[sum_compositions == 0] = eps
-        abs_sum_compositions[abs_sum_compositions == 0] = eps
+        composition[mask] = composition[mask].abs()
 
-        ratio_map(ratio)
-
-        weights = ratio * compositions / sum_compositions
-        abs_weights = (1 - ratio) * abs_compositions / abs_sum_compositions
-
-        bias_composition_tensor = weights * bias + abs_weights * bias
-        from ..variable_functions import _from_replce
-
-        out = _from_replce(bias_composition_tensor)
-        return out
+        multiplier = sum_value / composition.sum(dim=0)
+        context._composition_tensor *= multiplier
+        return context
 
     # return legacy_relu(input, ref)
     if ref is None:
@@ -306,8 +295,8 @@ def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition
     relu_out = out._residual_tensor
 
     delta_relu_out = relu_out - isolated_relu_out
-    decomposition_func = hybrid_decomposition
-    bias_composition = decomposition_func(bias=delta_relu_out, context=input)
+    decomposition_func = hybrid_decomposition_
+    delta_composition = decomposition_func(sum_value=delta_relu_out, context=input)
     out._residual_tensor = isolated_relu_out
-    out = out + bias_composition
+    out = out + delta_composition
     return out
