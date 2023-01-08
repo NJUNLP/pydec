@@ -340,6 +340,8 @@ class Composition:
         else:
             raise unsupported_operand_error("@", type(self), type(other))
 
+    # TODO: to support tensor@composition
+
     def __imul__(self, other) -> Composition:
         if isinstance(other, Composition):
             raise unsupported_operand_error("*=", type(self), type(other))
@@ -1278,6 +1280,16 @@ class Composition:
         else:
             self._composition_tensor.round_()
             self._residual_tensor.round_()
+        return self
+
+    def abs(self) -> Composition:
+        out_composition_tensor = self._composition_tensor.abs()
+        out_residual_tensor = self._residual_tensor.abs()
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def abs_(self) -> Tensor:
+        self._composition_tensor.abs_()
+        self._residual_tensor.abs_()
         return self
 
 
