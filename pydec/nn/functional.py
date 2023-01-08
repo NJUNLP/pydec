@@ -50,6 +50,7 @@ def relu(
 ) -> Composition:
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
+        # TODO: inplace arg overwrite
         out = decomposition_func(
             input=input, func=torch.nn.functional.relu, ref=ref, inplace=inplace
         )
@@ -185,10 +186,22 @@ def conv2d(
         )
     if len(input.size()) == 3:
         out_composition_tensor = F.conv2d(
-            input._composition_tensor, weight, None, stride, padding, dilation, groups,
+            input._composition_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
         out_residual_tensor = F.conv2d(
-            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+            input._residual_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
     else:
         out_composition_tensor = F.conv2d(
@@ -201,7 +214,13 @@ def conv2d(
             groups,
         ).view((-1,) + input.size())
         out_residual_tensor = F.conv2d(
-            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+            input._residual_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
     out_residual_tensor += bias
     return _from_replce(out_composition_tensor, out_residual_tensor)
@@ -268,37 +287,24 @@ def max_pool2d_with_indices(
 
 
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
-    def hybrid_decomposition_(
-        sum_value, context: Composition, *, threshold=0.2, eps=1e-6,
-    ) -> Composition:
-
-        composition = context._composition_tensor
-        sum_composition = composition.sum(dim=0)
-        abs_composition = composition.abs()
-        abs_sum_composition = abs_composition.sum(dim=0, keepdim=True)
-        instability_ratio = sum_composition.abs() / abs_sum_composition
-        mask = (instability_ratio < threshold).expand_as(composition)
-
-        composition[mask] = composition[mask].abs()
-
-        multiplier = sum_value / composition.sum(dim=0)
-        context._composition_tensor *= multiplier
-        context._residual_tensor = 0.0
-        return context
-
-    # return legacy_relu(input, ref)
     if ref is None:
         ref = input.c_sum()
     zero_mask = ref < 0
-    isolated_relu_out = torch.nn.functional.relu(input._residual_tensor)
-
+    residual_out = torch.nn.functional.relu(input._residual_tensor)
     out = input.masked_fill(zero_mask, 0.0)
-    relu_out = out._residual_tensor
+    masked_residual_out = out._residual_tensor
+    decomposition_func = get_decomposition_func()
+    if decomposition_func is not None:
 
-    delta_relu_out = relu_out - isolated_relu_out
-    decomposition_func = hybrid_decomposition_
-    delta_composition = decomposition_func(sum_value=delta_relu_out, context=input)
-    out._residual_tensor = isolated_relu_out
-    out = out + delta_composition
-    return out
+        delta_context = _from_replce(input._composition_tensor, residual_out)
+        delta_out = decomposition_func(
+            input=delta_context, func=lambda x: x, ref=masked_residual_out
+        )
+        out._composition_tensor += delta_out._composition_tensor
+        out._residual_tensor = delta_out._residual_tensor
+        return out
+    else:
+        raise none_decomposition_func_error(get_decomposition_name())
 
+
+# relu = legacy_relu
