@@ -73,7 +73,11 @@ from .states import register_decomposition_func, set_decomposition_func
 
 @register_decomposition_func("none")
 def _none_decomposition(
-    context: Composition, func: Callable[[Tensor], Tensor], *, inplace: _bool = False
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    inplace: _bool = False,
 ) -> Composition:
     r"""
     Note: since Pydec TODO(add a version), this algorithm is no longer the default
@@ -81,16 +85,24 @@ def _none_decomposition(
 
     A trivial decomposition algorithm. Just add the output to residual.
     """
-    recovery = input.c_sum()
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
     recovery_out = func(recovery)
 
-    out = zeros_like(context)
-    out._residual_tensor += recovery_out
-    return out
+    if inplace:
+        input._composition_tensor[:] = 0
+        input._residual_tensor = recovery_out
+        return input
+    else:
+        out = zeros_like(input)
+        out._residual_tensor += recovery_out
+        return out
 
 
 @register_decomposition_func("abs_decomposition")
-def hybrid_decomposition(
+def abs_decomposition(
     input: Composition,
     func: Callable[[Tensor], Tensor],
     *,
