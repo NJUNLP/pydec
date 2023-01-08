@@ -30,7 +30,7 @@ class _DecompositionState:
 
 def register_decomposition_func(name: str):
     """
-    TODO: need update
+    TODO: docs need update
     New decomposition_func can be added with the :func:`register_decomposition_func`
     function decorator.
 
