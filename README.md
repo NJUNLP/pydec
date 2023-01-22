@@ -1,6 +1,6 @@
 [![PyPI](https://img.shields.io/pypi/v/pydec)](https://pypi.org/project/pydec/)
 [![Test](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/DoubleVII/pydec/pages%20build%20and%20deployment?label=docs)](https://doublevii.github.io/pydec/)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/DoubleVII/pydec/jekyll-gh-pages.yml?label=docs)](https://doublevii.github.io/pydec/)
 ![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/DoubleVII/pydec/python-coverage-comment-action-data/endpoint.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
