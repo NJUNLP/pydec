@@ -142,7 +142,7 @@ class Composition:
     ) -> Union[Composition, Tensor]:
         # TODO: fix bug: Composition[None], Composition[List]
         # TODO: support autotracing
-        if isinstance(indices, (type(None), _int, slice, Tensor)):
+        if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
@@ -160,7 +160,7 @@ class Composition:
         indices: Union[None, _int, slice, Tensor, List, Tuple],
         val: Union[Composition, Tensor, Number],
     ) -> None:
-        if isinstance(indices, (type(None), _int, slice, Tensor)):
+        if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
