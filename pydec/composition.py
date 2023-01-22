@@ -4,6 +4,7 @@ import torch
 from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, overload
 from torch import Tensor
 from torch._C import memory_format
+import pydec
 
 # In some cases, these basic types are shadowed by corresponding
 # top-level values.  The underscore variants let us refer to these
@@ -140,7 +141,16 @@ class Composition:
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
     ) -> Union[Composition, Tensor]:
-        # TODO: support autotracing
+        # support autotracing
+        if pydec.autotracing.is_tracing_enabled():
+            if isinstance(indices, Tuple):
+                indices = (slice(None, None, None),) + indices
+            else:
+                indices = (
+                    slice(None, None, None),
+                    indices,
+                )
+
         if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
@@ -159,6 +169,16 @@ class Composition:
         indices: Union[None, _int, slice, Tensor, List, Tuple],
         val: Union[Composition, Tensor, Number],
     ) -> None:
+        # support autotracing
+        if pydec.autotracing.is_tracing_enabled():
+            if isinstance(indices, Tuple):
+                indices = (slice(None, None, None),) + indices
+            else:
+                indices = (
+                    slice(None, None, None),
+                    indices,
+                )
+
         if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
