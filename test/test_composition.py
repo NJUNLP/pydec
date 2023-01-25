@@ -1,71 +1,9 @@
 import pydec
 from pydec import Composition
 import torch
-import logging
+import pytest
 
 torch.manual_seed(114514)
-
-# t = torch.randn((3,))
-# t2 = torch.zeros((2,))
-# t3 = t2
-# print(t2._version)
-# print(torch.cat([t, t], dim=0, out=t2))
-# print(t2._version)
-# print(t2)
-# print(t3)
-# # # t = t + 1
-# # print(t)
-# # torch.tensor(t).unsqueeze_(1)
-# # t.clone().detach().unsqueeze_(1)
-# # # t3.squeeze_(1)
-# pydec.set_decomposition_func("abs_decomposition")
-# c = Composition((2, 3), 3, dtype=torch.float)
-# # c = Composition(torch.empty((3, 2)), torch.empty((4,)))
-# # c = Composition(c)
-# # print(c)
-# t0 = torch.randn((2, 3), requires_grad=True)
-# t1 = torch.randn((2, 3), requires_grad=True)
-# t2 = torch.randn((2, 3), requires_grad=True)
-# index = torch.LongTensor([[2, 1], [2, 0]])
-
-# c[0] = t0
-# c[1] = t1
-# c[2] = t2
-# print(c.size(1))
-# # print(c.all(1, 2, keepdim=True))
-# # torch.nn.Conv2d
-# # print(t0)
-# # print(t1)
-# # print(t0.scatter(dim=1, index=index, src=t1, reduce="add")+t1+t2)
-# # print(c.scatter(dim=1, index=index, src=t1, reduce="add").c_sum())
-# # exit()
-# # c._composition_tensor.requires_grad_(True)
-# # c._composition_tensor += 3
-# c = 2 * c
-# c = c + 3
-# # print(c[0])
-# # c += 3
-# # print(c)
-# # c += 3
-# c = c.permute(dims=(-1, 0))
-# t0.permute(dims=(-1, 0))
-# exit()
-# # c = c.contiguous().view((6,)).to(c)
-
-# # c = c.view_as(t0)
-# # print(c.c_sum().sum())
-# # print(c)
-# # c = c.sum((-1,0), keepdim=True)
-# # print(c)
-# print(c.size())
-# print(c)
-
-# loss = c.sum().c_sum()
-# loss.backward()
-# print(t0.grad)
-# # print(c.size())
-# # c.unsqueeze_(1)
-# # print(c.size())
 
 
 def init_composition(size, c_num=3, requires_grad=False):
@@ -73,6 +11,111 @@ def init_composition(size, c_num=3, requires_grad=False):
     for i in range(c_num):
         c[i] = torch.randn(size, requires_grad=requires_grad)
     return c
+
+
+class TestIndexing:
+    @classmethod
+    def init_composition(cls) -> Composition:
+        size = (3, 4)
+        c = Composition(size, component_num=4)
+        return c
+
+    def test1(self):
+        c = TestIndexing.init_composition()
+        with pytest.raises(RuntimeError):
+            c[None]
+        with pytest.raises(RuntimeError):
+            c[None] = 1
+
+    def test2(self):
+        c = TestIndexing.init_composition()
+        c0 = c[0]
+        assert isinstance(c0, torch.Tensor)
+        assert c0.size() == c.size()
+        c02 = c[0:2]
+        assert isinstance(c02, Composition)
+        assert c02.numc() == 2
+        assert c02.size() == c.size()
+        c02_ = c[:, 0:2]
+        assert c02_.numc() == c.numc()
+        assert c02_.size() == (2,) + c.size()[1:]
+        c0202 = c[:2, :2]
+        assert c0202.numc() == 2
+        assert c0202.size() == (2,) + c.size()[1:]
+
+    def test3(self):
+        c = TestIndexing.init_composition()
+        c_ = c[:, None]
+        assert c_.size() == (1,) + c.size()
+        index_list = [0, 2]
+        c_ = c[index_list]
+        assert isinstance(c_, Composition)
+        assert c_.numc() == 2
+        assert c_.size() == c.size()
+        c_ = c[index_list, index_list]
+        assert c_.c_size() == (2,) + c.c_size()[2:]
+
+        c_ = c[index_list, index_list, index_list]
+        assert c_.c_size() == (2,)
+
+        c_ = c[:, index_list, index_list]
+        assert c_.c_size() == (4, 2)
+
+
+class TestIndexingInAutotracing:
+    @classmethod
+    def init_composition(cls) -> Composition:
+        size = (3, 4)
+        c = Composition(size, component_num=4)
+        return c
+
+    def test1(self):
+        c = TestIndexing.init_composition()
+        with pydec.autotracing.set_tracing_enabled(True):
+            c_ = c[None]
+            assert c_.numc() == c.numc()
+            assert c_.size() == (1,) + c.size()
+
+            c[None] = 1
+            assert torch.all(c._residual_tensor == 0)
+            assert torch.all(c._composition_tensor == 1)
+
+    def test2(self):
+        c = TestIndexing.init_composition()
+        with pydec.autotracing.set_tracing_enabled(True):
+            c0 = c[0]
+            assert isinstance(c0, Composition)
+            assert c0.numc() == c.numc()
+            assert c0.size() == c.size()[1:]
+            c02 = c[0:2]
+            assert isinstance(c02, Composition)
+            assert c02.numc() == c.numc()
+            assert c02.size() == (2,) + c.size()[1:]
+            c02_ = c[:, 0:2]
+            assert c02_.numc() == c.numc()
+            assert c02_.size() == c.size()[:1] + (2,)
+            c0202 = c[:2, :2]
+            assert c0202.numc() == c.numc()
+            assert c0202.size() == (2, 2)
+
+    def test3(self):
+        c = TestIndexing.init_composition()
+        with pydec.autotracing.set_tracing_enabled(True):
+            c_ = c[:, None]
+            assert c_.size() == c.size()[:1] + (1,) + c.size()[1:]
+            index_list = [0, 2]
+            c_ = c[index_list]
+            assert isinstance(c_, Composition)
+            assert c_.numc() == c.numc()
+            assert c_.size() == (2,) + c.size()[1:]
+            c_ = c[index_list, index_list]
+            assert c_.c_size() == (c.numc(), 2)
+
+            with pytest.raises(IndexError):
+                c_ = c[index_list, index_list, index_list]
+
+            with pytest.raises(IndexError):
+                c_ = c[:, index_list, index_list]
 
 
 class TestView:
@@ -139,71 +182,3 @@ class TestPlus:
             self.c._composition_tensor + c._composition_tensor
             == out._composition_tensor
         )
-
-
-# input = torch.randn((16, 20, 512))
-
-# c = pydec.Composition((16, 20, 512), component_num=20*512)
-# c = c.view(16, 20*512)
-# c = pydec.diagonal_init(c, src=input.view(16,20*512), dim=1)
-# c = c.view_as(input)
-# torch.zeros(requires_grad=)
-# import torch.nn as nn
-# from torch import Tensor
-
-
-# class NN(nn.Module):
-#     def __init__(self) -> None:
-#         ...
-
-#     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
-#         x1 = self.linear1(x1)
-#         x1 = self.relu(x1)
-
-#         x2 = self.linear2(x2)
-#         x2 = self.relu(x2)
-
-#         out = self.linear3(x1 + x2)
-#         return out
-
-
-# class NN(nn.Module):
-#     def __init__(self) -> None:
-#         self.linear1: nn.Linear = None
-#         self.linear2: nn.Linear = None
-#         self.linear3: nn.Linear = None
-
-#     def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
-#         x1 = self.linear1(x1)
-#         x1 = self.relu(x1)
-
-#         x2 = self.linear2(x2)
-#         x2 = self.relu(x2)
-
-#         out = self.linear3(x1 + x2)
-
-
-#         # Initialize composition
-#         import pydec
-#         from pydec import Composition
-#         c1 = Composition(x1.size(), component_num=2).to(x1)
-#         c1[0] = x1
-
-#         c2 = Composition(x2.size(), component_num=2).to(x2)
-#         c2[1] = x2
-
-#         # Apply the same operation for composition
-#         c1 = pydec.nn.functional.linear(
-#             c1, weight=self.linear1.weight, bias=self.linear1.bias
-#         )
-#         c1 = pydec.nn.functional.relu(c1)
-
-#         c2 = pydec.nn.functional.linear(
-#             c2, weight=self.linear2.weight, bias=self.linear2.bias
-#         )
-#         c2 = pydec.nn.functional.relu(c2)
-
-#         c_out = pydec.nn.functional.linear3(
-#             c1 + c2, weight=self.linear3.weight, bias=self.linear3.bias
-#         )
-#         return out, c_out
