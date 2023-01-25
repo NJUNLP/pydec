@@ -18,7 +18,7 @@ __all__ = ["no_grad", "enable_grad", "set_grad_enabled", "inference_mode"]
 
 
 class _TracingMode:
-    is_enabled = True
+    is_enabled = False
 
     @classmethod
     def set_enabled(cls, enabled: _bool):
@@ -30,8 +30,7 @@ def is_tracing_enabled() -> _bool:
 
 
 class no_tracing(_DecoratorContextManager):
-    r"""Context-manager that disabled forward tracing.
-    """
+    r"""Context-manager that disabled forward tracing."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -46,8 +45,7 @@ class no_tracing(_DecoratorContextManager):
 
 
 class enable_tracing(_DecoratorContextManager):
-    r"""Context-manager that enables forward tracing.
-    """
+    r"""Context-manager that enables forward tracing."""
 
     def __enter__(self) -> None:
         self.prev = is_tracing_enabled()
@@ -58,8 +56,7 @@ class enable_tracing(_DecoratorContextManager):
 
 
 class set_tracing_enabled(_DecoratorContextManager):
-    r"""Context-manager that sets forward tracing to on or off.
-    """
+    r"""Context-manager that sets forward tracing to on or off."""
 
     def __init__(self, mode: bool) -> None:
         self.prev = is_tracing_enabled()
