@@ -4,7 +4,7 @@ import torch
 
 
 def init_composition(size, c_num=3, requires_grad=False):
-    c = Composition(size, c_num, dtype=torch.float)
+    c = pydec.zeros(size, c_num, dtype=torch.float)
     for i in range(c_num):
         c[i] = torch.randn(size, requires_grad=requires_grad)
     return c

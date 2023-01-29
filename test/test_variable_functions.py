@@ -85,7 +85,7 @@ class TestDiagonalInit:
         component_num = 3
         size = (3, 2)
         x = torch.randn(size)
-        c = Composition((3, 2), component_num)
+        c = pydec.zeros((3, 2), component_num)
         out = pydec.diagonal_init(c, src=x, dim=0)
         for i in range(self.c.numc()):
             for j in range(self.c.numc()):

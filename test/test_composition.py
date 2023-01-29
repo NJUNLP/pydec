@@ -7,7 +7,7 @@ torch.manual_seed(114514)
 
 
 def init_composition(size, c_num=3, requires_grad=False):
-    c = Composition(size, c_num, dtype=torch.float)
+    c = pydec.zeros(size, c_num, dtype=torch.float)
     for i in range(c_num):
         c[i] = torch.randn(size, requires_grad=requires_grad)
     return c
@@ -17,7 +17,7 @@ class TestIndexing:
     @classmethod
     def init_composition(cls) -> Composition:
         size = (3, 4)
-        c = Composition(size, component_num=4)
+        c = pydec.zeros(size, c_num=4)
         return c
 
     def test1(self):
