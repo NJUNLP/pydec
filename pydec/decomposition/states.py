@@ -37,7 +37,7 @@ def register_decomposition_func(name: str):
     For example::
 
         @register_model('forward_norm_decomposition')
-        def abs_decomposition(c: Composition, bias: Union[Number, Tensor] = None, *, eps=1e-6):
+        def abs_decomposition(input: Composition, func: Callable[[Tensor], Tensor], *, ref: Optional[Tensor] = None, inplace: _bool = False,):
             (...)
 
     Args:
