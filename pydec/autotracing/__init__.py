@@ -6,3 +6,4 @@ from .tracing_mode import (
 )
 from .tracer import Tracer
 from .compiler import compile
+from .library import register_api, register_functional_api, register_module
