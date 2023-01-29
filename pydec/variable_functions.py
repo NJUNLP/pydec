@@ -36,9 +36,7 @@ def void(
     device: Union[_device, str, None] = None,
     requires_grad: _bool = False,
 ) -> Composition:
-    return Composition(
-        tuple(), 0, dtype=dtype, device=device, requires_grad=requires_grad
-    )
+    return Composition(torch.zeros([]))
 
 
 def _from_replce(
@@ -149,9 +147,18 @@ def diagonal_init(
     permute_dims.remove(dim)
     permute_dims.append(dim)
     src = src.permute(permute_dims)
-    out_composition_tensor = input._composition_tensor.diagonal_scatter(
-        src, offset=offset, dim1=0, dim2=_shift_dim(dim)
-    )
+    if (
+        torch.__version__ < "1.11.0"
+    ):  # for versions < 1.11.0, 'diagonal_scatter' does not exist.
+        out_composition_tensor = input._composition_tensor.clone()
+        diag_view = out_composition_tensor.diagonal(
+            offset=offset, dim1=0, dim2=_shift_dim(dim)
+        )
+        diag_view = src
+    else:
+        out_composition_tensor = input._composition_tensor.diagonal_scatter(
+            src, offset=offset, dim1=0, dim2=_shift_dim(dim)
+        )
     out_residual_tensor = input._residual_tensor.clone()
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -742,6 +749,77 @@ def round_(input: Composition, *, decimals: _int) -> Composition:
 
 def round_(input: Composition, *, decimals: _int = None) -> Composition:
     return input.round_(decimals=decimals)
+
+
+@overload
+def zeros(
+    size: _size,
+    c_num: _int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: _dtype = None,
+    layout: Optional[_layout] = strided,
+    device: Union[_device, str, None] = None,
+    pin_memory: _bool = False,
+    requires_grad: _bool = False,
+) -> Composition:
+    ...
+
+
+@overload
+def zeros(
+    *size: _int,
+    c_num: _int,
+    out: Optional[Tensor] = None,
+    dtype: _dtype = None,
+    layout: Optional[_layout] = strided,
+    device: Union[_device, str, None] = None,
+    pin_memory: _bool = False,
+    requires_grad: _bool = False,
+) -> Composition:
+    ...
+
+
+def zeros(*args: Any, **kwargs: Any):
+    def _zeros(
+        *,
+        size: _size,
+        c_num: _int,
+        out: Optional[Composition] = None,
+        dtype: _dtype = None,
+        layout: Optional[_layout] = strided,
+        device: Union[_device, str, None] = None,
+        pin_memory: _bool = False,
+        requires_grad: _bool = False,
+    ):
+        out_composition_tensor = torch.zeros(
+            (c_num,) + size,
+            out=out._composition_tensor if out is not None else None,
+            dtype=dtype,
+            layout=layout,
+            device=device,
+            pin_memory=pin_memory,
+            requires_grad=requires_grad,
+        )
+        out_residual_tensor = torch.zeros(
+            size,
+            out=out._residual_tensor if out is not None else None,
+            dtype=dtype,
+            layout=layout,
+            device=device,
+            pin_memory=pin_memory,
+            requires_grad=requires_grad,
+        )
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    # parse args
+    if len(args) > 0:
+        if isinstance(args[0], _int):
+            kwargs["size"] = args
+        else:
+            for i in range(len(args)):
+                kwargs[["size", "c_num"][i]] = args[i]
+    return _zeros(**kwargs)
 
 
 def zeros_like(
