@@ -29,7 +29,6 @@ from pydec.exception_utils import (
     component_num_error,
     unsupported_operand_error,
     arg_value_error,
-    none_decomposition_func_error,
 )
 
 
@@ -49,19 +48,36 @@ def _from_replce(
 
 class Composition:
     __doc__ = r"""
-    Composition doc
+    TODO: Composition doc
     """
 
-    @overload
-    def __init__(
-        self,
-        size: _size,
-        component_num: _int,
-        dtype: Optional[_dtype] = None,
-        device: Union[_device, str, None] = None,
-        requires_grad: _bool = False,
-    ) -> None:
-        ...
+    @property
+    def requires_grad(self) -> _bool:
+        return self._residual_tensor.requires_grad
+
+    @property
+    def shape(self) -> torch.Size:
+        return self._residual_tensor.shape
+
+    @property
+    def device(self) -> _device:
+        return self._residual_tensor.device
+
+    @property
+    def dtype(self) -> _dtype:
+        return self._residual_tensor.dtype
+
+    @property
+    def T(self) -> Composition:
+        return self.permute(*torch.arange(self.ndim - 1, -1, -1))
+
+    @property
+    def mT(self) -> Composition:
+        return self.transpose(-2, -1)
+
+    @property
+    def ndim(self) -> _int:
+        return self.dim()
 
     @overload
     def __init__(
@@ -77,9 +93,22 @@ class Composition:
         def init_from_tensor(
             composition_tensor: Tensor, residual_tensor: Tensor = None
         ):
-            self._composition_tensor = torch.tensor(composition_tensor).to(
-                composition_tensor
-            )
+            if residual_tensor is not None:
+                if composition_tensor.dtype != residual_tensor.dtype:
+                    raise arg_value_error(
+                        f"the dtype of composition_tensor ({composition_tensor.dtype}) should be the same as that of residual_tensor ({residual_tensor.dtype})."
+                    )
+                if composition_tensor.device != residual_tensor.device:
+                    raise arg_value_error(
+                        f"the device of composition_tensor ({composition_tensor.device}) should be the same as that of residual_tensor ({residual_tensor.device})."
+                    )
+                if composition_tensor.requires_grad != residual_tensor.requires_grad:
+                    raise arg_value_error(
+                        f"composition_tensor.requires_grad ({composition_tensor.requires_grad}) should be the same as residual_tensor.requires_grad ({residual_tensor.requires_grad})."
+                    )
+
+            # formal way but may cause problems, see https://github.com/pytorch/pytorch/issues/85094
+            self._composition_tensor = composition_tensor.clone().detach()
             if residual_tensor is not None:
                 if composition_tensor.size()[1:] != residual_tensor.size():
                     raise size_error(
@@ -88,30 +117,11 @@ class Composition:
                         "composition",
                         "residual",
                     )
-                self._residual_tensor = torch.tensor(residual_tensor).to(
-                    residual_tensor
-                )
+                self._residual_tensor = residual_tensor.clone().detach()
             else:
                 self._residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
                     composition_tensor
                 )
-
-        def init_from_size(
-            size: _size,
-            component_num: _int,
-            dtype: Optional[_dtype] = None,
-            device: Union[_device, str, None] = None,
-            requires_grad: _bool = False,
-        ):
-            self._composition_tensor = torch.zeros(
-                (component_num,) + size,
-                dtype=dtype,
-                device=device,
-                requires_grad=requires_grad,
-            )
-            self._residual_tensor: Tensor = torch.zeros(
-                size, dtype=dtype, device=device, requires_grad=requires_grad
-            )
 
         def parse_args(args: list, key_list: List):
             for i in range(len(args)):
@@ -120,23 +130,28 @@ class Composition:
         self._composition_tensor: Tensor = None
         self._residual_tensor: Tensor = None
 
-        if len(args) > 0:
-            if isinstance(args[0], (torch.Size, list, Tuple)):
-                parse_args(
-                    args, ["size", "component_num", "dtype", "device", "requires_grad"]
-                )
+        if len(args) == 1:
+            if isinstance(args[0], Composition):
+                parse_args(args, ["composition"])
             elif isinstance(args[0], Tensor):
+                parse_args(args, ["composition_tensor"])
+            else:
+                raise args_error("Composition.__init__", args, kwargs)
+        elif len(args) == 2:
+            if isinstance(args[0], Tensor) and isinstance(args[1], Tensor):
                 parse_args(args, ["composition_tensor", "residual_tensor"])
             else:
-                parse_args(args, ["composition"])
+                raise args_error("Composition.__init__", args, kwargs)
+        elif len(args) > 2:
+            raise args_error("Composition.__init__", args, kwargs)
 
-        if "size" in kwargs:
-            init_from_size(**kwargs)
+        if "composition" in kwargs:
+            c: Composition = kwargs["composition"]
+            init_from_tensor(c._composition_tensor, c._residual_tensor)
         elif "composition_tensor" in kwargs:
             init_from_tensor(**kwargs)
         else:
-            c: Composition = kwargs["composition"]
-            init_from_tensor(c._composition_tensor, c._residual_tensor)
+            raise args_error("Composition.__init__", args, kwargs)
 
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
@@ -1306,28 +1321,12 @@ class Composition:
         out_residual_tensor = self._residual_tensor.abs()
         return _from_replce(out_composition_tensor, out_residual_tensor)
 
-    def abs_(self) -> Tensor:
+    def abs_(self) -> Composition:
         self._composition_tensor.abs_()
         self._residual_tensor.abs_()
         return self
 
-
-# original
-# bsz * self.num_heads x tgt_num x src_num
-# bsz * self.num_heads x src_num x head_dim
-
-# composition
-# bsz * self.num_heads x tgt_num x src_num
-# all_len x bsz * self.num_heads x src_num x head_dim
-
-
-# connection
-# bsz * self.num_heads x tgt_num x src_num
-# src_num x all_len x bsz * self.num_heads x src_num x head_dim
-
-
-# bsz * self.num_heads x 1       x tgt_num x src_num x 1
-# bsz * self.num_heads x src_num x 1       x src_num x head_dim
-
-# bsz * self.num_heads x src_num x tgt_num x src_num x head_dim
-# or bsz * self.num_heads x all_value_len x tgt_num x value_len x head_dim
+    def requires_grad_(self, mode: _bool = True) -> Composition:
+        self._composition_tensor.requires_grad_(mode)
+        self._residual_tensor.requires_grad_(mode)
+        return self
