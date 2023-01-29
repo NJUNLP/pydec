@@ -1,4 +1,5 @@
-from .module import DecModule, CopyModule
+from .meta import CopyModule
+from .module import DecModule
 import torch.nn as nn
 
 

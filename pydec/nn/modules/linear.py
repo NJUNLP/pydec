@@ -1,4 +1,5 @@
-from .module import DecModule, ProxyModule, CopyModule
+from .meta import ProxyModule, CopyModule
+from .module import DecModule
 from pydec import Composition
 import torch.nn as nn
 from .. import functional as F
