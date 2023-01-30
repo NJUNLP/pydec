@@ -94,6 +94,7 @@ def concatenate(
 def c_cat(
     compositions: Union[Tuple[Composition, ...], List[Composition]],
     *,
+    sum_residual: _bool = False,
     out: Optional[Composition] = None,
 ) -> Composition:
     for i in range(1, len(compositions)):
@@ -108,8 +109,10 @@ def c_cat(
         0,
         out=out._composition_tensor if out is not None else None,
     )
-    r_tensors = tuple(c._residual_tensor for c in compositions)
-    out_residual_tensor = builtins.sum(r_tensors)
+    out_residual_tensor = None
+    if sum_residual:
+        r_tensors = tuple(c._residual_tensor for c in compositions)
+        out_residual_tensor = builtins.sum(r_tensors)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
