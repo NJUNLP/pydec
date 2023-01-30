@@ -684,6 +684,24 @@ class Composition(metaclass=_CompositionMeta):
             self._residual_tensor.div_(other, rounding_mode=rounding_mode)
         return self
 
+    def mv(self, vec: Tensor) -> Composition:
+        r"""
+        Note that the use of Tensor.mv(Composition) is not supported and may raise an error in autoracing.
+        Use pydec.mv() instead or use torch.mv() in autotracing instead.
+        """
+        out_residual_tensor = self._residual_tensor.mv(vec)
+        out_composition_tensor = self._composition_tensor @ vec
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+        
+    def mm(self, mat2: Tensor) -> Composition:
+        r"""
+        Note that the use of Tensor.mm(Composition) is not supported and may raise an error in autoracing.
+        Use pydec.mm() instead or use torch.mm() in autotracing instead.
+        """
+        out_residual_tensor = self._residual_tensor.mm(mat2)
+        out_composition_tensor = self._composition_tensor @ mat2
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
     @overload
     def any(self) -> Tensor:
         ...
