@@ -5,6 +5,8 @@ from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, 
 from torch import Tensor
 from torch._C import memory_format
 import pydec
+import types
+import warnings
 
 # In some cases, these basic types are shadowed by corresponding
 # top-level values.  The underscore variants let us refer to these
@@ -46,7 +48,38 @@ def _from_replce(
     ...
 
 
-class Composition:
+_registered_method_dict = {}
+
+def _c_register_method(name: str, func: Callable):
+    # this function is not public, invoked by pydec.autotracing.library (stacklevel=3)
+    if name in _registered_method_dict:
+        warnings.warn("override registered method ({})".format(name), stacklevel=3)
+    _registered_method_dict[name] = func
+
+
+class _CompositionMeta(type):
+    r"""
+    This metaclass is used to support customized method registration for Composition.
+    """
+
+    def __new__(cls, clsname, bases, attrs):
+        assert len(bases) == 0
+        c_init = attrs["__init__"] if "__init__" in attrs else None
+
+        def meta_init(self, *args, **kwargs):
+            if c_init is not None:
+                c_init(self, *args, **kwargs)
+
+            # do registeration
+            for name, func in _registered_method_dict.items():
+                setattr(self, name, types.MethodType(func, self))
+
+        attrs["__init__"] = meta_init
+
+        return super().__new__(cls, clsname, bases, attrs)
+
+
+class Composition(metaclass=_CompositionMeta):
     __doc__ = r"""
     TODO: Composition doc
     """
@@ -373,7 +406,7 @@ class Composition:
             return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("@", type(self), type(other))
-
+        
     # TODO: to support tensor@composition
 
     def __imul__(self, other) -> Composition:

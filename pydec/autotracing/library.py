@@ -16,7 +16,7 @@ _customized_functional_dict = {}
 _customized_module_dict = {}
 
 
-def _init():
+def _init() -> None:
     # only initialize once
     if len(_torch_builtin_modules) != 0:
         return
@@ -93,7 +93,7 @@ def _api_wrapper(torch_api: Callable, pydec_api: Callable) -> Callable:
     return warpped_func
 
 
-def register_api(name: str):
+def register_api(name: str) -> None:
     def register_api_with_name(func):
         torch_api_dict = vars(torch)
         if name in _customized_api_dict:
@@ -109,7 +109,7 @@ def register_api(name: str):
     return register_api_with_name
 
 
-def register_functional_api(name: str):
+def register_functional_api(name: str) -> None:
     def register_functional_api_with_name(func):
         torch_functional_dict = vars(torch.nn.functional)
         if name in _customized_functional_dict:
@@ -127,7 +127,7 @@ def register_functional_api(name: str):
     return register_functional_api_with_name
 
 
-def register_module(name: str):
+def register_module(name: str) -> None:
     def register_module_with_name(module: pydec.nn.DecModule):
         if name in _customized_module_dict:
             import warnings
@@ -138,6 +138,13 @@ def register_module(name: str):
         return module
 
     return register_module_with_name
+
+
+def register_cmethod(name: str) -> None:
+    def register_cmethod_with_name(func: Callable):
+        pydec.composition._c_register_method(name, func)
+
+    return register_cmethod_with_name
 
 
 def _is_support_module(module: Module) -> bool:
