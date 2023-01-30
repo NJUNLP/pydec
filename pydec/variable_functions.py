@@ -163,9 +163,19 @@ def diagonal_init(
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
-def call_torch_function(c: Composition, func_name: str, **kwargs) -> Composition:
-    out_composition_tensor = getattr(torch, func_name)(c._composition_tensor, **kwargs)
-    out_residual_tensor = getattr(torch, func_name)(c._residual_tensor, **kwargs)
+def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
+    out_composition_tensor = callable(input._composition_tensor)
+    out_residual_tensor = callable(input._residual_tensor)
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def c_map(
+    input, composition: Composition, callable: Callable[..., Tensor]
+) -> Composition:
+    out_composition_tensor = callable(
+        input._composition_tensor, composition._composition_tensor
+    )
+    out_residual_tensor = callable(input._residual_tensor, composition._residual_tensor)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
@@ -349,7 +359,13 @@ def mv(
         )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
-def mm(input: Union[Composition, Tensor], mat2: Union[Composition, Tensor], *, out: Optional[Composition]=None) -> Composition:
+
+def mm(
+    input: Union[Composition, Tensor],
+    mat2: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
     if isinstance(input, Composition) and isinstance(mat2, Composition):
         raise TypeError(
             "mm(): argument 'input' and argument 'mat2' cannot both be Composition"
