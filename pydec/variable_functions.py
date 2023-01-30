@@ -315,6 +315,70 @@ def divide(input: Composition, other: Any, *, rounding_mode: Optional[str]):
     return div(input, other=other, rounding_mode=rounding_mode)
 
 
+def mv(
+    input: Union[Composition, Tensor],
+    vec: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if isinstance(input, Composition) and isinstance(vec, Composition):
+        raise TypeError(
+            "mv(): argument 'input' and argument 'vec' cannot both be Composition"
+        )
+    if isinstance(input, Composition):
+        out_residual_tensor = torch.mv(
+            input._residual_tensor,
+            vec,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input._composition_tensor,
+            vec,
+            out=out._composition_tensor if out is not None else None,
+        )
+    else:
+        out_residual_tensor = torch.mv(
+            input,
+            vec._residual_tensor,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input,
+            vec._composition_tensor,
+            out=out._composition_tensor if out is not None else None,
+        )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+def mm(input: Union[Composition, Tensor], mat2: Union[Composition, Tensor], *, out: Optional[Composition]=None) -> Composition:
+    if isinstance(input, Composition) and isinstance(mat2, Composition):
+        raise TypeError(
+            "mm(): argument 'input' and argument 'mat2' cannot both be Composition"
+        )
+    if isinstance(input, Composition):
+        out_residual_tensor = torch.mm(
+            input._residual_tensor,
+            mat2,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input._composition_tensor,
+            mat2,
+            out=out._composition_tensor if out is not None else None,
+        )
+    else:
+        out_residual_tensor = torch.mv(
+            input,
+            mat2._residual_tensor,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input,
+            mat2._composition_tensor,
+            out=out._composition_tensor if out is not None else None,
+        )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
 @overload
 def any(input: Composition, *, out: Optional[Tensor] = None) -> Tensor:
     ...
