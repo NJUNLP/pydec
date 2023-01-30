@@ -139,6 +139,25 @@ def stack(
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
+def c_stack(
+    components: Union[Tuple[Tensor, ...], List[Tensor]],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    for i in range(1, len(components)):
+        if components[i].size() != components[0].size():
+            raise arg_value_error(
+                f"Sizes of components must match. Expected size [{components[0].size()}] but got size [{components[i].size()}] for component number {i} in the list."
+            )
+
+    out_composition_tensor = torch.stack(
+        components,
+        0,
+        out=out._composition_tensor if out is not None else None,
+    )
+    return _from_replce(out_composition_tensor)
+
+
 def diagonal_init(
     input: Composition, src: Tensor, dim: _int, offset: _int = 0
 ) -> Composition:
