@@ -50,6 +50,7 @@ def _from_replce(
 
 _registered_method_dict = {}
 
+
 def _c_register_method(name: str, func: Callable):
     # this function is not public, invoked by pydec.autotracing.library (stacklevel=3)
     if name in _registered_method_dict:
@@ -406,7 +407,7 @@ class Composition(metaclass=_CompositionMeta):
             return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("@", type(self), type(other))
-        
+
     def __rmatmul__(self, other) -> Composition:
         if isinstance(other, Tensor):
             if self.dim() == 1:
@@ -692,7 +693,7 @@ class Composition(metaclass=_CompositionMeta):
         out_residual_tensor = self._residual_tensor.mv(vec)
         out_composition_tensor = self._composition_tensor @ vec
         return _from_replce(out_composition_tensor, out_residual_tensor)
-        
+
     def mm(self, mat2: Tensor) -> Composition:
         r"""
         Note that the use of Tensor.mm(Composition) is not supported and may raise an error in autoracing.
@@ -1393,4 +1394,23 @@ class Composition(metaclass=_CompositionMeta):
     def requires_grad_(self, mode: _bool = True) -> Composition:
         self._composition_tensor.requires_grad_(mode)
         self._residual_tensor.requires_grad_(mode)
+        return self
+
+    def apply_(self, callable: Callable) -> Composition:
+        self._composition_tensor.apply_(callable)
+        self._residual_tensor.apply_(callable)
+        return self
+
+    def map_(self, composition: Composition, callable: Callable) -> Composition:
+        self._residual_tensor.map_(composition._residual_tensor, callable)
+        # permute to be broadcastable
+        p_dims = [i for i in range(1, self._composition_tensor.dim())] + [0]
+        p_composition_tensor = self._composition_tensor.permute(*p_dims)
+        p_dims = [i for i in range(1, composition._composition_tensor.dim())] + [0]
+        p_other_composition_tensor = composition.permute(*p_dims)
+        p_composition_tensor.map_(p_other_composition_tensor, callable)
+
+        # recover
+        p_dims = [-1] + [i for i in range(0, p_composition_tensor.dim() - 1)]
+        self._composition_tensor = p_composition_tensor.permute(p_dims)
         return self
