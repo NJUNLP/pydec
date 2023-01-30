@@ -382,7 +382,7 @@ class Composition(metaclass=_CompositionMeta):
         try:
             return other + (-self)
         except TypeError:
-            raise unsupported_operand_error("-", type(self), type(other))
+            raise unsupported_operand_error("-", type(other), type(self))
 
     def __isub__(self, other) -> Composition:
         try:
@@ -407,7 +407,20 @@ class Composition(metaclass=_CompositionMeta):
         else:
             raise unsupported_operand_error("@", type(self), type(other))
         
-    # TODO: to support tensor@composition
+    def __rmatmul__(self, other) -> Composition:
+        if isinstance(other, Tensor):
+            if self.dim() == 1:
+                # if the composition_tensor's ndim is 2, the component dim
+                # will be incorrectly included in the multiplication
+                out_composition_tensor = other @ self._composition_tensor.unsqueeze(-1)
+                out_composition_tensor.squeeze_(-1)
+                out_residual_tensor = other @ self._residual_tensor
+            else:
+                out_composition_tensor = other @ self._composition_tensor
+                out_residual_tensor = other @ self._residual_tensor
+            return _from_replce(out_composition_tensor, out_residual_tensor)
+        else:
+            raise unsupported_operand_error("@=", type(self), type(other))
 
     def __imul__(self, other) -> Composition:
         if isinstance(other, Composition):
