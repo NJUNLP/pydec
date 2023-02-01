@@ -8,4 +8,5 @@ from .container import (
     ParameterList,
     ParameterDict,
 )
+from .activation import ReLU
 from . import meta
