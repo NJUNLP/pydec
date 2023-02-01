@@ -44,10 +44,10 @@ class TestCCat:
             pydec.c_cat(self.c_list + [init_composition((2, 2))])
 
 
-class TestCallTorchFunction:
+class TestApply:
     def test_abs(self):
         c = init_composition((3, 4))
-        out = pydec.call_torch_function(c, "abs")
+        out = pydec.c_apply(c, torch.abs)
         assert (out._composition_tensor == c._composition_tensor.abs()).all()
 
 
