@@ -262,7 +262,7 @@ class Composition(metaclass=_CompositionMeta):
     def __repr__(self, *, tensor_contents=None) -> str:
         import itertools
 
-        composition_hint = [f"composition {i}:\n" for i in range(len(self))]
+        composition_hint = [f"component {i}:\n" for i in range(len(self))]
         composition_hint.append("residual:\n")
         tensor_str = [repr(t) + "\n" for t in self]
         tensor_str.append(repr(self._residual_tensor))
