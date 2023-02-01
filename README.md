@@ -52,62 +52,120 @@ pip install pydec
 
 ## Example: deompose a tiny network
 
-Suppose a simple feedforward neural network containing two input tensors and outputting one tensor.
+As a simple example, here’s a very simple model with two linear layers and an activation function. We’ll create an instance of it andand get the decomposition of the output by autotracing:
 ```python
-class NN(nn.Module):
-    def __init__(self) -> None:...
+import torch
 
-    def forward(self, x1:Tensor, x2:Tensor) -> Tensor:
-        x1 = self.linear1(x1)
-        x1 = self.relu(x1)
+class TinyModel(torch.nn.Module):
+    def __init__(self):
+        super(TinyModel, self).__init__()
 
-        x2 = self.linear2(x2)
-        x2 = self.relu(x2)
+        self.linear1 = torch.nn.Linear(4, 10)
+        self.activation = torch.nn.ReLU()
+        self.linear2 = torch.nn.Linear(10, 2)
 
-        out = self.linear3(x1+x2)
-        return out
-```
-In order to keep track of the components of inputs x1 and x2 in each hidden tensor, simply initialize the corresponding compositions and apply the same operation for them.
-```python
-class NN(nn.Module):
-    def __init__(self) -> None:...
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.activation(x)
+        x = self.linear2(x)
+        return x
 
-    def forward(self, x1: Tensor, x2: Tensor) -> Tensor:
-        x1 = self.linear1(x1)
-        x1 = self.relu(x1)
-
-        x2 = self.linear2(x2)
-        x2 = self.relu(x2)
-
-        out = self.linear3(x1 + x2)
-
-        import pydec
-        from pydec import Composition
-        # Initialize composition
-        c1 = Composition(x1.size(), component_num=2).to(x1)
-        c1[0] = x1 # Assign x1 to the first component of c1.
-
-        c2 = Composition(x2.size(), component_num=2).to(x2)
-        c2[1] = x2 # Assign x2 to the second component of c2.
-
-        # Apply the same operation for composition
-        c1 = pydec.nn.functional.linear(
-            c1, weight=self.linear1.weight, bias=self.linear1.bias
-        )
-        c1 = pydec.nn.functional.relu(c1)
-
-        c2 = pydec.nn.functional.linear(
-            c2, weight=self.linear2.weight, bias=self.linear2.bias
-        )
-        c2 = pydec.nn.functional.relu(c2)
-        
-        c_out = pydec.nn.functional.linear3(
-            c1 + c2, weight=self.linear3.weight, bias=self.linear3.bias
-        )
-        return out, c_out
+tinymodel = TinyModel()
 ```
 
-In the above example, each composition consists of two components whose sum is always equal to the corresponding tensor being decomposed, e.g., $x_1=c_1[0]+c_1[1]$ and $out=c_{out}[0]+c_{out}[1]$. Usually, you can think of $c_{out}[i]$ as the contribution of $x_i$ to the tensor $out$.
+Given an input `x`, the output of the model is:
+```python
+x = torch.rand(4)
+
+print("Input tensor:")
+print(x)
+
+print("\n\nOutput tensor:")
+print(tinymodel(x))
+```
+Out:
+```python
+"""
+Input tensor:
+tensor([0.7023, 0.3492, 0.7771, 0.0157])
+
+
+Output tensor:
+tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
+"""
+```
+To decompose the output, first wrap the model using `pydec.autotracing.compile` and then input the Composition initialized from `x`:
+```python
+tinymodel = pydec.autotracing.compile(tinymodel)
+
+c = pydec.zeros(x.size(), c_num=x.size(0))
+c = pydec.diagonal_init(c, src=x, dim=0)
+
+print("Input composition:")
+print(c)
+
+c_out = tinymodel(c)
+
+print("\n\nOutput composition:")
+print(c_out)
+```
+Out:
+```python
+"""
+Input composition:
+component 0:
+tensor([0.7023, 0.0000, 0.0000, 0.0000])
+component 1:
+tensor([0.0000, 0.3492, 0.0000, 0.0000])
+component 2:
+tensor([0.0000, 0.0000, 0.7771, 0.0000])
+component 3:
+tensor([0.0000, 0.0000, 0.0000, 0.0157])
+residual:
+tensor([0., 0., 0., 0.])
+
+
+Output composition:
+component 0:
+tensor([-0.0418, -0.0296], grad_fn=<UnbindBackward0>)
+component 1:
+tensor([0.0566, 0.0332], grad_fn=<UnbindBackward0>)
+component 2:
+tensor([0.1093, 0.1147], grad_fn=<UnbindBackward0>)
+component 3:
+tensor([ 0.0015, -0.0018], grad_fn=<UnbindBackward0>)
+residual:
+tensor([0.1497, 0.2461], grad_fn=<AddBackward0>)
+"""
+```
+
+Each component of the output composition represents the contribution of each feature in `x` to the output.
+Summing each component yields the tensor of original output:
+```python
+print("Sum of each component:")
+print(c_out.c_sum())
+```
+Out:
+```python
+"""
+Sum of each component:
+tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
+"""
+```
+To restore the ability of the model to forward tensor, use `trace()` to turn off autotracing:
+```python
+tinymodel.trace(False)
+
+print("Output tensor:")
+print(tinymodel(x))
+```
+Out:
+```python
+"""
+Output tensor:
+tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
+"""
+```
 
 # Documentation
 
