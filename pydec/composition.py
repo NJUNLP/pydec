@@ -5,6 +5,7 @@ from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, 
 from torch import Tensor
 from torch._C import memory_format
 import pydec
+from ._composition_str import _c_str
 import types
 import warnings
 
@@ -259,16 +260,8 @@ class Composition(metaclass=_CompositionMeta):
     def __contains__(self, element):
         return self._composition_tensor.__contains__(element)
 
-    def __repr__(self, *, tensor_contents=None) -> str:
-        import itertools
-
-        composition_hint = [f"component {i}:\n" for i in range(len(self))]
-        composition_hint.append("residual:\n")
-        tensor_str = [repr(t) + "\n" for t in self]
-        tensor_str.append(repr(self._residual_tensor))
-        zipped_str = zip(composition_hint, tensor_str)
-        merged_str = list(itertools.chain(*zipped_str))
-        return "".join(merged_str)
+    def __repr__(self, *, composition_contents: List[str] = None) -> str:
+        return _c_str(self, composition_contents=composition_contents)
 
     def numel(self) -> _int:
         return self._residual_tensor.numel()
