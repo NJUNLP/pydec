@@ -84,15 +84,13 @@ print("\n\nOutput tensor:")
 print(tinymodel(x))
 ```
 Out:
-```python
-"""
+```
 Input tensor:
 tensor([0.7023, 0.3492, 0.7771, 0.0157])
 
 
 Output tensor:
 tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
-"""
 ```
 To decompose the output, first wrap the model using `pydec.autotracing.compile` and then input the Composition initialized from `x`:
 ```python
@@ -110,33 +108,28 @@ print("\n\nOutput composition:")
 print(c_out)
 ```
 Out:
-```python
-"""
+```
 Input composition:
-component 0:
-tensor([0.7023, 0.0000, 0.0000, 0.0000])
-component 1:
-tensor([0.0000, 0.3492, 0.0000, 0.0000])
-component 2:
-tensor([0.0000, 0.0000, 0.7771, 0.0000])
-component 3:
-tensor([0.0000, 0.0000, 0.0000, 0.0157])
-residual:
-tensor([0., 0., 0., 0.])
+composition{
+  components:
+    tensor([0.7023, 0.0000, 0.0000, 0.0000]),
+    tensor([0.0000, 0.3492, 0.0000, 0.0000]),
+    tensor([0.0000, 0.0000, 0.7771, 0.0000]),
+    tensor([0.0000, 0.0000, 0.0000, 0.0157]),
+  residual:
+    tensor([0., 0., 0., 0.])}
 
 
 Output composition:
-component 0:
-tensor([-0.0418, -0.0296], grad_fn=<UnbindBackward0>)
-component 1:
-tensor([0.0566, 0.0332], grad_fn=<UnbindBackward0>)
-component 2:
-tensor([0.1093, 0.1147], grad_fn=<UnbindBackward0>)
-component 3:
-tensor([ 0.0015, -0.0018], grad_fn=<UnbindBackward0>)
-residual:
-tensor([0.1497, 0.2461], grad_fn=<AddBackward0>)
-"""
+composition{
+  components:
+    tensor([-0.0418, -0.0296]),
+    tensor([0.0566, 0.0332]),
+    tensor([0.1093, 0.1147]),
+    tensor([ 0.0015, -0.0018]),
+  residual:
+    tensor([0.1497, 0.2461]),
+  grad_fn=<AddBackward0>}
 ```
 
 Each component of the output composition represents the contribution of each feature in `x` to the output.
@@ -146,11 +139,9 @@ print("Sum of each component:")
 print(c_out.c_sum())
 ```
 Out:
-```python
-"""
+```
 Sum of each component:
 tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
-"""
 ```
 To restore the ability of the model to forward tensor, use `trace()` to turn off autotracing:
 ```python
@@ -160,11 +151,9 @@ print("Output tensor:")
 print(tinymodel(x))
 ```
 Out:
-```python
-"""
+```
 Output tensor:
 tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
-"""
 ```
 
 # Documentation
