@@ -14,8 +14,21 @@ Critical items to know are:
  - changed behaviour
 
 ## PyDec 0.2.0
-
-
+* Add non linear decompose algorithm.
+* Add nn modules (Linear, Containers, ReLU).
+* Add `conv2d()`, `relu()`, `leaky_relu()`, `tanh()`, `sigmoid()` and `max_pool2d()`.
+* Add new feature: autotracing.
+* Add fast algorithm for `legacy_relu()`.
+* Add `abs()`, `__rmatmul__()`, `mv()`, `mm()` function.
+* Add `apply_()` and `map_()`.
+* Add `c_apply()` and `c_map()`.
+* Add `c_stack()`.
+* Add argument `sum_residual` for `c_cat()`.
+* Add `zeros()` and support for torch versions < 1.11.
+* Add customized api registration.
+* Update docs.
+* Fix bugs.
+* 
 ## PyDec 0.1.1
 * Update doc notes and api documentation.
 * Improve doc site style.
