@@ -4,6 +4,10 @@ import torch
 from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, overload
 from torch import Tensor
 from torch._C import memory_format
+import pydec
+from ._composition_str import _c_str
+import types
+import warnings
 
 # In some cases, these basic types are shadowed by corresponding
 # top-level values.  The underscore variants let us refer to these
@@ -28,7 +32,6 @@ from pydec.exception_utils import (
     component_num_error,
     unsupported_operand_error,
     arg_value_error,
-    none_bias_decomposition_func_error,
 )
 
 
@@ -46,29 +49,70 @@ def _from_replce(
     ...
 
 
-def _get_bias_decomposition_name() -> str:
-    ...
+_registered_method_dict = {}
 
 
-def _get_bias_decomposition_func() -> Callable[..., Composition]:
-    ...
+def _c_register_method(name: str, func: Callable):
+    # this function is not public, invoked by pydec.autotracing.library (stacklevel=3)
+    if name in _registered_method_dict:
+        warnings.warn("override registered method ({})".format(name), stacklevel=3)
+    _registered_method_dict[name] = func
 
 
-class Composition:
-    __doc__ = r"""
-    Composition doc
+class _CompositionMeta(type):
+    r"""
+    This metaclass is used to support customized method registration for Composition.
     """
 
-    @overload
-    def __init__(
-        self,
-        size: _size,
-        component_num: _int,
-        dtype: Optional[_dtype] = None,
-        device: Union[_device, str, None] = None,
-        requires_grad: _bool = False,
-    ) -> None:
-        ...
+    def __new__(cls, clsname, bases, attrs):
+        assert len(bases) == 0
+        c_init = attrs["__init__"] if "__init__" in attrs else None
+
+        def meta_init(self, *args, **kwargs):
+            if c_init is not None:
+                c_init(self, *args, **kwargs)
+
+            # do registeration
+            for name, func in _registered_method_dict.items():
+                setattr(self, name, types.MethodType(func, self))
+
+        attrs["__init__"] = meta_init
+
+        return super().__new__(cls, clsname, bases, attrs)
+
+
+class Composition(metaclass=_CompositionMeta):
+    __doc__ = r"""
+    TODO: Composition doc
+    """
+
+    @property
+    def requires_grad(self) -> _bool:
+        return self._residual_tensor.requires_grad
+
+    @property
+    def shape(self) -> torch.Size:
+        return self._residual_tensor.shape
+
+    @property
+    def device(self) -> _device:
+        return self._residual_tensor.device
+
+    @property
+    def dtype(self) -> _dtype:
+        return self._residual_tensor.dtype
+
+    @property
+    def T(self) -> Composition:
+        return self.permute(*torch.arange(self.ndim - 1, -1, -1))
+
+    @property
+    def mT(self) -> Composition:
+        return self.transpose(-2, -1)
+
+    @property
+    def ndim(self) -> _int:
+        return self.dim()
 
     @overload
     def __init__(
@@ -84,9 +128,22 @@ class Composition:
         def init_from_tensor(
             composition_tensor: Tensor, residual_tensor: Tensor = None
         ):
-            self._composition_tensor = torch.tensor(composition_tensor).to(
-                composition_tensor
-            )
+            if residual_tensor is not None:
+                if composition_tensor.dtype != residual_tensor.dtype:
+                    raise arg_value_error(
+                        f"the dtype of composition_tensor ({composition_tensor.dtype}) should be the same as that of residual_tensor ({residual_tensor.dtype})."
+                    )
+                if composition_tensor.device != residual_tensor.device:
+                    raise arg_value_error(
+                        f"the device of composition_tensor ({composition_tensor.device}) should be the same as that of residual_tensor ({residual_tensor.device})."
+                    )
+                if composition_tensor.requires_grad != residual_tensor.requires_grad:
+                    raise arg_value_error(
+                        f"composition_tensor.requires_grad ({composition_tensor.requires_grad}) should be the same as residual_tensor.requires_grad ({residual_tensor.requires_grad})."
+                    )
+
+            # formal way but may cause problems, see https://github.com/pytorch/pytorch/issues/85094
+            self._composition_tensor = composition_tensor.clone().detach()
             if residual_tensor is not None:
                 if composition_tensor.size()[1:] != residual_tensor.size():
                     raise size_error(
@@ -95,30 +152,11 @@ class Composition:
                         "composition",
                         "residual",
                     )
-                self._residual_tensor = torch.tensor(residual_tensor).to(
-                    residual_tensor
-                )
+                self._residual_tensor = residual_tensor.clone().detach()
             else:
                 self._residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
                     composition_tensor
                 )
-
-        def init_from_size(
-            size: _size,
-            component_num: _int,
-            dtype: Optional[_dtype] = None,
-            device: Union[_device, str, None] = None,
-            requires_grad: _bool = False,
-        ):
-            self._composition_tensor = torch.zeros(
-                (component_num,) + size,
-                dtype=dtype,
-                device=device,
-                requires_grad=requires_grad,
-            )
-            self._residual_tensor: Tensor = torch.zeros(
-                size, dtype=dtype, device=device, requires_grad=requires_grad
-            )
 
         def parse_args(args: list, key_list: List):
             for i in range(len(args)):
@@ -127,29 +165,43 @@ class Composition:
         self._composition_tensor: Tensor = None
         self._residual_tensor: Tensor = None
 
-        if len(args) > 0:
-            if isinstance(args[0], (torch.Size, list, Tuple)):
-                parse_args(
-                    args, ["size", "component_num", "dtype", "device", "requires_grad"]
-                )
+        if len(args) == 1:
+            if isinstance(args[0], Composition):
+                parse_args(args, ["composition"])
             elif isinstance(args[0], Tensor):
+                parse_args(args, ["composition_tensor"])
+            else:
+                raise args_error("Composition.__init__", args, kwargs)
+        elif len(args) == 2:
+            if isinstance(args[0], Tensor) and isinstance(args[1], Tensor):
                 parse_args(args, ["composition_tensor", "residual_tensor"])
             else:
-                parse_args(args, ["composition"])
+                raise args_error("Composition.__init__", args, kwargs)
+        elif len(args) > 2:
+            raise args_error("Composition.__init__", args, kwargs)
 
-        if "size" in kwargs:
-            init_from_size(**kwargs)
+        if "composition" in kwargs:
+            c: Composition = kwargs["composition"]
+            init_from_tensor(c._composition_tensor, c._residual_tensor)
         elif "composition_tensor" in kwargs:
             init_from_tensor(**kwargs)
         else:
-            c: Composition = kwargs["composition"]
-            init_from_tensor(c._composition_tensor, c._residual_tensor)
+            raise args_error("Composition.__init__", args, kwargs)
 
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
     ) -> Union[Composition, Tensor]:
-        # TODO: fix bug: Composition[None], Composition[List]
-        if isinstance(indices, (type(None), _int, slice, Tensor)):
+        # support autotracing
+        if pydec.autotracing.is_tracing_enabled():
+            if isinstance(indices, Tuple):
+                indices = (slice(None, None, None),) + indices
+            else:
+                indices = (
+                    slice(None, None, None),
+                    indices,
+                )
+
+        if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
@@ -167,7 +219,17 @@ class Composition:
         indices: Union[None, _int, slice, Tensor, List, Tuple],
         val: Union[Composition, Tensor, Number],
     ) -> None:
-        if isinstance(indices, (type(None), _int, slice, Tensor)):
+        # support autotracing
+        if pydec.autotracing.is_tracing_enabled():
+            if isinstance(indices, Tuple):
+                indices = (slice(None, None, None),) + indices
+            else:
+                indices = (
+                    slice(None, None, None),
+                    indices,
+                )
+
+        if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
@@ -198,16 +260,8 @@ class Composition:
     def __contains__(self, element):
         return self._composition_tensor.__contains__(element)
 
-    def __repr__(self, *, tensor_contents=None) -> str:
-        import itertools
-
-        composition_hint = [f"composition {i}:\n" for i in range(len(self))]
-        composition_hint.append("residual:\n")
-        tensor_str = [repr(t) + "\n" for t in self]
-        tensor_str.append(repr(self._residual_tensor))
-        zipped_str = zip(composition_hint, tensor_str)
-        merged_str = list(itertools.chain(*zipped_str))
-        return "".join(merged_str)
+    def __repr__(self, *, composition_contents: List[str] = None) -> str:
+        return _c_str(self, composition_contents=composition_contents)
 
     def numel(self) -> _int:
         return self._residual_tensor.numel()
@@ -285,13 +339,7 @@ class Composition:
             self._residual_tensor += other._residual_tensor
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_bias_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(bias=other, context=self)
-                assert isinstance(bias_composition, Composition)
-                self += bias_composition
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            self._residual_tensor += other
             return self
         else:
             raise unsupported_operand_error("+=", type(self), type(other))
@@ -306,13 +354,9 @@ class Composition:
             out_residual_tensor = self._residual_tensor + other._residual_tensor
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_bias_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(bias=other, context=self)
-                assert isinstance(bias_composition, Composition)
-                return self + bias_composition
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            out_composition_tensor = self._composition_tensor.clone()
+            out_residual_tensor = self._residual_tensor + other
+            return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("+", type(self), type(other))
 
@@ -332,7 +376,7 @@ class Composition:
         try:
             return other + (-self)
         except TypeError:
-            raise unsupported_operand_error("-", type(self), type(other))
+            raise unsupported_operand_error("-", type(other), type(self))
 
     def __isub__(self, other) -> Composition:
         try:
@@ -356,6 +400,21 @@ class Composition:
             return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("@", type(self), type(other))
+
+    def __rmatmul__(self, other) -> Composition:
+        if isinstance(other, Tensor):
+            if self.dim() == 1:
+                # if the composition_tensor's ndim is 2, the component dim
+                # will be incorrectly included in the multiplication
+                out_composition_tensor = other @ self._composition_tensor.unsqueeze(-1)
+                out_composition_tensor.squeeze_(-1)
+                out_residual_tensor = other @ self._residual_tensor
+            else:
+                out_composition_tensor = other @ self._composition_tensor
+                out_residual_tensor = other @ self._residual_tensor
+            return _from_replce(out_composition_tensor, out_residual_tensor)
+        else:
+            raise unsupported_operand_error("@=", type(self), type(other))
 
     def __imul__(self, other) -> Composition:
         if isinstance(other, Composition):
@@ -492,15 +551,13 @@ class Composition:
                 )
             return _from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_bias_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(
-                    bias=alpha * other, context=self, **kwargs
-                )
-                assert isinstance(bias_composition, Composition)
-                return self.add(bias_composition, out=out, **kwargs)
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            out_composition_tensor = self._composition_tensor.clone()
+            out_residual_tensor = self._residual_tensor.add(
+                other, alpha=alpha, out=out._residual_tensor
+            )
+            if out is not None:
+                out._composition_tensor[:] = out_composition_tensor
+            return _from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("add", type(self), type(other))
 
@@ -518,15 +575,8 @@ class Composition:
             self._residual_tensor.add_(other._residual_tensor, alpha=alpha)
             return self
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            decomposition_func = _get_bias_decomposition_func()
-            if decomposition_func is not None:
-                bias_composition = decomposition_func(
-                    bias=alpha * other, context=self, **kwargs
-                )
-                assert isinstance(bias_composition, Composition)
-                return self.add_(bias_composition)
-            else:
-                raise none_bias_decomposition_func_error(_get_bias_decomposition_name())
+            self._residual_tensor.add_(other, alpha=alpha)
+            return self
         else:
             raise unsupported_operand_error("add_", type(self), type(other))
 
@@ -627,6 +677,24 @@ class Composition:
             self._composition_tensor.div_(other, rounding_mode=rounding_mode)
             self._residual_tensor.div_(other, rounding_mode=rounding_mode)
         return self
+
+    def mv(self, vec: Tensor) -> Composition:
+        r"""
+        Note that the use of Tensor.mv(Composition) is not supported and may raise an error in autoracing.
+        Use pydec.mv() instead or use torch.mv() in autotracing instead.
+        """
+        out_residual_tensor = self._residual_tensor.mv(vec)
+        out_composition_tensor = self._composition_tensor @ vec
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    def mm(self, mat2: Tensor) -> Composition:
+        r"""
+        Note that the use of Tensor.mm(Composition) is not supported and may raise an error in autoracing.
+        Use pydec.mm() instead or use torch.mm() in autotracing instead.
+        """
+        out_residual_tensor = self._residual_tensor.mm(mat2)
+        out_composition_tensor = self._composition_tensor @ mat2
+        return _from_replce(out_composition_tensor, out_residual_tensor)
 
     @overload
     def any(self) -> Tensor:
@@ -1306,23 +1374,36 @@ class Composition:
             self._residual_tensor.round_()
         return self
 
+    def abs(self) -> Composition:
+        out_composition_tensor = self._composition_tensor.abs()
+        out_residual_tensor = self._residual_tensor.abs()
+        return _from_replce(out_composition_tensor, out_residual_tensor)
 
-# original
-# bsz * self.num_heads x tgt_num x src_num
-# bsz * self.num_heads x src_num x head_dim
+    def abs_(self) -> Composition:
+        self._composition_tensor.abs_()
+        self._residual_tensor.abs_()
+        return self
 
-# composition
-# bsz * self.num_heads x tgt_num x src_num
-# all_len x bsz * self.num_heads x src_num x head_dim
+    def requires_grad_(self, mode: _bool = True) -> Composition:
+        self._composition_tensor.requires_grad_(mode)
+        self._residual_tensor.requires_grad_(mode)
+        return self
 
+    def apply_(self, callable: Callable) -> Composition:
+        self._composition_tensor.apply_(callable)
+        self._residual_tensor.apply_(callable)
+        return self
 
-# connection
-# bsz * self.num_heads x tgt_num x src_num
-# src_num x all_len x bsz * self.num_heads x src_num x head_dim
+    def map_(self, composition: Composition, callable: Callable) -> Composition:
+        self._residual_tensor.map_(composition._residual_tensor, callable)
+        # permute to be broadcastable
+        p_dims = [i for i in range(1, self._composition_tensor.dim())] + [0]
+        p_composition_tensor = self._composition_tensor.permute(*p_dims)
+        p_dims = [i for i in range(1, composition._composition_tensor.dim())] + [0]
+        p_other_composition_tensor = composition.permute(*p_dims)
+        p_composition_tensor.map_(p_other_composition_tensor, callable)
 
-
-# bsz * self.num_heads x 1       x tgt_num x src_num x 1
-# bsz * self.num_heads x src_num x 1       x src_num x head_dim
-
-# bsz * self.num_heads x src_num x tgt_num x src_num x head_dim
-# or bsz * self.num_heads x all_value_len x tgt_num x value_len x head_dim
+        # recover
+        p_dims = [-1] + [i for i in range(0, p_composition_tensor.dim() - 1)]
+        self._composition_tensor = p_composition_tensor.permute(p_dims)
+        return self

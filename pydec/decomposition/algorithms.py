@@ -1,14 +1,11 @@
 from __future__ import annotations
-import functools
-import inspect
 import torch
 from torch import Tensor
-from torch.autograd.grad_mode import _DecoratorContextManager
 
-from typing import Dict, Union, Any, Callable, TYPE_CHECKING
+from typing import Dict, Tuple, Union, Any, Callable, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .composition import Composition
+    from ..composition import Composition
 
 from torch.types import (
     _int,
@@ -24,166 +21,217 @@ from torch.types import (
 )
 
 
-from .variable_functions import _from_replce, zeros_like
+from ..variable_functions import _from_replce, zeros_like
+from .states import register_decomposition_func, set_decomposition_func
 
-_BIAS_DECOMPOSITION_FUNC_REGISTRY = {}
+# def _non_linear_decompose(
+#     input: Composition, func: Callable[[Tensor], Tensor]
+# ) -> Composition:
+#     """
+#     Non-linear decomposition for **point-wise opertations**.
+#     """
+#     recovery = input.c_sum()
+#     residual = input._residual_tensor
+#     recovery_out = func(recovery)
+#     residual_out = func(residual)
 
+#     decompose_tensor = recovery_out - residual_out
 
-class _BiasDecompositionState:
-    bias_decomposition_name: str = None
-    bias_decomposition_args: Dict[str, Any] = {}
-
-
-def register_bias_decomposition_func(name):
-    """
-    TODO: need update
-    New bias_decomposition_func can be added with the :func:`register_bias_decomposition_func`
-    function decorator.
-
-    For example::
-
-        @register_model('forward_norm_decomposition')
-        def forward_abs_decomposition(c: Composition, bias: Union[Number, Tensor] = None, *, eps=1e-6):
-            (...)
-
-    Args:
-        name (str): the name of the funcion
-    """
-
-    def register_func(func):
-        if name in _BIAS_DECOMPOSITION_FUNC_REGISTRY:
-            raise ValueError("Cannot register duplicate function ({})".format(name))
-        # if name == "none":
-        #     raise ValueError(
-        #         'Cannot register function ({}), the name "none" is reserved.'.format(
-        #             name
-        #         )
-        #     )
-
-        @functools.wraps(func)
-        def warp_bias_decomposition_func(*args, **kwargs):
-            bias_args = _BiasDecompositionState.bias_decomposition_args.copy()
-            bias_args.update(kwargs)
-            argspec = inspect.getfullargspec(func)
-            if argspec.varkw is None:
-                ignore_keys = []
-                for key in bias_args.keys():
-                    if key not in (argspec.args + argspec.kwonlyargs):
-                        ignore_keys.append(key)
-                for key in ignore_keys:
-                    bias_args.pop(key)
-            return func(*args, **bias_args)
-
-        _BIAS_DECOMPOSITION_FUNC_REGISTRY[name] = warp_bias_decomposition_func
-
-        return warp_bias_decomposition_func
-
-    return register_func
+#     decomposition_func = get_decomposition_func()
+#     if decomposition_func is not None:
+#         out = decomposition_func(bias=decompose_tensor, context=input)
+#         out._residual_tensor = out._residual_tensor + residual_out
+#         return out
+#     else:
+#         raise none_decomposition_func_error(get_decomposition_name())
 
 
-def set_bias_decomposition_func(name: str) -> None:
-    if name not in _BIAS_DECOMPOSITION_FUNC_REGISTRY:
-        raise ValueError(
-            "Bias decomposition function ({}) is not registered".format(name)
-        )
-    _BiasDecompositionState.bias_decomposition_name = name
+# def _base_decomposition(
+#     input: Tensor,
+#     residual: Tensor,
+#     func: Callable[[Tensor], Tensor],
+#     *,
+#     inplace: _bool = False,
+# ) -> Tensor:
+#     """
+#     Note: if inplace is True, the func must be a inplace function.
+#     """
+#     out = func(input)
+#     residual_out = func(residual)
+
+#     decompose_tensor = recovery_out - residual_out
+#     # TODO: use composition add
+#     if inplace:
+#         input._residual_tensor = recovery_out
+#         return input, decompose_tensor
+#     else:
+#         out_composition_tensor = input._composition_tensor.clone()
+#         out_residual_tensor = residual_out
+#         out = _from_replce(out_composition_tensor, out_residual_tensor)
+#         return out, decompose_tensor
 
 
-def get_bias_decomposition_name() -> str:
-    return _BiasDecompositionState.bias_decomposition_name
-
-
-def get_bias_decomposition_func() -> Callable[..., Composition]:
-    if (
-        _BiasDecompositionState.bias_decomposition_name
-        not in _BIAS_DECOMPOSITION_FUNC_REGISTRY
-    ):
-        return None
-    else:
-        current_bias_decomposition_func = _BIAS_DECOMPOSITION_FUNC_REGISTRY[
-            _BiasDecompositionState.bias_decomposition_name
-        ]
-        return current_bias_decomposition_func
-
-
-class using_bias_decomposition_func(_DecoratorContextManager):
-    def __init__(self, name: str) -> None:
-        if name not in _BIAS_DECOMPOSITION_FUNC_REGISTRY:
-            raise ValueError(
-                "Bias decomposition function ({}) is not registered".format(name)
-            )
-        self.prev = None
-        self.using_name = name
-
-    def __enter__(self):
-        self.prev = _BiasDecompositionState.bias_decomposition_name
-        _BiasDecompositionState.bias_decomposition_name = self.using_name
-
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        _BiasDecompositionState.bias_decomposition_name = self.prev
-
-    def clone(self):
-        return self.__class__(self.using_name)
-
-
-class no_bias_decomposition(_DecoratorContextManager):
-    def __init__(
-        self,
-    ) -> None:
-        self.prev = None
-
-    def __enter__(self):
-        self.prev = _BiasDecompositionState.bias_decomposition_name
-        _BiasDecompositionState.bias_decomposition_name = "none"
-
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        _BiasDecompositionState.bias_decomposition_name = self.prev
-
-
-def set_bias_decomposition_args(update=True, **kwargs) -> None:
-    if update:
-        _BiasDecompositionState.bias_decomposition_args.update(kwargs)
-    else:
-        _BiasDecompositionState.bias_decomposition_args = kwargs
-
-
-def get_bias_decomposition_args() -> Dict[str, Any]:
-    return _BiasDecompositionState.bias_decomposition_args
-
-
-class using_bias_decomposition_args(_DecoratorContextManager):
-    def __init__(self, update=True, **kwargs) -> None:
-        self.update = update
-        self.prev = None
-        self.using_args = kwargs
-
-    def __enter__(self):
-        self.prev = _BiasDecompositionState.bias_decomposition_args.copy()
-        if self.update:
-            _BiasDecompositionState.bias_decomposition_args.update(self.using_args)
-        else:
-            _BiasDecompositionState.bias_decomposition_args = self.using_args
-
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        _BiasDecompositionState.bias_decomposition_args = self.prev
-
-    def clone(self):
-        return self.__class__(self.update, **self.using_args)
-
-
-@register_bias_decomposition_func("none")
+@register_decomposition_func("none")
 def _none_decomposition(
-    bias: Union[Number, Tensor], context: Composition
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    inplace: _bool = False,
 ) -> Composition:
     r"""
-    Default decomposition with no_bias_decomposition. Just add the bias to residual.
+    Note: since Pydec TODO(add a version), this algorithm is no longer the default
+    decomposition algorithm for pydec, as the results it obtains do not make any sense.
+
+    A trivial decomposition algorithm. Just add the output to residual.
     """
-    out = zeros_like(context)
-    out._residual_tensor += bias
-    return out
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
+    recovery_out = func(recovery)
+
+    if inplace:
+        input._composition_tensor[:] = 0
+        input._residual_tensor = recovery_out
+        return input
+    else:
+        out = zeros_like(input)
+        out._residual_tensor += recovery_out
+        return out
 
 
-@register_bias_decomposition_func("abs_decomposition")
+@register_decomposition_func("abs_decomposition")
+def abs_decomposition(
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    threshold: _float = 0.15,
+    inplace: _bool = False,
+) -> Composition:
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
+    recovery_out = func(recovery)
+    residual_out = func(input._residual_tensor)
+
+    decompose_out = recovery_out - residual_out
+
+    composition = input._composition_tensor
+    abs_composition = composition.abs()
+
+    multiplier = decompose_out / abs_composition.sum(dim=0)
+
+    if inplace:
+        input._composition_tensor.abs_()
+        input._composition_tensor *= multiplier
+        input._residual_tensor = residual_out
+        return input
+    else:
+        out_composition_tensor = abs_composition * multiplier
+        out_residual_tensor = residual_out
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+@register_decomposition_func("hybrid_decomposition")
+def hybrid_decomposition(
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    threshold: _float = 0.15,
+    inplace: _bool = False,
+) -> Composition:
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
+    recovery_out = func(recovery)
+    residual_out = func(input._residual_tensor)
+
+    decompose_out = recovery_out - residual_out
+
+    composition = input._composition_tensor
+    sum_composition = composition.sum(dim=0)
+    abs_composition = composition.abs()
+    abs_sum_composition = abs_composition.sum(dim=0, keepdim=True)
+    instability_ratio = sum_composition.abs() / abs_sum_composition
+    mask = (instability_ratio < threshold).expand_as(composition)
+
+    if not inplace:
+        composition = composition.clone()
+
+    composition[mask] = composition[mask].abs()
+
+    multiplier = decompose_out / composition.sum(dim=0)
+
+    if inplace:
+        input._composition_tensor *= multiplier
+        input._residual_tensor = residual_out
+        return input
+    else:
+        out_composition_tensor = composition * multiplier
+        out_residual_tensor = residual_out
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+@register_decomposition_func("sampled_shaply")
+def sampled_shaply(
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    inplace: _bool = False,
+) -> Composition:
+    """
+    not work.
+    """
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
+
+    composition = input._composition_tensor
+    residual = input._residual_tensor
+    recovery_out = func(recovery)
+    residual_out = func(residual)
+
+    delta = recovery_out - residual_out
+
+    sampled_input = (
+        composition.sum(dim=0, keepdim=True).expand_as(composition).contiguous()
+    )
+    sampled_input -= composition
+    sampled_input = (
+        sampled_input[None].expand((input.numc(),) + sampled_input.size()).contiguous()
+    )
+    multiplier = torch.linspace(0, 1, steps=input.numc(), device=composition.device)
+    multiplier = multiplier.view((input.numc(),) + composition.dim() * (1,))
+    sampled_input *= multiplier
+    exclusive_out = func(sampled_input + residual)
+    inclusive_out = func(sampled_input + composition + residual)
+    sampled_shaply_value = (inclusive_out - exclusive_out).mean(dim=0)
+
+    if (sampled_shaply_value.sum(dim=0) - delta).abs().sum() > 0.1:
+        fix_multiplier = delta / sampled_shaply_value.sum(dim=0)
+        sampled_shaply_value *= fix_multiplier
+
+    if inplace:
+        input._composition_tensor = sampled_shaply_value
+        input._residual_tensor = residual_out
+        return input
+    else:
+        out_composition_tensor = sampled_shaply_value
+        out_residual_tensor = residual_out
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+# TODO: the algorithms below are deprecated.
+
+"""
+@register_decomposition_func("abs_decomposition")
 def abs_decomposition(
     bias: Union[Number, Tensor],
     context: Composition,
@@ -200,7 +248,7 @@ def abs_decomposition(
     return out
 
 
-@register_bias_decomposition_func("hybrid_decomposition")
+@register_decomposition_func("hybrid_decomposition")
 def hybrid_decomposition(
     bias: Union[Number, Tensor],
     context: Composition,
@@ -232,7 +280,7 @@ def hybrid_decomposition(
     return out
 
 
-@register_bias_decomposition_func("sign_decomposition")
+@register_decomposition_func("sign_decomposition")
 def sign_decomposition(
     bias: Union[Number, Tensor],
     context: Composition,
@@ -261,7 +309,7 @@ def sign_decomposition(
     return out
 
 
-@register_bias_decomposition_func("sign_decomposition_threshold")
+@register_decomposition_func("sign_decomposition_threshold")
 def sign_decomposition_threshold(
     bias: Union[Number, Tensor],
     context: Composition,
@@ -283,7 +331,7 @@ def sign_decomposition_threshold(
     return out
 
 
-@register_bias_decomposition_func("hybrid_decomposition_threshold")
+@register_decomposition_func("hybrid_decomposition_threshold")
 def hybrid_decomposition_threshold(
     bias: Union[Number, Tensor],
     context: Composition,
@@ -309,7 +357,7 @@ def hybrid_decomposition_threshold(
     return out
 
 
-@register_bias_decomposition_func("norm_decomposition")
+@register_decomposition_func("norm_decomposition")
 def norm_decomposition(
     bias: Union[Number, Tensor],
     context: Composition,
@@ -327,8 +375,9 @@ def norm_decomposition(
     bias_composition_tensor = weights * bias
     return _from_replce(bias_composition_tensor)
 
+"""
 
-# @register_bias_decomposition_func("sparse_abs_decomposition")
+# @register_decomposition_func("sparse_abs_decomposition")
 # def forward_sparse_abs_decomposition(x: Tensor, eps=1e-6):
 #     # import pdb
 #     # pdb.set_trace()
@@ -348,7 +397,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("sparse_norm_decomposition")
+# @register_decomposition_func("sparse_norm_decomposition")
 # def forward_sparse_norm_decomposition(x: Tensor, eps=1e-6):
 #     residual = x[:, 0:1, :, :]  # T x 1 x B x C
 #     compositions = x[:, 1:]
@@ -368,7 +417,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("sparse_hybrid_decomposition")
+# @register_decomposition_func("sparse_hybrid_decomposition")
 # def forward_sparse_hybrid_decomposition(x, eps=1e-6):
 #     def ratio_map(ratio: Tensor):
 #         zero_map = ratio < 0.3
@@ -410,7 +459,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("positive_decomposition")
+# @register_decomposition_func("positive_decomposition")
 # def forward_sign_decomposition(x, eps=1e-6):
 #     residual = x[:, 0:1, :, :]  # T x 1 x B x C
 #     compositions = x[:, 1:]
@@ -426,7 +475,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("hybrid_norm_decomposition")
+# @register_decomposition_func("hybrid_norm_decomposition")
 # def forward_hybrid_norm_decomposition(x: Tensor, power_factor=1, eps=1e-6):
 #     residual = x[:, 0:1, :, :]  # T x 1 x B x C
 #     compositions = x[:, 1:]  # T x CT x B x C
@@ -451,7 +500,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("softmax_decomposition")
+# @register_decomposition_func("softmax_decomposition")
 # def forward_softmax_decomposition(x, eps=1e-6):
 #     residual = x[:, 0:1, :, :]  # T x 1 x B x C
 #     compositions = x[:, 1:]
@@ -465,7 +514,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("norm_softmax_decomposition")
+# @register_decomposition_func("norm_softmax_decomposition")
 # def forward_norm_softmax_decomposition(x, eps=1e-6):
 #     residual = x[:, 0:1, :, :]  # T x 1 x B x C
 #     compositions = x[:, 1:]
@@ -483,7 +532,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("average_decomposition")
+# @register_decomposition_func("average_decomposition")
 # def forward_average_decomposition(x: Tensor, eps=1e-6):
 #     residual = x[:, 0:1, :, :]  # T x 1 x B x C
 #     compositions = x[:, 1:]
@@ -495,7 +544,7 @@ def norm_decomposition(
 #     return x
 
 
-# @register_bias_decomposition_func("sparse_norm_decomposition_sparsification")
+# @register_decomposition_func("sparse_norm_decomposition_sparsification")
 # def forward_sparse_norm_decomposition_sparsification(x: Tensor, eps=1e-6):
 #     """
 #     To sparsificate the compositions, which will make the compositions to
@@ -525,13 +574,14 @@ def norm_decomposition(
 #     x[:, 0] = 0.0
 #     return x
 
-
 """
 Initialization
 """
 try:
-    set_bias_decomposition_func("none")
+    set_decomposition_func("hybrid_decomposition")
 except ValueError:
-    set_bias_decomposition_func(
-        _BIAS_DECOMPOSITION_FUNC_REGISTRY.keys().__iter__().__next__()
+    from . import states
+
+    set_decomposition_func(
+        states._DECOMPOSITION_FUNC_REGISTRY.keys().__iter__().__next__()
     )

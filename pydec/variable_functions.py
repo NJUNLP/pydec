@@ -36,9 +36,7 @@ def void(
     device: Union[_device, str, None] = None,
     requires_grad: _bool = False,
 ) -> Composition:
-    return Composition(
-        tuple(), 0, dtype=dtype, device=device, requires_grad=requires_grad
-    )
+    return Composition(torch.zeros([]))
 
 
 def _from_replce(
@@ -68,7 +66,9 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
@@ -94,6 +94,7 @@ def concatenate(
 def c_cat(
     compositions: Union[Tuple[Composition, ...], List[Composition]],
     *,
+    sum_residual: _bool = False,
     out: Optional[Composition] = None,
 ) -> Composition:
     for i in range(1, len(compositions)):
@@ -104,10 +105,14 @@ def c_cat(
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.cat(
-        c_tensors, 0, out=out._composition_tensor if out is not None else None,
+        c_tensors,
+        0,
+        out=out._composition_tensor if out is not None else None,
     )
-    r_tensors = tuple(c._residual_tensor for c in compositions)
-    out_residual_tensor = builtins.sum(r_tensors)
+    out_residual_tensor = None
+    if sum_residual:
+        r_tensors = tuple(c._residual_tensor for c in compositions)
+        out_residual_tensor = builtins.sum(r_tensors)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
@@ -130,9 +135,30 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def c_stack(
+    components: Union[Tuple[Tensor, ...], List[Tensor]],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    for i in range(1, len(components)):
+        if components[i].size() != components[0].size():
+            raise arg_value_error(
+                f"Sizes of components must match. Expected size [{components[0].size()}] but got size [{components[i].size()}] for component number {i} in the list."
+            )
+
+    out_composition_tensor = torch.stack(
+        components,
+        0,
+        out=out._composition_tensor if out is not None else None,
+    )
+    return _from_replce(out_composition_tensor)
 
 
 def diagonal_init(
@@ -143,16 +169,35 @@ def diagonal_init(
     permute_dims.remove(dim)
     permute_dims.append(dim)
     src = src.permute(permute_dims)
-    out_composition_tensor = input._composition_tensor.diagonal_scatter(
-        src, offset=offset, dim1=0, dim2=_shift_dim(dim)
-    )
+    if (
+        torch.__version__ < "1.11.0"
+    ):  # for versions < 1.11.0, 'diagonal_scatter' does not exist.
+        out_composition_tensor = input._composition_tensor.clone()
+        diag_view = out_composition_tensor.diagonal(
+            offset=offset, dim1=0, dim2=_shift_dim(dim)
+        )
+        diag_view = src
+    else:
+        out_composition_tensor = input._composition_tensor.diagonal_scatter(
+            src, offset=offset, dim1=0, dim2=_shift_dim(dim)
+        )
     out_residual_tensor = input._residual_tensor.clone()
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
-def call_torch_function(c: Composition, func_name: str, **kwargs) -> Composition:
-    out_composition_tensor = getattr(torch, func_name)(c._composition_tensor, **kwargs)
-    out_residual_tensor = getattr(torch, func_name)(c._residual_tensor, **kwargs)
+def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
+    out_composition_tensor = callable(input._composition_tensor)
+    out_residual_tensor = callable(input._residual_tensor)
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def c_map(
+    input, composition: Composition, callable: Callable[..., Tensor]
+) -> Composition:
+    out_composition_tensor = callable(
+        input._composition_tensor, composition._composition_tensor
+    )
+    out_residual_tensor = callable(input._residual_tensor, composition._residual_tensor)
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
@@ -220,7 +265,11 @@ def subtract(input: Composition, other: Number, alpha: Number = 1) -> Compositio
 
 
 def subtract(
-    input: Composition, other: Any, *, alpha: Number = 1, out: Optional[Tensor] = None,
+    input: Composition,
+    other: Any,
+    *,
+    alpha: Number = 1,
+    out: Optional[Tensor] = None,
 ) -> Composition:
     return sub(input, other=other, alpha=alpha, out=out)
 
@@ -262,13 +311,19 @@ def div(
 
 
 @overload
-def divide(input: Composition, other: Tensor,) -> Composition:
+def divide(
+    input: Composition,
+    other: Tensor,
+) -> Composition:
     ...
 
 
 @overload
 def divide(
-    input: Composition, other: Tensor, *, rounding_mode: Optional[str],
+    input: Composition,
+    other: Tensor,
+    *,
+    rounding_mode: Optional[str],
 ) -> Composition:
     ...
 
@@ -281,12 +336,85 @@ def divide(
 
 
 @overload
-def divide(input: Composition, other: Number,) -> Composition:
+def divide(
+    input: Composition,
+    other: Number,
+) -> Composition:
     ...
 
 
 def divide(input: Composition, other: Any, *, rounding_mode: Optional[str]):
     return div(input, other=other, rounding_mode=rounding_mode)
+
+
+def mv(
+    input: Union[Composition, Tensor],
+    vec: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if isinstance(input, Composition) and isinstance(vec, Composition):
+        raise TypeError(
+            "mv(): argument 'input' and argument 'vec' cannot both be Composition"
+        )
+    if isinstance(input, Composition):
+        out_residual_tensor = torch.mv(
+            input._residual_tensor,
+            vec,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input._composition_tensor,
+            vec,
+            out=out._composition_tensor if out is not None else None,
+        )
+    else:
+        out_residual_tensor = torch.mv(
+            input,
+            vec._residual_tensor,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input,
+            vec._composition_tensor,
+            out=out._composition_tensor if out is not None else None,
+        )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def mm(
+    input: Union[Composition, Tensor],
+    mat2: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if isinstance(input, Composition) and isinstance(mat2, Composition):
+        raise TypeError(
+            "mm(): argument 'input' and argument 'mat2' cannot both be Composition"
+        )
+    if isinstance(input, Composition):
+        out_residual_tensor = torch.mm(
+            input._residual_tensor,
+            mat2,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input._composition_tensor,
+            mat2,
+            out=out._composition_tensor if out is not None else None,
+        )
+    else:
+        out_residual_tensor = torch.mv(
+            input,
+            mat2._residual_tensor,
+            out=out._residual_tensor if out is not None else None,
+        )
+        out_composition_tensor = torch.matmul(
+            input,
+            mat2._composition_tensor,
+            out=out._composition_tensor if out is not None else None,
+        )
+    return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
 @overload
@@ -701,9 +829,13 @@ def round(
         )
     else:
         out_composition_tensor = torch.round(
-            input._composition_tensor, decimals=decimals,
+            input._composition_tensor,
+            decimals=decimals,
         )
-        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
+        out_residual_tensor = torch.round(
+            input._residual_tensor,
+            decimals=decimals,
+        )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
@@ -719,6 +851,77 @@ def round_(input: Composition, *, decimals: _int) -> Composition:
 
 def round_(input: Composition, *, decimals: _int = None) -> Composition:
     return input.round_(decimals=decimals)
+
+
+@overload
+def zeros(
+    size: _size,
+    c_num: _int,
+    *,
+    out: Optional[Tensor] = None,
+    dtype: _dtype = None,
+    layout: Optional[_layout] = strided,
+    device: Union[_device, str, None] = None,
+    pin_memory: _bool = False,
+    requires_grad: _bool = False,
+) -> Composition:
+    ...
+
+
+@overload
+def zeros(
+    *size: _int,
+    c_num: _int,
+    out: Optional[Tensor] = None,
+    dtype: _dtype = None,
+    layout: Optional[_layout] = strided,
+    device: Union[_device, str, None] = None,
+    pin_memory: _bool = False,
+    requires_grad: _bool = False,
+) -> Composition:
+    ...
+
+
+def zeros(*args: Any, **kwargs: Any):
+    def _zeros(
+        *,
+        size: _size,
+        c_num: _int,
+        out: Optional[Composition] = None,
+        dtype: _dtype = None,
+        layout: Optional[_layout] = strided,
+        device: Union[_device, str, None] = None,
+        pin_memory: _bool = False,
+        requires_grad: _bool = False,
+    ):
+        out_composition_tensor = torch.zeros(
+            (c_num,) + size,
+            out=out._composition_tensor if out is not None else None,
+            dtype=dtype,
+            layout=layout,
+            device=device,
+            pin_memory=pin_memory,
+            requires_grad=requires_grad,
+        )
+        out_residual_tensor = torch.zeros(
+            size,
+            out=out._residual_tensor if out is not None else None,
+            dtype=dtype,
+            layout=layout,
+            device=device,
+            pin_memory=pin_memory,
+            requires_grad=requires_grad,
+        )
+        return _from_replce(out_composition_tensor, out_residual_tensor)
+
+    # parse args
+    if len(args) > 0:
+        if isinstance(args[0], _int):
+            kwargs["size"] = args
+        else:
+            for i in range(len(args)):
+                kwargs[["size", "c_num"][i]] = args[i]
+    return _zeros(**kwargs)
 
 
 def zeros_like(
@@ -751,3 +954,17 @@ def zeros_like(
         requires_grad=requires_grad,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
+    out_composition_tensor = torch.abs(
+        input._composition_tensor, out=out._composition_tensor
+    )
+    out_residual_tensor = torch.abs(input._residual_tensor, out=out._residual_tensor)
+    return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def abs_(input: Composition) -> Composition:
+    torch.abs_(input._composition_tensor)
+    torch.abs_(input._residual_tensor)
+    return input

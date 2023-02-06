@@ -1,15 +1,15 @@
 from . import composition as _composition
 from . import variable_functions as _variable_functions
 from .composition import Composition
-from .bias_decomposition import (
-    set_bias_decomposition_func,
-    get_bias_decomposition_name,
-    get_bias_decomposition_func,
-    using_bias_decomposition_func,
-    no_bias_decomposition,
-    set_bias_decomposition_args,
-    get_bias_decomposition_args,
-    using_bias_decomposition_args,
+from .decomposition import (
+    set_decomposition_func,
+    get_decomposition_name,
+    get_decomposition_func,
+    using_decomposition_func,
+    no_decomposition,
+    set_decomposition_args,
+    get_decomposition_args,
+    using_decomposition_args,
 )
 
 from .error_check import (
@@ -18,17 +18,31 @@ from .error_check import (
     check_error,
     is_error_checking_enabled,
 )
+from .autotracing import (
+    no_tracing,
+    enable_tracing,
+    set_tracing_enabled,
+    is_tracing_enabled,
+)
+
 
 __all__ = [
     "Composition",
-    "set_bias_decomposition_func",
-    "get_bias_decomposition_name",
-    "get_bias_decomposition_func",
-    "using_bias_decomposition_func",
-    "no_bias_decomposition",
-    "set_bias_decomposition_args",
-    "get_bias_decomposition_args",
-    "using_bias_decomposition_args",
+    "set_decomposition_func",
+    "get_decomposition_name",
+    "get_decomposition_func",
+    "using_decomposition_func",
+    "set_decomposition_args",
+    "get_decomposition_args",
+    "using_decomposition_args",
+    "no_error_check",
+    "error_check",
+    "check_error",
+    "is_error_checking_enabled",
+    "no_tracing",
+    "enable_tracing",
+    "set_tracing_enabled",
+    "is_tracing_enabled",
 ]
 
 import typing as _typing
@@ -58,43 +72,3 @@ for name in dir(_variable_functions):
 # initialization
 
 _composition._from_replce = _variable_functions._from_replce
-_composition._get_bias_decomposition_name = get_bias_decomposition_name
-_composition._get_bias_decomposition_func = get_bias_decomposition_func
-
-
-# import torch
-# c = Composition((3, 4), 3, dtype=torch.float)
-
-
-# # print(torch.tensor([0,0,0,0], dtype=torch.float) in c[0])
-# # print(c[1])
-# # print(c[1])
-# c._composition_tensor[:] = 1
-# # print(c.residual())
-# c.residual()[:] = 1
-# # print(c)
-# # t1 = torch.randn(
-# #     (
-# #         3,
-# #         3,
-# #         4,
-# #     )
-# # )
-# # t2 = torch.randn(
-# #     (
-# #         3,
-# #         4,
-# #         2,
-# #     )
-# # )
-# # # print((t1 @ t2).size())
-# c = 3 * c
-# print(c)
-# c += 3
-# print(c)
-# # t1 += "asd"
-# # t1.__matmul__
-# # CompositionModual.get_bias_decomposition_func()(c)
-# print(c)
-# # print(c.__repr__())
-# # c.__str__

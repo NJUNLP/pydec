@@ -48,15 +48,15 @@ version_params:
   versioning: true
 
   # Disable so older versions cannot be searched
-  allow_search: true  
+  allow_search: false  
 
   # Allow these versions to be searched
   search_versions:
-    - Previous
-  latest: Current
-  versions:
     - Current
-    - Previous
+  latest: v0.2.0
+  versions:
+    - v0.2.0
+    - v0.1.1
 
 # Should there be feedback buttons at the bottom of pages?
 feedback: false
