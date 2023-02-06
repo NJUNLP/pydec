@@ -24,7 +24,7 @@ Critical items to know are:
 * Add `c_apply()` and `c_map()`.
 * Add `c_stack()`.
 * Add argument `sum_residual` for `c_cat()`.
-* Add `zeros()` and support for torch versions < 1.11
+* Add `zeros()` and support for torch versions < 1.11.
 * Add customized api registration.
 * Update docs.
 * Fix bugs.
