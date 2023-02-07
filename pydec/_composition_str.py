@@ -283,7 +283,7 @@ def _c_str(self, *, composition_contents: List[str] = None):
 
     components_reprs = [
         _t_str(
-            self[i],
+            self()[i],
             tensor_contents=composition_contents[i]
             if composition_contents is not None
             else None,
