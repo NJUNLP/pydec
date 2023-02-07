@@ -81,8 +81,8 @@ class _CompositionMeta(type):
         return super().__new__(cls, clsname, bases, attrs)
 
 
-class Composition(metaclass=_CompositionMeta):
-    __doc__ = r"""
+class Composition:
+    r"""
     TODO: Composition doc
     """
 
@@ -113,6 +113,14 @@ class Composition(metaclass=_CompositionMeta):
     @property
     def ndim(self) -> _int:
         return self.dim()
+
+    @property
+    def components(self) -> Tensor:
+        return self._composition_tensor
+
+    @property
+    def residual(self) -> Tensor:
+        return self._residual_tensor
 
     @overload
     def __init__(
@@ -190,9 +198,9 @@ class Composition(metaclass=_CompositionMeta):
 
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
-    ) -> Union[Composition, Tensor]:
+    ) -> Composition:
         # support autotracing
-        if pydec.autotracing.is_tracing_enabled():
+        if pydec.autotracing.is_tracing_enabled():  # TODO
             if isinstance(indices, Tuple):
                 indices = (slice(None, None, None),) + indices
             else:
@@ -200,7 +208,27 @@ class Composition(metaclass=_CompositionMeta):
                     slice(None, None, None),
                     indices,
                 )
+        return self.__c_setitem__(indices)
 
+    def __setitem__(
+        self,
+        indices: Union[None, _int, slice, Tensor, List, Tuple],
+        val: Union[Composition, Tensor, Number],
+    ) -> None:
+        # support autotracing
+        if pydec.autotracing.is_tracing_enabled():  # TODO
+            if isinstance(indices, Tuple):
+                indices = (slice(None, None, None),) + indices
+            else:
+                indices = (
+                    slice(None, None, None),
+                    indices,
+                )
+        return self.__c_c_setitem__()
+
+    def __c_getitem__(
+        self, indices: Union[None, _int, slice, Tensor, List, Tuple]
+    ) -> Union[Composition, Tensor]:
         if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
@@ -214,21 +242,11 @@ class Composition(metaclass=_CompositionMeta):
             out_residual_tensor = self._residual_tensor[indices[1:]]
             return _from_replce(out_composition_tensor, out_residual_tensor)
 
-    def __setitem__(
+    def __c_setitem__(
         self,
         indices: Union[None, _int, slice, Tensor, List, Tuple],
         val: Union[Composition, Tensor, Number],
     ) -> None:
-        # support autotracing
-        if pydec.autotracing.is_tracing_enabled():
-            if isinstance(indices, Tuple):
-                indices = (slice(None, None, None),) + indices
-            else:
-                indices = (
-                    slice(None, None, None),
-                    indices,
-                )
-
         if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
         if indices[0] is None:
@@ -247,6 +265,12 @@ class Composition(metaclass=_CompositionMeta):
             else:
                 self._composition_tensor[indices] = val._composition_tensor
                 self._residual_tensor[indices[1:]] = val._residual_tensor
+
+    def __call__(self) -> Any:
+        """
+        Shortcut for `__c_getitem__` and `__c_setitem__`, e.g., `c()[2]` equals to `c.__c_getitem__(2)`.
+        """
+        return _SliceComposition(self)
 
     def __len__(self):
         return self._composition_tensor.__len__()
@@ -1407,3 +1431,26 @@ class Composition(metaclass=_CompositionMeta):
         p_dims = [-1] + [i for i in range(0, p_composition_tensor.dim() - 1)]
         self._composition_tensor = p_composition_tensor.permute(p_dims)
         return self
+
+
+class _SliceComposition(Composition):
+    r"""
+    TODO: A temporary type for implementation of component subscript accessing for Composition.
+    """
+
+    def __init__(self, composition: Composition):
+        super().__init__(torch.zeros([]))  # void initialization
+        self._composition_tensor = composition._composition_tensor
+        self._residual_tensor = composition._residual_tensor
+
+    def __getitem__(
+        self, indices: Union[None, _int, slice, Tensor, List, Tuple]
+    ) -> Union[Composition, Tensor]:
+        return super().__c_getitem__(indices)
+
+    def __setitem__(
+        self,
+        indices: Union[None, _int, slice, Tensor, List, Tuple],
+        val: Union[Composition, Tensor, Number],
+    ) -> None:
+        return super().__c_setitem__(indices, val)
