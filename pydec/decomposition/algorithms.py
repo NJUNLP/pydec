@@ -5,7 +5,7 @@ from torch import Tensor
 from typing import Dict, Tuple, Union, Any, Callable, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..composition import Composition
+    from .._composition import Composition
 
 from torch.types import (
     _int,

@@ -142,7 +142,7 @@ def register_module(name: str) -> None:
 
 def register_cmethod(name: str) -> None:
     def register_cmethod_with_name(func: Callable):
-        pydec.composition._c_register_method(name, func)
+        pydec._composition._c_register_method(name, func)
 
     return register_cmethod_with_name
 

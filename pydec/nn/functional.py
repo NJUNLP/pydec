@@ -3,7 +3,7 @@ r"""Functional interface"""
 import torch
 from torch import Tensor
 import torch.nn.functional as F
-from ..composition import Composition
+from .._composition import Composition
 from ..decomposition import (
     get_decomposition_func,
     get_decomposition_name,

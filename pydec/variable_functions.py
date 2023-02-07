@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 from torch._C import memory_format
 
-from pydec.composition import Composition
+from pydec._composition import Composition
 
 from typing import Any, Union, List, Tuple, Optional, Callable, overload
 

@@ -1,6 +1,6 @@
-from . import composition as _composition
+from . import _composition as _composition
 from . import variable_functions as _variable_functions
-from .composition import Composition
+from ._composition import Composition
 from .decomposition import (
     set_decomposition_func,
     get_decomposition_name,

@@ -3,7 +3,7 @@ from torch import Tensor
 
 from typing import Union, Any, Callable, ContextManager, TYPE_CHECKING
 
-from .composition import Composition
+from ._composition import Composition
 
 from torch.types import (
     _int,
