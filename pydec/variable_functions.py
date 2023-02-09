@@ -102,7 +102,7 @@ def concatenate(
 def c_cat(
     compositions: Union[Tuple[Composition, ...], List[Composition]],
     *,
-    sum_residual: _bool = False,
+    sum_residual: _bool = True,
     out: Optional[Composition] = None,
 ) -> Composition:
     for i in range(1, len(compositions)):
