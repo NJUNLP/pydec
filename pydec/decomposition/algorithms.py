@@ -1,5 +1,6 @@
 from __future__ import annotations
 import torch
+import pydec
 from torch import Tensor
 
 from typing import Dict, Tuple, Union, Any, Callable, Optional, TYPE_CHECKING
@@ -20,8 +21,6 @@ from torch.types import (
     SymInt,
 )
 
-
-from ..variable_functions import _from_replce, zeros_like
 from .states import register_decomposition_func, set_decomposition_func
 
 # def _non_linear_decompose(
@@ -67,7 +66,7 @@ from .states import register_decomposition_func, set_decomposition_func
 #     else:
 #         out_composition_tensor = input._composition_tensor.clone()
 #         out_residual_tensor = residual_out
-#         out = _from_replce(out_composition_tensor, out_residual_tensor)
+#         out = pydec._from_replce(out_composition_tensor, out_residual_tensor)
 #         return out, decompose_tensor
 
 
@@ -96,7 +95,7 @@ def _none_decomposition(
         input._residual_tensor = recovery_out
         return input
     else:
-        out = zeros_like(input)
+        out = pydec.zeros_like(input)
         out._residual_tensor += recovery_out
         return out
 
@@ -132,7 +131,7 @@ def abs_decomposition(
     else:
         out_composition_tensor = abs_composition * multiplier
         out_residual_tensor = residual_out
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
 
 @register_decomposition_func("hybrid_decomposition")
@@ -174,7 +173,7 @@ def hybrid_decomposition(
     else:
         out_composition_tensor = composition * multiplier
         out_residual_tensor = residual_out
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
 
 @register_decomposition_func("sampled_shaply")
@@ -225,7 +224,7 @@ def sampled_shaply(
     else:
         out_composition_tensor = sampled_shaply_value
         out_residual_tensor = residual_out
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
 
 # TODO: the algorithms below are deprecated.
@@ -244,7 +243,7 @@ def abs_decomposition(
     sum_compositions[sum_compositions == 0] = eps
     weights = abs_compositions / sum_compositions
     bias_composition_tensor = weights * bias
-    out = _from_replce(bias_composition_tensor)
+    out = pydec._from_replce(bias_composition_tensor)
     return out
 
 
@@ -276,7 +275,7 @@ def hybrid_decomposition(
     abs_weights = (1 - ratio) * abs_compositions / abs_sum_compositions
 
     bias_composition_tensor = weights * bias + abs_weights * bias
-    out = _from_replce(bias_composition_tensor)
+    out = pydec._from_replce(bias_composition_tensor)
     return out
 
 
@@ -305,7 +304,7 @@ def sign_decomposition(
     bias_composition_tensor = weights * bias
     bias_residula_tensor = (1 - weights.sum(dim=0)) * bias
 
-    out = _from_replce(bias_composition_tensor, bias_residula_tensor)
+    out = pydec._from_replce(bias_composition_tensor, bias_residula_tensor)
     return out
 
 
@@ -327,7 +326,7 @@ def sign_decomposition_threshold(
 
     bias_composition_tensor = weights * bias
     bias_residula_tensor = (1 - weights.sum(dim=0)) * bias
-    out = _from_replce(bias_composition_tensor, bias_residula_tensor)
+    out = pydec._from_replce(bias_composition_tensor, bias_residula_tensor)
     return out
 
 
@@ -353,7 +352,7 @@ def hybrid_decomposition_threshold(
     abs_weights = (1 - ratio) * abs_compositions / abs_sum_compositions
 
     bias_composition_tensor = weights * bias + abs_weights * bias
-    out = _from_replce(bias_composition_tensor)
+    out = pydec._from_replce(bias_composition_tensor)
     return out
 
 
@@ -373,7 +372,7 @@ def norm_decomposition(
     weights = norm_compositions / sum_compositions
 
     bias_composition_tensor = weights * bias
-    return _from_replce(bias_composition_tensor)
+    return pydec._from_replce(bias_composition_tensor)
 
 """
 
