@@ -40,21 +40,15 @@ from pydec.exception_utils import (
     component_num_error,
     unsupported_operand_error,
     arg_value_error,
+    none_decomposition_func_error,
 )
 
 
 from pydec.utils import _shift_dim, _shift_dims
 
-
 r"""
 To avoid circular import, we have to initialize the following method in __init__.py.
 """
-
-
-def _from_replce(
-    composition_tensor: Tensor, residual_tensor: Tensor = None
-) -> Composition:
-    ...
 
 
 class Composition:
@@ -202,7 +196,7 @@ class Composition:
                     slice(None, None, None),
                     indices,
                 )
-        return self.__c_setitem__(indices)
+        return self.__c_getitem__(indices)
 
     @_auto_registration
     def __setitem__(
@@ -219,7 +213,7 @@ class Composition:
                     slice(None, None, None),
                     indices,
                 )
-        return self.__c_c_setitem__()
+        return self.__c_setitem__(indices, val)
 
     def __c_getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
@@ -235,7 +229,7 @@ class Composition:
         else:
             out_composition_tensor = self._composition_tensor[indices]
             out_residual_tensor = self._residual_tensor[indices[1:]]
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     def __c_setitem__(
         self,
@@ -261,7 +255,7 @@ class Composition:
                 self._composition_tensor[indices] = val._composition_tensor
                 self._residual_tensor[indices[1:]] = val._residual_tensor
 
-    def __call__(self) -> Any:
+    def __call__(self) -> _SliceComposition:
         """
         Shortcut for `__c_getitem__` and `__c_setitem__`, e.g., `c()[2]` equals to `c.__c_getitem__(2)`.
         """
@@ -288,38 +282,25 @@ class Composition:
 
     @_auto_registration
     def numel(self) -> _int:
-        return self._residual_tensor.numel()
+        return pydec.numel(self)
 
     def c_numel(self, count_residual=False) -> _int:
-        if count_residual:
-            return self._composition_tensor.numel() + self._residual_tensor.numel()
-        else:
-            return self._composition_tensor.numel()
+        return pydec.c_numel(self, count_residual=count_residual)
 
     def numc(self) -> _int:
-        return len(self)
+        return pydec.numc(self)
 
     @_auto_registration
     def clone(self, *, memory_format: Optional[memory_format] = None) -> Composition:
-        out = Composition(tuple(), 0)
-        out._composition_tensor = self._composition_tensor.clone(
-            memory_format=memory_format
-        )
-        out._residual_tensor = self._residual_tensor.clone(memory_format=memory_format)
-        return out
+        return pydec.clone(input, memory_format=memory_format)
 
     @_auto_registration
     def detach(self) -> Composition:
-        out = Composition(tuple(), 0)
-        out._composition_tensor = self._composition_tensor.detach()
-        out._residual_tensor = self._residual_tensor.detach()
-        return out
+        return pydec.detach(self)
 
     @_auto_registration
     def detach_(self) -> Composition:
-        self._composition_tensor.detach_()
-        self._residual_tensor.detach_()
-        return self
+        return pydec.detach_(self)
 
     @overload
     def size(self) -> torch.Size:
@@ -327,6 +308,10 @@ class Composition:
 
     @overload
     def size(self, dim: _int) -> _int:
+        ...
+
+    @overload
+    def size(self, dim: Optional[_int] = None) -> Union[torch.Size, _int]:
         ...
 
     @_auto_registration
@@ -356,11 +341,11 @@ class Composition:
 
     @_auto_registration
     def __neg__(self) -> Composition:
-        return _from_replce(-self._composition_tensor, -self._residual_tensor)
+        return pydec._from_replce(-self._composition_tensor, -self._residual_tensor)
 
     @_auto_registration
     def __pos__(self) -> Composition:
-        return _from_replce(+self._composition_tensor, +self._residual_tensor)
+        return pydec._from_replce(+self._composition_tensor, +self._residual_tensor)
 
     @_auto_registration
     def __iadd__(self, other) -> Composition:
@@ -385,11 +370,11 @@ class Composition:
                 self._composition_tensor + other._composition_tensor
             )
             out_residual_tensor = self._residual_tensor + other._residual_tensor
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             out_composition_tensor = self._composition_tensor.clone()
             out_residual_tensor = self._residual_tensor + other
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("+", type(self), type(other))
 
@@ -427,7 +412,7 @@ class Composition:
         if isinstance(other, Tensor):
             out_composition_tensor = self._composition_tensor @ other
             out_residual_tensor = self._residual_tensor @ other
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("@", type(self), type(other))
 
@@ -443,7 +428,7 @@ class Composition:
             else:
                 out_composition_tensor = other @ self._composition_tensor
                 out_residual_tensor = other @ self._residual_tensor
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
         else:
             raise unsupported_operand_error("@=", type(self), type(other))
 
@@ -480,7 +465,7 @@ class Composition:
         else:
             out_composition_tensor = self._composition_tensor * other
             out_residual_tensor = self._residual_tensor * other
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @_auto_registration
     def __rmul__(self, other) -> Composition:
@@ -522,7 +507,7 @@ class Composition:
         else:
             out_composition_tensor = self._composition_tensor / other
             out_residual_tensor = self._residual_tensor / other
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @_auto_registration
     def __rtruediv__(self, other: Any) -> Composition:
@@ -573,39 +558,7 @@ class Composition:
         alpha: Optional[Number] = 1,
         out: Optional[Composition] = None,
     ) -> Composition:
-        # if not isinstance(self, Composition):
-        #     assert isinstance(other, Composition)
-        #     self, other = other, self
-        if isinstance(other, Composition):
-            if self.numc() != other.numc():
-                raise component_num_error(self.numc(), other.numc())
-            if out is None:
-                out_composition_tensor = self._composition_tensor.add(
-                    other._composition_tensor, alpha=alpha
-                )
-                out_residual_tensor = self._residual_tensor.add(
-                    other._residual_tensor, alpha=alpha
-                )
-            else:
-                out_composition_tensor = self._composition_tensor.add(
-                    other._composition_tensor, alpha=alpha, out=out._composition_tensor
-                )
-                out_residual_tensor = self._residual_tensor.add(
-                    other._residual_tensor, alpha=alpha, out=out._residual_tensor
-                )
-            return _from_replce(out_composition_tensor, out_residual_tensor)
-        elif isinstance(other, (_int, _float, _bool, Tensor)):
-            out_composition_tensor = self._composition_tensor.clone()
-            out_residual_tensor = self._residual_tensor.add(
-                other,
-                alpha=alpha,
-                # TODO out=out._residual_tensor if out is not None else None,
-            )
-            if out is not None:
-                out._composition_tensor[:] = out_composition_tensor
-            return _from_replce(out_composition_tensor, out_residual_tensor)
-        else:
-            raise unsupported_operand_error("add", type(self), type(other))
+        return pydec.add(self, other, alpha=alpha, out=out)
 
     @_auto_registration
     @_hadle_self_is_tensor_inplace
@@ -632,9 +585,8 @@ class Composition:
         *,
         alpha: Optional[Number] = 1,
         out: Optional[Composition] = None,
-        **kwargs,
     ) -> Composition:
-        return self.add(-other, alpha=alpha, out=out, **kwargs)
+        return pydec.add(-other, alpha=alpha, out=out)
 
     @_auto_registration
     @_hadle_self_is_tensor_inplace
@@ -648,27 +600,7 @@ class Composition:
     def mul(
         self, other: Union[Tensor, Number], *, out: Optional[Composition] = None
     ) -> Composition:
-        if isinstance(other, Composition):
-            raise args_error(Composition.mul.__name__, self, other, out=out)
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                out_composition_tensor = self._composition_tensor.view(new_size).mul(
-                    other, out=out._composition_tensor
-                )
-            else:
-                out_composition_tensor = self._composition_tensor.mul(
-                    other, out=out._composition_tensor
-                )
-            out_residual_tensor = self._residual_tensor.mul(
-                other, out=out._residual_tensor
-            )
-        else:
-            out_composition_tensor = self._composition_tensor * other
-            out_residual_tensor = self._residual_tensor * other
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.mul(self, other, out=out)
 
     @_auto_registration
     @_hadle_self_is_tensor_inplace
@@ -681,33 +613,7 @@ class Composition:
         self, other: Union[Tensor, Number], *, rounding_mode: Optional[str] = None
     ) -> Composition:
         # TODO: self tensor
-        if isinstance(other, Composition):
-            raise args_error(
-                Composition.div.__name__, self, other, rounding_mode=rounding_mode
-            )
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                out_composition_tensor = self._composition_tensor.view(new_size).div(
-                    other, rounding_mode=rounding_mode
-                )
-            else:
-                out_composition_tensor = self._composition_tensor.div(
-                    other, rounding_mode == rounding_mode
-                )
-            out_residual_tensor = self._residual_tensor.div(
-                other, rounding_mode=rounding_mode
-            )
-        else:
-            out_composition_tensor = self._composition_tensor.div(
-                other, rounding_mode=rounding_mode
-            )
-            out_residual_tensor = self._residual_tensor.div(
-                other, rounding_mode=rounding_mode
-            )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.div(self, other, rounding_mode=rounding_mode)
 
     @_auto_registration
     def div_(
@@ -741,9 +647,7 @@ class Composition:
         Use pydec.mv() instead or use torch.mv() in autotracing instead.
         """
         # TODO: self tensor
-        out_residual_tensor = self._residual_tensor.mv(vec)
-        out_composition_tensor = self._composition_tensor @ vec
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.mv(self, vec)
 
     @_auto_registration
     def mm(self, mat2: Tensor) -> Composition:
@@ -752,9 +656,7 @@ class Composition:
         Use pydec.mm() instead or use torch.mm() in autotracing instead.
         """
         # TODO: self tensor
-        out_residual_tensor = self._residual_tensor.mm(mat2)
-        out_composition_tensor = self._composition_tensor @ mat2
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.mm(self, mat2)
 
     @overload
     def any(self) -> Tensor:
@@ -766,7 +668,7 @@ class Composition:
 
     @_auto_registration
     def any(self, *args: Any, **kwargs: Any) -> Tensor:
-        return self.c_sum().any(*args, **kwargs)
+        return pydec.any(self, *args, **kwargs)
 
     @overload
     def all(self) -> Tensor:
@@ -778,13 +680,11 @@ class Composition:
 
     @_auto_registration
     def all(self, *args: Any, **kwargs: Any) -> Tensor:
-        return self.c_sum().all(*args, **kwargs)
+        return pydec.all(self, *args, **kwargs)
 
     @_auto_registration
     def unsqueeze(self, dim: _int) -> Composition:
-        out_residual_tensor = self._residual_tensor.unsqueeze(dim)
-        out_composition_tensor = self._composition_tensor.unsqueeze(_shift_dim(dim))
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.unsqueeze(self, dim)
 
     @overload
     def squeeze(self) -> Composition:
@@ -796,15 +696,7 @@ class Composition:
 
     @_auto_registration
     def squeeze(self, dim: _int = None) -> Composition:
-        if dim is None:
-            out_residual_tensor = self._residual_tensor.squeeze()
-            out_composition_tensor = self._composition_tensor.squeeze()
-            if self.numc() == 1:
-                out_composition_tensor = out_composition_tensor.unsqueeze(0)
-        else:
-            out_residual_tensor = self._residual_tensor.squeeze(dim)
-            out_composition_tensor = self._composition_tensor.squeeze(_shift_dim(dim))
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.squeeze(self, dim)
 
     @_auto_registration
     def unsqueeze_(self, dim: _int) -> Composition:
@@ -835,11 +727,7 @@ class Composition:
 
     @_auto_registration
     def transpose(self, dim0: _int, dim1: _int) -> Composition:
-        out_residual_tensor = self._residual_tensor.transpose(dim0, dim1)
-        out_composition_tensor = self._composition_tensor.transpose(
-            _shift_dim(dim0), _shift_dim(dim1)
-        )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.transpose(self, dim0, dim1)
 
     @_auto_registration
     def transpose_(self, dim0: _int, dim1: _int) -> Composition:
@@ -863,11 +751,7 @@ class Composition:
             dims = torch.Size(args)
         else:
             dims = args[0]
-        out_residual_tensor = self._residual_tensor.permute(dims)
-        out_composition_tensor = self._composition_tensor.permute(
-            (0,) + _shift_dims(dims)
-        )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.permute(self, dims=dims)
 
     @overload
     def sum(self, *, dtype: Optional[_dtype] = None) -> Composition:
@@ -887,25 +771,10 @@ class Composition:
     def sum(
         self, dim=None, keepdim: _bool = False, *, dtype: Optional[_dtype] = None
     ) -> Composition:
-        if dim is None:
-            dim = tuple(range(1, self._composition_tensor.dim()))
-            out_composition_tensor = self._composition_tensor.sum(dim, dtype=dtype)
-            out_residual_tensor = self._residual_tensor.sum(dtype=dtype)
-        else:
-            out_residual_tensor = self._residual_tensor.sum(
-                dim=dim, keepdim=keepdim, dtype=dtype
-            )
-            if isinstance(dim, _int):
-                dim = (dim,)
-            out_composition_tensor = self._composition_tensor.sum(
-                dim=_shift_dims(dim), keepdim=keepdim, dtype=dtype
-            )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.sum(dim=dim, keepdim=keepdim, dtype=dtype)
 
     def c_sum(self, *, dtype: Optional[_dtype] = None) -> Tensor:
-        return self._composition_tensor.sum(
-            dim=0, dtype=dtype
-        ) + self._residual_tensor.to(dtype=dtype)
+        return pydec.c_sum(self, dtype=dtype)
 
     @overload
     def mean(self, *, dtype: Optional[_dtype] = None) -> Composition:
@@ -929,20 +798,7 @@ class Composition:
         *,
         dtype: Optional[_dtype] = None,
     ):
-        if dim is None:
-            dim = tuple(range(1, self._composition_tensor.dim()))
-            out_composition_tensor = self._composition_tensor.mean(dim, dtype=dtype)
-            out_residual_tensor = self._residual_tensor.mean(dtype=dtype)
-        else:
-            out_residual_tensor = self._residual_tensor.mean(
-                dim=dim, keepdim=keepdim, dtype=dtype
-            )
-            if isinstance(dim, _int):
-                dim = (dim,)
-            out_composition_tensor = self._composition_tensor.mean(
-                dim=_shift_dims(dim), keepdim=keepdim, dtype=dtype
-            )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.mean(self, dim, keepdim, dtype=dtype)
 
     @overload
     def view(self, dtype: _dtype) -> Composition:
@@ -974,7 +830,7 @@ class Composition:
                 (self.numc(),) + size
             )
             out_residual_tensor = self._residual_tensor.view(size)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @_auto_registration
     def view_as(self, other: Union[Tensor, Composition]) -> Composition:
@@ -995,9 +851,7 @@ class Composition:
                 shape = torch.Size(args)
             else:
                 shape = args[0]
-        out_composition_tensor = self._composition_tensor.view((self.numc(),) + shape)
-        out_residual_tensor = self._residual_tensor.view(shape)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.reshape(self, shape=shape)
 
     @_auto_registration
     def reshape_as(self, other: Tensor) -> Composition:
@@ -1007,7 +861,7 @@ class Composition:
     def contiguous(self, memory_format=torch.contiguous_format) -> Composition:
         out_composition_tensor = self._composition_tensor.contiguous()
         out_residual_tensor = self._residual_tensor.contiguous()
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @_auto_registration
     def is_contiguous(self, memory_format=torch.contiguous_format) -> _bool:
@@ -1048,7 +902,7 @@ class Composition:
         else:
             out_composition_tensor = self._composition_tensor.to(*args, **kwargs)
             out_residual_tensor = self._residual_tensor.to(*args, **kwargs)
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @overload
     def masked_fill(self, mask: Tensor, value: Tensor) -> Composition:
@@ -1060,12 +914,24 @@ class Composition:
 
     @_auto_registration
     def masked_fill(self, mask: Tensor, value: Any) -> Composition:
+        return pydec.masked_fill(self, mask, value)
+
+    @overload
+    def masked_fill_(self, mask: Tensor, value: Tensor) -> Composition:
+        ...
+
+    @overload
+    def masked_fill_(self, mask: Tensor, value: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def masked_fill_(self, mask: Tensor, value: Any) -> Composition:
         r"""
         Unsafe.
         """
-        out_composition_tensor = self._composition_tensor.masked_fill(mask[None], value)
-        out_residual_tensor = self._residual_tensor.masked_fill(mask, value)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        self._composition_tensor.masked_fill_(mask[None], value)
+        self._residual_tensor.masked_fill_(mask, value)
+        return self
 
     @overload
     def c_masked_fill(self, mask: Tensor, value: Tensor) -> Composition:
@@ -1076,16 +942,7 @@ class Composition:
         ...
 
     def c_masked_fill(self, mask: Tensor, value: Any) -> Composition:
-        if mask.dim() == 1:
-            if len(mask) != self.numc():
-                raise arg_value_error(
-                    f"the length of mask ({len(mask)}) should match component number ({self.numc()})"
-                )
-            mask_size = (self.numc(),) + (1,) * self.dim()
-            mask = mask.view(mask_size)
-        out_composition_tensor = self._composition_tensor.masked_fill(mask, value)
-        out_residual_tensor = self._residual_tensor.clone()
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.c_masked_fill(self, mask, value)
 
     @overload
     def c_masked_fill_(self, mask: Tensor, value: Tensor) -> Composition:
@@ -1106,41 +963,13 @@ class Composition:
         self._composition_tensor.masked_fill_(mask, value)
         return self
 
-    @overload
-    def masked_fill_(self, mask: Tensor, value: Tensor) -> Composition:
-        ...
-
-    @overload
-    def masked_fill_(self, mask: Tensor, value: Number) -> Composition:
-        ...
-
-    @_auto_registration
-    def masked_fill_(self, mask: Tensor, value: Any) -> Composition:
-        r"""
-        Unsafe.
-        """
-        self._composition_tensor.masked_fill_(mask[None], value)
-        self._residual_tensor.masked_fill_(mask, value)
-        return self
-
     @_auto_registration
     def masked_select(self, mask: Tensor) -> Composition:
-        out_composition_tensor = self._composition_tensor.masked_select(
-            mask[None]
-        ).reshape(self.numc(), -1)
-        out_residual_tensor = self._residual_tensor.masked_select(mask)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.masked_select(self, mask)
 
     @_auto_registration
     def masked_scatter(self, mask: Tensor, source: Tensor) -> Composition:
-        r"""
-        Unsafe.
-        """
-        out_composition_tensor = self._composition_tensor.masked_scatter(
-            mask[None], source
-        )
-        out_residual_tensor = self._residual_tensor.masked_scatter(mask, source)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.masked_scatter(self, mask, source)
 
     @_auto_registration
     def masked_scatter_(self, mask: Tensor, source: Tensor) -> Composition:
@@ -1161,14 +990,7 @@ class Composition:
     def gather(
         self, dim: Any, index: Tensor, *, sparse_grad: _bool = False
     ) -> Composition:
-        c_index = index[None].expand((self.numc(),) + (-1,) * index.dim())
-        out_composition_tensor = self._composition_tensor.gather(
-            _shift_dim(dim), c_index, sparse_grad=sparse_grad
-        )
-        out_residual_tensor = self._residual_tensor.gather(
-            dim, index, sparse_grad=sparse_grad
-        )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.gather(self, dim, index, sparse_grad=sparse_grad)
 
     @overload
     def scatter(self, dim: _int, index: Tensor, src: Tensor) -> Composition:
@@ -1200,35 +1022,7 @@ class Composition:
         *,
         reduce: str = None,
     ) -> Composition:
-        r"""
-        Unsafe.
-        Safe when reduce is not None.
-        """
-        if src is None:
-            src = value
-        if reduce == "add":
-            holder = torch.zeros_like(self._residual_tensor).to(self._residual_tensor)
-            holder = holder.scatter(dim, index, src, reduce=reduce)
-            return self + holder
-        else:
-            c_index = index[None].expand((self.numc(),) + (-1,) * index.dim())
-            if isinstance(src, Tensor):
-                c_src = src[None].expand((self.numc(),) + (-1,) * src.dim())
-            else:
-                c_src = src
-            if reduce is None:
-                out_composition_tensor = self._composition_tensor.scatter(
-                    _shift_dim(dim), c_index, c_src
-                )
-                out_residual_tensor = self._residual_tensor.scatter(dim, index, src)
-            else:
-                out_composition_tensor = self._composition_tensor.scatter(
-                    _shift_dim(dim), c_index, c_src, reduce=reduce
-                )
-                out_residual_tensor = self._residual_tensor.scatter(
-                    dim, index, src, reduce=reduce
-                )
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.scatter(self, dim, index, src, value, reduce=reduce)
 
     @overload
     def scatter_(self, dim: _int, index: Tensor, src: Tensor) -> Tensor:
@@ -1252,9 +1046,6 @@ class Composition:
     def scatter_(
         self, dim: Any, index: Tensor, src: Any, *, reduce: str = None
     ) -> Composition:
-        r"""
-        Unsafe.
-        """
         if reduce == "add":
             holder = torch.zeros_like(self._residual_tensor).to(self._residual_tensor)
             holder = holder.scatter(dim, index, src, reduce=reduce)
@@ -1280,17 +1071,7 @@ class Composition:
     def diagonal_scatter(
         self, src: Tensor, offset: _int = 0, dim1: _int = 0, dim2: _int = 1
     ) -> Composition:
-        r"""
-        Unsafe.
-        """
-        c_src = src[None].expand((self.numc(),) + (-1,) * src.dim())
-        out_composition_tensor = self._composition_tensor.diagonal_scatter(
-            c_src, offset, _shift_dim(dim1), _shift_dim(dim2)
-        )
-        out_residual_tensor = self._residual_tensor.diagonal_scatter(
-            src, offset, dim1, dim2
-        )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.diagonal_scatter(self, src, offset, dim1, dim2)
 
     @_auto_registration
     def cuda(
@@ -1304,13 +1085,13 @@ class Composition:
         out_residual_tensor = self._residual_tensor.cuda(
             device=device, non_blocking=non_blocking
         )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @_auto_registration
     def cpu(self) -> Composition:
         out_composition_tensor = self._composition_tensor.cpu()
         out_residual_tensor = self._residual_tensor.cpu()
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     def is_cuda(self):
         return self._residual_tensor.is_cuda
@@ -1321,33 +1102,18 @@ class Composition:
 
     @_auto_registration
     def index_select(self, dim: _int, index: Tensor) -> Composition:
-        out_composition_tensor = self._composition_tensor.index_select(
-            dim=_shift_dim(dim), index=index
-        )
-        out_residual_tensor = self._residual_tensor.index_select(dim=dim, index=index)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.index_select(self, dim=dim, index=index)
 
     @overload
     def c_index_select(self, index: Tensor, with_residual: _bool = True) -> Composition:
         ...
 
     def c_index_select(self, index: Tensor, with_residual: _bool = True) -> Composition:
-        out_composition_tensor = self._composition_tensor.index_select(
-            dim=0, index=index
-        )
-        if with_residual:
-            out_residual_tensor = self._residual_tensor.clone()
-        else:
-            out_residual_tensor = torch.zeros_like(self._residual_tensor).to(
-                self._residual_tensor
-            )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.c_index_select(self, index=index, with_residual=with_residual)
 
     @_auto_registration
     def masked_select(self, mask: Tensor) -> Composition:
-        out_composition_tensor = self._composition_tensor.masked_select(mask=mask[None])
-        out_residual_tensor = self._residual_tensor.masked_select(mask=mask)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.masked_select(self, mask)
 
     @overload
     def index_fill(self, dim: _int, index: Tensor, value: Tensor) -> Composition:
@@ -1359,16 +1125,7 @@ class Composition:
 
     @_auto_registration
     def index_fill(self, dim: _int, index: Tensor, value: Any) -> Composition:
-        r"""
-        Unsafe.
-        """
-        out_composition_tensor = self._composition_tensor.index_fill(
-            dim=_shift_dim(dim), index=index, value=value
-        )
-        out_residual_tensor = self._residual_tensor.index_fill(
-            dim=dim, index=index, value=value
-        )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.index_fill(self, dim=dim, index=index, value=value)
 
     @overload
     def index_fill_(self, dim: _int, index: Tensor, value: Tensor) -> Composition:
@@ -1380,9 +1137,6 @@ class Composition:
 
     @_auto_registration
     def index_fill_(self, dim: _int, index: Tensor, value: Number) -> Composition:
-        r"""
-        Unsafe.
-        """
         self._composition_tensor.index_fill_(
             dim=_shift_dim(dim), index=index, value=value
         )
@@ -1399,7 +1153,7 @@ class Composition:
             dim=_shift_dim(dim), index=index
         )
         out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @overload
     def type(self, dtype: None = None, non_blocking: _bool = False) -> str:
@@ -1420,7 +1174,7 @@ class Composition:
             out_residual_tensor = self._residual_tensor.type(
                 dtype=dtype, non_blocking=non_blocking
             )
-            return _from_replce(out_composition_tensor, out_residual_tensor)
+            return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @_auto_registration
     def type_as(self, other: Union[Tensor, Composition]) -> Composition:
@@ -1434,7 +1188,7 @@ class Composition:
         else:
             out_composition_tensor = self._composition_tensor.type_as(other)
             out_residual_tensor = self._residual_tensor.type_as(other)
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec._from_replce(out_composition_tensor, out_residual_tensor)
 
     @overload
     def round(self) -> Composition:
@@ -1446,13 +1200,7 @@ class Composition:
 
     @_auto_registration
     def round(self, *, decimals: _int = None):
-        if decimals is not None:
-            out_composition_tensor = self._composition_tensor.round(decimals=decimals)
-            out_residual_tensor = self._residual_tensor.round(decimals=decimals)
-        else:
-            out_composition_tensor = self._composition_tensor.round()
-            out_residual_tensor = self._residual_tensor.round()
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.round(self, decimals=decimals)
 
     @overload
     def round_(self) -> Composition:
@@ -1464,25 +1212,15 @@ class Composition:
 
     @_auto_registration
     def round_(self, *, decimals: _int = None) -> Composition:
-        if decimals is not None:
-            self._composition_tensor.round_(decimals=decimals)
-            self._residual_tensor.round_(decimals=decimals)
-        else:
-            self._composition_tensor.round_()
-            self._residual_tensor.round_()
-        return self
+        return pydec.round_(self, decimals=decimals)
 
     @_auto_registration
     def abs(self) -> Composition:
-        out_composition_tensor = self._composition_tensor.abs()
-        out_residual_tensor = self._residual_tensor.abs()
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return pydec.abs(self)
 
     @_auto_registration
     def abs_(self) -> Composition:
-        self._composition_tensor.abs_()
-        self._residual_tensor.abs_()
-        return self
+        return pydec.abs_(self)
 
     @_auto_registration
     def requires_grad_(self, mode: _bool = True) -> Composition:
@@ -1510,6 +1248,30 @@ class Composition:
         p_dims = [-1] + [i for i in range(0, p_composition_tensor.dim() - 1)]
         self._composition_tensor = p_composition_tensor.permute(p_dims)
         return self
+
+    @_auto_registration
+    def relu(self, *, ref: Optional[Tensor] = None) -> Composition:
+        return pydec.relu(self, ref=ref)
+
+    @_auto_registration
+    def relu_(self, *, ref: Optional[Tensor] = None) -> Composition:
+        return pydec.relu_(self, ref=ref)
+
+    @_auto_registration
+    def tanh(self, *, ref: Optional[Tensor] = None) -> Composition:
+        return pydec.tanh(self, ref=ref)
+
+    @_auto_registration
+    def tanh_(self, *, ref: Optional[Tensor] = None) -> Composition:
+        return pydec.tanh_(self, ref=ref)
+
+    @_auto_registration
+    def sigmoid(self, *, ref: Optional[Tensor] = None) -> Composition:
+        return pydec.sigmoid(self, ref=ref)
+
+    @_auto_registration
+    def sigmoid_(self, *, ref: Optional[Tensor] = None) -> Composition:
+        return pydec.sigmoid_(self, ref=ref)
 
 
 class _SliceComposition(Composition):
