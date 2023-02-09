@@ -1,4 +1,5 @@
-from . import _composition as _composition
+from . import _composition
+from . import overrides
 from . import variable_functions as _variable_functions
 from ._composition import Composition
 from .decomposition import (
@@ -52,7 +53,6 @@ PRIVATE_NAME = ["memory_format", "strided"]
 PRIVATE_NAME.extend(dir(_typing))
 PRIVATE_NAME.extend(dir(_types))
 
-import pydec.nn as nn
 
 from typing import TYPE_CHECKING
 
@@ -69,6 +69,7 @@ for name in dir(_variable_functions):
     if not name.startswith("_"):
         __all__.append(name)
 
-# initialization
+from .variable_functions import _from_replce
 
-_composition._from_replce = _variable_functions._from_replce
+import pydec.nn as nn
+
