@@ -1283,9 +1283,12 @@ def zeros_like(
 @_auto_registration
 def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
     out_composition_tensor = torch.abs(
-        input._composition_tensor, out=out._composition_tensor
+        input._composition_tensor,
+        out=out._composition_tensor if out is not None else None,
     )
-    out_residual_tensor = torch.abs(input._residual_tensor, out=out._residual_tensor)
+    out_residual_tensor = torch.abs(
+        input._residual_tensor, out=out._residual_tensor if out is not None else None,
+    )
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
