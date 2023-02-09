@@ -1,6 +1,7 @@
 r"""Functional interface"""
 
 import torch
+import pydec
 from torch import Tensor
 import torch.nn.functional as F
 from .._composition import Composition
@@ -8,6 +9,7 @@ from ..decomposition import (
     get_decomposition_func,
     get_decomposition_name,
 )
+from ..overrides import _auto_registration, _register_builtin_function
 from ..exception_utils import none_decomposition_func_error, arg_value_error
 
 # In some cases, these basic types are shadowed by corresponding
@@ -43,34 +45,49 @@ from typing import (
 )
 
 from ..variable_functions import _from_replce
+import warnings
+
+T = TypeVar("T")
 
 
+def _add_docstr(obj: T, doc_obj: str) -> T:
+    obj.__doc__ = doc_obj
+
+
+@_auto_registration
 def relu(
-    input: Composition, inplace=False, ref: Optional[Tensor] = None
+    input: Composition, inplace: bool = False, *, ref: Optional[Tensor] = None
 ) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        # TODO: inplace arg overwrite
-        out = decomposition_func(
-            input=input, func=torch.nn.functional.relu, ref=ref, inplace=inplace
-        )
-        assert isinstance(out, Composition)
-        return out
+    r"""relu(input, inplace=False, *, ref=None) -> Composition
+
+    Applies the rectified linear unit function element-wise. See
+    :class:`~torch.nn.ReLU` for more details.
+    """
+    if inplace:
+        result = pydec.relu_(input, ref=ref)
     else:
-        raise none_decomposition_func_error(get_decomposition_name())
+        result = pydec.relu(input, ref=ref)
+    return result
 
 
-def relu_(input: Composition, ref: Optional[Tensor] = None) -> Composition:
-    return relu(input=input, inplace=True, ref=ref)
+relu_ = _add_docstr(
+    pydec.relu_,
+    r"""
+relu_(input, *, ref=None) -> Composition
+
+In-place version of :func:`~relu`.
+""",
+)
 
 
+@_auto_registration
 def leaky_relu(
-    input: Composition, inplace=False, ref: Optional[Tensor] = None
+    input: Composition, inplace=False, *, ref: Optional[Tensor] = None
 ) -> Composition:
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         out = decomposition_func(
-            input=input, func=torch.nn.functional.relu, ref=ref, inplace=inplace
+            input=input, func=torch.nn.functional.leaky_relu, ref=ref, inplace=inplace
         )
         assert isinstance(out, Composition)
         return out
@@ -78,11 +95,13 @@ def leaky_relu(
         raise none_decomposition_func_error(get_decomposition_name())
 
 
-def leaky_relu_(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+@_auto_registration
+def leaky_relu_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
     return leaky_relu(input=input, inplace=True, ref=ref)
 
 
-def gelu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+@_auto_registration
+def gelu(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         out = decomposition_func(input=input, func=torch.nn.functional.gelu, ref=ref)
@@ -92,26 +111,30 @@ def gelu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
         raise none_decomposition_func_error(get_decomposition_name())
 
 
-def tanh(input: Composition, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.nn.functional.relu, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+def tanh(input, *, ref: Optional[Tensor] = None):
+    r"""tanh(input, *, ref=None) -> Composition
+
+    Applies element-wise,
+    :math:`\text{Tanh}(x) = \tanh(x) = \frac{\exp(x) - \exp(-x)}{\exp(x) + \exp(-x)}`
+
+    See :class:`~torch.nn.Tanh` for more details.
+    """
+    warnings.warn("nn.functional.tanh is deprecated. Use torch.tanh instead.")
+    return input.tanh(ref=ref)
 
 
-def sigmoid(input: Composition, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.nn.functional.relu, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+def sigmoid(input, *, ref: Optional[Tensor] = None):
+    r"""sigmoid(input, *, ref=None) -> Composition
+
+    Applies the element-wise function :math:`\text{Sigmoid}(x) = \frac{1}{1 + \exp(-x)}`
+
+    See :class:`~torch.nn.Sigmoid` for more details.
+    """
+    warnings.warn("nn.functional.sigmoid is deprecated. Use torch.sigmoid instead.")
+    return input.sigmoid(ref=ref)
 
 
+@_auto_registration
 def linear(input: Composition, weight: Tensor, bias: Tensor = None) -> Composition:
     out = input @ weight.t()
     if bias is not None:
@@ -121,6 +144,7 @@ def linear(input: Composition, weight: Tensor, bias: Tensor = None) -> Compositi
         return out
 
 
+@_register_builtin_function(torch.nn.functional.layer_norm)
 def layer_norm_1d(
     input: Composition,
     ref: Optional[Tensor] = None,
@@ -168,6 +192,7 @@ def conv2d(
     ...
 
 
+@_auto_registration
 def conv2d(
     input: Composition,
     weight: Tensor,
@@ -186,22 +211,10 @@ def conv2d(
         )
     if len(input.size()) == 3:
         out_composition_tensor = F.conv2d(
-            input._composition_tensor,
-            weight,
-            None,
-            stride,
-            padding,
-            dilation,
-            groups,
+            input._composition_tensor, weight, None, stride, padding, dilation, groups,
         )
         out_residual_tensor = F.conv2d(
-            input._residual_tensor,
-            weight,
-            None,
-            stride,
-            padding,
-            dilation,
-            groups,
+            input._residual_tensor, weight, None, stride, padding, dilation, groups,
         )
     else:
         out_composition_tensor = F.conv2d(
@@ -214,18 +227,13 @@ def conv2d(
             groups,
         ).view((-1,) + input.size())
         out_residual_tensor = F.conv2d(
-            input._residual_tensor,
-            weight,
-            None,
-            stride,
-            padding,
-            dilation,
-            groups,
+            input._residual_tensor, weight, None, stride, padding, dilation, groups,
         )
     out_residual_tensor += bias
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
+@_auto_registration
 def max_pool2d(
     input: Composition,
     kernel_size: Union[_int, Tuple[_int, _int]],
