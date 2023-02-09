@@ -138,29 +138,37 @@ def sigmoid(input, *, ref: Optional[Tensor] = None):
 def linear(input: Composition, weight: Tensor, bias: Tensor = None) -> Composition:
     out = input @ weight.t()
     if bias is not None:
-        out._residual_tensor = out._residual_tensor + bias
+        out += bias
         return out
     else:
         return out
 
 
-@_register_builtin_function(torch.nn.functional.layer_norm)
-def layer_norm_1d(
+@_auto_registration
+def layer_norm(
     input: Composition,
-    ref: Optional[Tensor] = None,
+    normalized_shape: List[int],
     weight: Optional[Tensor] = None,
     bias: Optional[Tensor] = None,
     eps: float = 1e-5,
-) -> Composition:
-    r"""Applies Layer Normalization for last dimension."""
-    input_mean = input.mean(dim=-1, keepdim=True)
+    ref: Optional[Tensor] = None,
+) -> Tensor:
+    r"""Applies Layer Normalization for last certain number of dimensions.
+
+    See :class:`~torch.nn.LayerNorm` for details.
+    """
+
+    normalized_dims = tuple(range(-len(normalized_shape), 0))
+    input_mean = input.mean(dim=normalized_dims, keepdim=True)
     if ref is None:
         ref = input.c_sum()
-    input_std = torch.sqrt(torch.var(ref, dim=-1, unbiased=False, keepdim=True) + eps)
+    input_std = torch.sqrt(
+        torch.var(ref, dim=normalized_dims, unbiased=False, keepdim=True) + eps
+    )
     out = (input - input_mean) * weight / input_std
 
     if bias is not None:
-        out._residual_tensor = out._residual_tensor + bias
+        out += bias
         return out
     else:
         return out
@@ -294,6 +302,40 @@ def max_pool2d_with_indices(
     return out
 
 
+@_auto_registration
+def dropout(
+    input: Composition, p: float = 0.5, training: bool = True, inplace: bool = False
+) -> Tensor:
+    r"""
+    During training, randomly zeroes some of the elements of the input
+    tensor with probability :attr:`p` using samples from a Bernoulli
+    distribution.
+
+    See :class:`~torch.nn.Dropout` for details.
+
+    Args:
+        p: probability of an element to be zeroed. Default: 0.5
+        training: apply dropout if is ``True``. Default: ``True``
+        inplace: If set to ``True``, will do this operation in-place. Default: ``False``
+    """
+    if p < 0.0 or p > 1.0:
+        raise ValueError(
+            "dropout probability has to be between 0 and 1, " "but got {}".format(p)
+        )
+    if not training:
+        return input
+
+    drop_mask = torch.rand(input.size(), device=input.device) < p
+    if inplace:
+        input.masked_fill_(drop_mask, 0)
+        input.mul_(1 / (1 - p))
+        return input
+    else:
+        out = pydec.masked_fill(input, drop_mask, 0)
+        out.mul_(1 / (1 - p))
+        return out
+
+
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
     if ref is None:
         ref = input.c_sum()
@@ -314,5 +356,3 @@ def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition
     else:
         raise none_decomposition_func_error(get_decomposition_name())
 
-
-# relu = legacy_relu
