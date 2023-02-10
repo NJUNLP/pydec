@@ -1,7 +1,7 @@
 from . import _composition
 from . import overrides
 from . import variable_functions as _variable_functions
-from ._composition import Composition
+from ._composition import Composition, IndexComposition
 from .decomposition import (
     set_decomposition_func,
     get_decomposition_name,

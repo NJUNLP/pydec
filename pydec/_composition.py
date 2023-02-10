@@ -7,6 +7,7 @@ from torch._C import memory_format
 import pydec
 from ._composition_str import _c_str
 import types
+import sys
 from .overrides import (
     _register_builtin_function,
     _auto_registration,
@@ -44,7 +45,7 @@ from pydec.exception_utils import (
 )
 
 
-from pydec.utils import _shift_dim, _shift_dims
+from pydec.utils import _shift_dim, _shift_dims, parse_args
 
 r"""
 To avoid circular import, we have to initialize the following method in __init__.py.
@@ -119,15 +120,15 @@ class Composition:
             if residual_tensor is not None:
                 if composition_tensor.dtype != residual_tensor.dtype:
                     raise arg_value_error(
-                        f"the dtype of composition_tensor ({composition_tensor.dtype}) should be the same as that of residual_tensor ({residual_tensor.dtype})."
+                        f"the dtype of composition_tensor ({composition_tensor.dtype}) should be the same as that of residual_tensor ({residual_tensor.dtype})"
                     )
                 if composition_tensor.device != residual_tensor.device:
                     raise arg_value_error(
-                        f"the device of composition_tensor ({composition_tensor.device}) should be the same as that of residual_tensor ({residual_tensor.device})."
+                        f"the device of composition_tensor ({composition_tensor.device}) should be the same as that of residual_tensor ({residual_tensor.device})"
                     )
                 if composition_tensor.requires_grad != residual_tensor.requires_grad:
                     raise arg_value_error(
-                        f"composition_tensor.requires_grad ({composition_tensor.requires_grad}) should be the same as residual_tensor.requires_grad ({residual_tensor.requires_grad})."
+                        f"composition_tensor.requires_grad ({composition_tensor.requires_grad}) should be the same as residual_tensor.requires_grad ({residual_tensor.requires_grad})"
                     )
 
             # formal way but may cause problems, see https://github.com/pytorch/pytorch/issues/85094
@@ -146,40 +147,45 @@ class Composition:
                     composition_tensor
                 )
 
-        def parse_args(args: list, key_list: List):
-            for i in range(len(args)):
-                kwargs[key_list[i]] = args[i]
-
-        self._composition_tensor: Tensor = None
-        self._residual_tensor: Tensor = None
-
-        if len(args) == 1:
-            if isinstance(args[0], Composition):
-                parse_args(args, ["composition"])
-            elif isinstance(args[0], Tensor):
-                parse_args(args, ["composition_tensor"])
-            else:
-                raise args_error("Composition.__init__", args, kwargs)
-        elif len(args) == 2:
-            if isinstance(args[0], Tensor) and isinstance(args[1], Tensor):
-                parse_args(args, ["composition_tensor", "residual_tensor"])
-            else:
-                raise args_error("Composition.__init__", args, kwargs)
-        elif len(args) > 2:
-            raise args_error("Composition.__init__", args, kwargs)
-
-        if "composition" in kwargs:
-            c: Composition = kwargs["composition"]
-            init_from_tensor(c._composition_tensor, c._residual_tensor)
-        elif "composition_tensor" in kwargs:
-            init_from_tensor(**kwargs)
-        else:
-            raise args_error("Composition.__init__", args, kwargs)
-
         def bind_customized_methods():
             method_dict = get_customized_composition_methods()
             for name, func in method_dict.items():
                 setattr(self, name, types.MethodType(func, self))
+
+        self._composition_tensor: Tensor = None
+        self._residual_tensor: Tensor = None
+        input_kwargs = kwargs.copy()  # for error hint
+
+        if len(args) == 0 and len(kwargs) == 0:
+            # a private constructor to create a void composition with no data,
+            # which is usually assigned in `_from_replace`.
+            bind_customized_methods()
+            return
+        elif len(args) > 0:
+            if isinstance(args[0], Composition):
+                parse_args(args, ["composition"], kwargs)
+            else:
+                parse_args(args, ["composition_tensor", "residual_tensor"], kwargs)
+        elif len(args) > 2:
+            raise args_error("Composition.__init__", args, input_kwargs)
+
+        if "composition" in kwargs:
+            c = kwargs["composition"]
+            if isinstance(c, Composition):
+                init_from_tensor(c._composition_tensor, c._residual_tensor)
+            else:
+                raise args_error("Composition.__init__", args, input_kwargs)
+        elif "composition_tensor" in kwargs:
+            if "residual_tensor" in kwargs and not isinstance(
+                kwargs["residual_tensor"], Tensor
+            ):
+                raise args_error("Composition.__init__", args, input_kwargs)
+            if isinstance(kwargs["composition_tensor"], Tensor):
+                init_from_tensor(**kwargs)
+            else:
+                raise args_error("Composition.__init__", args, input_kwargs)
+        else:
+            raise args_error("Composition.__init__", args, input_kwargs)
 
         bind_customized_methods()
 
@@ -222,7 +228,7 @@ class Composition:
             indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
-                "The first dimension of indices should not be NoneType."
+                "The first dimension of indices should not be NoneType"
             )
         if isinstance(indices[0], _int):
             return self._composition_tensor[indices]
@@ -240,7 +246,7 @@ class Composition:
             indices = (indices,)
         if indices[0] is None:
             raise arg_value_error(
-                "The first dimension of indices should not be NoneType."
+                "The first dimension of indices should not be NoneType"
             )
 
         if isinstance(val, (Tensor, _int, _float, _bool)):
@@ -249,7 +255,7 @@ class Composition:
         if isinstance(val, (Composition)):
             if isinstance(indices[0], _int):
                 raise arg_value_error(
-                    f"A single component assignment is being made, and the right part of the equal sign should be (Tensor) or (Number), not ({type(val).__name__})."
+                    f"Expected the assignment value to be (Tensor) or (Number), not ({type(val).__name__}) for single component assignment"
                 )
             else:
                 self._composition_tensor[indices] = val._composition_tensor
@@ -1274,13 +1280,61 @@ class Composition:
         return pydec.sigmoid_(self, ref=ref)
 
 
+class IndexComposition(Composition):
+    """
+    TODO
+    """
+
+    # we use this number to represent empty value
+    # all indices should avoid this value
+    MASK_NUM = -sys.maxsize
+
+    @property
+    def component_indices_mask(self) -> Tensor:
+        return self.components == IndexComposition.MASK_NUM
+
+    @property
+    def residual_indices_mask(self) -> Tensor:
+        return self.residual == IndexComposition.MASK_NUM
+
+    @overload
+    def __init__(
+        self, composition_tensor: Tensor, residual_tensor: Tensor = None,
+    ) -> None:
+        ...
+
+    @overload
+    def __init__(self, composition: IndexComposition) -> None:
+        ...
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+
+        super().__init__(*args, **kwargs)
+
+        if len(args) + len(kwargs) == 0:
+            # a private constructor to create a void composition with no data,
+            # which is usually assigned in `_from_replace`.
+            return
+
+        # Type checking
+        accept_dtypes = [torch.int, torch.long]
+        msg = "Expected arguments to have one of the following scalar types: {}; but got {} instead (while checking arguments for IndexComposition)"
+
+        if self.dtype not in accept_dtypes:
+            raise RuntimeError(msg.format(accept_dtypes, self.dtype))
+
+    def __repr__(self, *, composition_contents: List[str] = None) -> str:
+        # TODO
+        return super().__repr__(composition_contents=composition_contents)
+
+
 class _SliceComposition(Composition):
     r"""
     TODO: A temporary type for implementation of component subscript accessing for Composition.
     """
 
     def __init__(self, composition: Composition):
-        super().__init__(torch.zeros([]))  # void initialization
+        super().__init__()  # void initialization
         self._composition_tensor = composition._composition_tensor
         self._residual_tensor = composition._residual_tensor
 

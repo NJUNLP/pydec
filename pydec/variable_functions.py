@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 from torch._C import memory_format
 
-from pydec._composition import Composition
+from pydec._composition import Composition, IndexComposition
 from .overrides import _auto_registration
 
 from typing import Any, Union, List, Tuple, Optional, Callable, overload
@@ -38,13 +38,8 @@ from pydec.exception_utils import (
 import builtins
 
 
-def void(
-    *,
-    dtype: _dtype = None,
-    device: Union[_device, str, None] = None,
-    requires_grad: _bool = False,
-) -> Composition:
-    return Composition(torch.zeros([]))
+def void() -> Composition:
+    return Composition()
 
 
 def _from_replce(
@@ -108,7 +103,7 @@ def c_cat(
     for i in range(1, len(compositions)):
         if compositions[i].size() != compositions[0].size():
             raise arg_value_error(
-                f"Sizes of compositions must match except the number of composition. Expected size [{compositions[0].size()}] but got size [{compositions[i].size()}] for component number {i} in the list."
+                f"Sizes of compositions must match except the number of composition. Expected size [{compositions[0].size()}] but got size [{compositions[i].size()}] for component number {i} in the list"
             )
 
     c_tensors = tuple(c._composition_tensor for c in compositions)
@@ -132,7 +127,7 @@ def stack(
     for i in range(1, len(compositions)):
         if compositions[i].size() != compositions[0].size():
             raise arg_value_error(
-                f"Sizes of compositions must match except the number of composition. Expected size [{compositions[0].size()}] but got size [{compositions[i].size()}] for component number {i} in the list."
+                f"Sizes of compositions must match except the number of composition. Expected size [{compositions[0].size()}] but got size [{compositions[i].size()}] for component number {i} in the list"
             )
     c_tensors = tuple(c._composition_tensor for c in compositions)
     out_composition_tensor = torch.stack(
@@ -155,7 +150,7 @@ def c_stack(
     for i in range(1, len(components)):
         if components[i].size() != components[0].size():
             raise arg_value_error(
-                f"Sizes of components must match. Expected size [{components[0].size()}] but got size [{components[i].size()}] for component number {i} in the list."
+                f"Sizes of components must match. Expected size [{components[0].size()}] but got size [{components[i].size()}] for component number {i} in the list"
             )
 
     out_composition_tensor = torch.stack(
@@ -179,12 +174,13 @@ def diagonal_init(
         diag_view = out_composition_tensor.diagonal(
             offset=offset, dim1=0, dim2=_shift_dim(dim)
         )
-        diag_view = src
+        diag_view[:] = src
     else:
         out_composition_tensor = input._composition_tensor.diagonal_scatter(
             src, offset=offset, dim1=0, dim2=_shift_dim(dim)
         )
     out_residual_tensor = input._residual_tensor.clone()
+
     return _from_replce(out_composition_tensor, out_residual_tensor)
 
 
@@ -726,7 +722,7 @@ def mean(
 ) -> Composition:
     if out is not None:
         raise arg_value_error(
-            f"{mean.__name__}() dees not support keyword 'out' currently."
+            f"{mean.__name__}() dees not support keyword 'out' currently"
         )
     if dim is None:
         dim = tuple(range(1, input._composition_tensor.dim()))
@@ -1001,7 +997,7 @@ def diagonal_scatter(
     if (
         torch.__version__ < "1.11.0"
     ):  # for versions < 1.11.0, 'diagonal_scatter' does not exist.
-        raise RuntimeError("`diagonal_scatter` requires a torch version >= 1.11.0.")
+        raise RuntimeError("`diagonal_scatter` requires a torch version >= 1.11.0")
     c_src = src[None].expand((input.numc(),) + (-1,) * src.dim())
     out_composition_tensor = input._composition_tensor.diagonal_scatter(
         c_src, offset, _shift_dim(dim1), _shift_dim(dim2)
@@ -1181,7 +1177,7 @@ def zeros(
     size: _size,
     c_num: _int,
     *,
-    out: Optional[Tensor] = None,
+    out: Optional[Composition] = None,
     dtype: _dtype = None,
     layout: Optional[_layout] = strided,
     device: Union[_device, str, None] = None,
@@ -1195,7 +1191,7 @@ def zeros(
 def zeros(
     *size: _int,
     c_num: _int,
-    out: Optional[Tensor] = None,
+    out: Optional[Composition] = None,
     dtype: _dtype = None,
     layout: Optional[_layout] = strided,
     device: Union[_device, str, None] = None,
@@ -1278,6 +1274,31 @@ def zeros_like(
         requires_grad=requires_grad,
     )
     return _from_replce(out_composition_tensor, out_residual_tensor)
+
+
+def empty_index_composition(
+    size: _size,
+    c_num: _int,
+    *,
+    dtype: _dtype = torch.long,
+    device: Union[_device, str, None] = None,
+) -> IndexComposition:
+    ...
+    # TODO
+    if dtype not in [torch.long, torch.int]:
+        raise RuntimeError(
+            "Expected argument 'dtype' to have one of the following scalar types: {}; but got {} instead".format(
+                [torch.long, torch.int], dtype
+            )
+        )
+
+    out_composition_tensor = torch.zeros(
+        size=(c_num,) + size, dtype=dtype, device=device
+    )
+    out_residual_tensor = torch.zeros(size=size, dtype=dtype, device=device)
+    out_composition_tensor[:] = IndexComposition.MASK_NUM
+    out_residual_tensor[:] = IndexComposition.MASK_NUM
+    return IndexComposition(out_composition_tensor, out_residual_tensor)
 
 
 @_auto_registration
