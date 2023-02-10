@@ -63,12 +63,6 @@ class TestIndexing:
 
 
 class TestIndexingInAutotracing:
-    @classmethod
-    def init_composition(cls) -> Composition:
-        size = (3, 4)
-        c = Composition(size, component_num=4)
-        return c
-
     def test1(self):
         c = TestIndexing.init_composition()
         with pydec.autotracing.set_tracing_enabled(True):
