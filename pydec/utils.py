@@ -1,5 +1,5 @@
 import torch
-from typing import Any, Union, List, Tuple, Optional, Callable, overload
+from typing import Any, Union, List, Dict, Tuple, Optional, Callable, overload
 
 # In some cases, these basic types are shadowed by corresponding
 # top-level values.  The underscore variants let us refer to these
@@ -42,3 +42,8 @@ def _shift_dims(*dims) -> torch.Size:
     for i in range(len(dims)):
         out[i] = _shift_dim(dims[i])
     return torch.Size(out)
+
+
+def parse_args(args: List[Any], key_list: List[str], kwargs: Dict[str, Any]):
+    for key, arg in zip(key_list, args):
+        kwargs[key] = arg
