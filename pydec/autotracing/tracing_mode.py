@@ -18,7 +18,7 @@ __all__ = ["no_grad", "enable_grad", "set_grad_enabled", "inference_mode"]
 
 
 class _TracingMode:
-    is_enabled = False
+    is_enabled = True
 
     @classmethod
     def set_enabled(cls, enabled: _bool):
