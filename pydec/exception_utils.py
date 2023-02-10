@@ -24,7 +24,7 @@ def size_error(
     s1: torch.Size, s2: torch.Size, t1_name="tensor1", t2_name="tensor2"
 ) -> RuntimeError:
     return RuntimeError(
-        f"The size of {t1_name} [{s1}] doesn't match the size of {t2_name} [{s2}]."
+        f"The size of {t1_name} [{s1}] doesn't match the size of {t2_name} [{s2}]"
     )
 
 
@@ -32,7 +32,7 @@ def component_num_error(
     num1: _int, num2: _int, c1_name="composition1", c2_name="composition2"
 ) -> RuntimeError:
     return RuntimeError(
-        f"The component number of {c1_name} ({num1}) doesn't match the component number of {c2_name} ({num2})."
+        f"The component number of {c1_name} ({num1}) doesn't match the component number of {c2_name} ({num2})"
     )
 
 
@@ -46,13 +46,13 @@ def unsupported_operand_error(
 
 def overflow_error(error: _float, error_bound=1e-2) -> RuntimeError:
     return RuntimeError(
-        f"Error overflow in checking, error {error} out of bound {error_bound}."
+        f"Error overflow in checking, error {error} out of bound {error_bound}"
     )
 
 
 def none_decomposition_func_error(func_name: str = None) -> RuntimeError:
     return RuntimeError(
-        f"Cannot find the currently used decomposition function with key name ({func_name})."
+        f"Cannot find the currently used decomposition function with key name ({func_name})"
     )
 
 
