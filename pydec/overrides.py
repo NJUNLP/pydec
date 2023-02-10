@@ -53,7 +53,7 @@ def _register_function(torch_function: T, builtin: bool = False) -> Callable[[T]
     ):
         msg = (
             f"function {torch_function} is not overridable."
-            " Invoke `torch.overrides.get_overridable_functions()` to see all overridable torch functions."
+            " Invoke `torch.overrides.get_overridable_functions()` to see all overridable torch functions"
         )
         raise TypeError(msg)
 
@@ -66,7 +66,7 @@ def _register_function(torch_function: T, builtin: bool = False) -> Callable[[T]
                 _HANDLED_COMPOSITION_METHODS[torch_function.__name__] = func
                 if hasattr(pydec.Composition, torch_function.__name__):
                     warnings.warn(
-                        f"pydec.Composition already has built-in method ({torch_function.__name__}), and will be overrided by {func}.",
+                        f"pydec.Composition already has built-in method ({torch_function.__name__}), and will be overrided by {func}",
                         stacklevel=2,
                     )
             # else:
@@ -106,7 +106,7 @@ def _auto_registration(func: T) -> T:
     if not hasattr(torch_namespace, func.__name__):
         msg = (
             f"function ({func.__name__}) is not overridable."
-            " Invoke `torch.overrides.get_overridable_functions()` to see all overridable torch functions."
+            " Invoke `torch.overrides.get_overridable_functions()` to see all overridable torch functions"
         )
         raise TypeError(msg)
     torch_function = getattr(torch_namespace, func.__name__)
@@ -139,7 +139,7 @@ def _hadle_self_is_tensor(func: T, inplace=False) -> T:
                 return func(self, *args, **kwargs)
             else:
                 raise RuntimeError(
-                    f"there is no composition arguments for the invoking of function {func}."
+                    f"there is no composition arguments for the invoking of function {func}"
                 )
         else:
             return func(self, *args, **kwargs)
