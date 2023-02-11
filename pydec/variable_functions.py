@@ -43,14 +43,12 @@ def void() -> Composition:
 
 
 def _from_replce(
-    composition_tensor: Tensor, residual_tensor: Tensor = None
+    component_tensor: Tensor, residual_tensor: Tensor = None
 ) -> Composition:
     out = void()
-    out._composition_tensor = composition_tensor
+    out._component_tensor = component_tensor
     if residual_tensor is None:
-        residual_tensor = torch.zeros(composition_tensor.size()[1:]).to(
-            composition_tensor
-        )
+        residual_tensor = torch.zeros(component_tensor.size()[1:]).to(component_tensor)
     out._residual_tensor = residual_tensor
     return out
 
@@ -62,17 +60,19 @@ def cat(
     *,
     out: Optional[Composition] = None,
 ) -> Composition:
-    c_tensors = tuple(c._composition_tensor for c in compositions)
-    out_composition_tensor = torch.cat(
+    c_tensors = tuple(c._component_tensor for c in compositions)
+    out_component_tensor = torch.cat(
         c_tensors,
         _shift_dim(dim),
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -106,15 +106,17 @@ def c_cat(
                 f"Sizes of compositions must match except the number of composition. Expected size [{compositions[0].size()}] but got size [{compositions[i].size()}] for component number {i} in the list"
             )
 
-    c_tensors = tuple(c._composition_tensor for c in compositions)
-    out_composition_tensor = torch.cat(
-        c_tensors, 0, out=out._composition_tensor if out is not None else None,
+    c_tensors = tuple(c._component_tensor for c in compositions)
+    out_component_tensor = torch.cat(
+        c_tensors,
+        0,
+        out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = None
     if sum_residual:
         r_tensors = tuple(c._residual_tensor for c in compositions)
         out_residual_tensor = builtins.sum(r_tensors)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -129,17 +131,19 @@ def stack(
             raise arg_value_error(
                 f"Sizes of compositions must match except the number of composition. Expected size [{compositions[0].size()}] but got size [{compositions[i].size()}] for component number {i} in the list"
             )
-    c_tensors = tuple(c._composition_tensor for c in compositions)
-    out_composition_tensor = torch.stack(
+    c_tensors = tuple(c._component_tensor for c in compositions)
+    out_component_tensor = torch.stack(
         c_tensors,
         _shift_dim(dim),
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 def c_stack(
@@ -153,10 +157,12 @@ def c_stack(
                 f"Sizes of components must match. Expected size [{components[0].size()}] but got size [{components[i].size()}] for component number {i} in the list"
             )
 
-    out_composition_tensor = torch.stack(
-        components, 0, out=out._composition_tensor if out is not None else None,
+    out_component_tensor = torch.stack(
+        components,
+        0,
+        out=out._component_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor)
+    return _from_replce(out_component_tensor)
 
 
 def diagonal_init(
@@ -170,34 +176,34 @@ def diagonal_init(
     if (
         torch.__version__ < "1.11.0"
     ):  # for versions < 1.11.0, 'diagonal_scatter' does not exist.
-        out_composition_tensor = input._composition_tensor.clone()
-        diag_view = out_composition_tensor.diagonal(
+        out_component_tensor = input._component_tensor.clone()
+        diag_view = out_component_tensor.diagonal(
             offset=offset, dim1=0, dim2=_shift_dim(dim)
         )
         diag_view[:] = src
     else:
-        out_composition_tensor = input._composition_tensor.diagonal_scatter(
+        out_component_tensor = input._component_tensor.diagonal_scatter(
             src, offset=offset, dim1=0, dim2=_shift_dim(dim)
         )
     out_residual_tensor = input._residual_tensor.clone()
 
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
-    out_composition_tensor = callable(input._composition_tensor)
+    out_component_tensor = callable(input._component_tensor)
     out_residual_tensor = callable(input._residual_tensor)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 def c_map(
     input, composition: Composition, callable: Callable[..., Tensor]
 ) -> Composition:
-    out_composition_tensor = callable(
-        input._composition_tensor, composition._composition_tensor
+    out_component_tensor = callable(
+        input._component_tensor, composition._component_tensor
     )
     out_residual_tensor = callable(input._residual_tensor, composition._residual_tensor)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -207,9 +213,9 @@ def numel(input: Composition) -> _int:
 
 def c_numel(input: Composition, count_residual=False) -> _int:
     if count_residual:
-        return input._composition_tensor.numel() + input._residual_tensor.numel()
+        return input._component_tensor.numel() + input._residual_tensor.numel()
     else:
-        return input._composition_tensor.numel()
+        return input._component_tensor.numel()
 
 
 def numc(input: Composition) -> _int:
@@ -220,25 +226,25 @@ def numc(input: Composition) -> _int:
 def clone(
     input: Composition, *, memory_format: Optional[memory_format] = None
 ) -> Composition:
-    out_composition_tensor = torch.clone(
-        input._composition_tensor, memory_format=memory_format
+    out_component_tensor = torch.clone(
+        input._component_tensor, memory_format=memory_format
     )
     out_residual_tensor = torch.clone(
         input._residual_tensor, memory_format=memory_format
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def detach(input: Composition) -> Composition:
-    out_composition_tensor = torch.detach(input._composition_tensor)
+    out_component_tensor = torch.detach(input._component_tensor)
     out_residual_tensor = torch.detach(input._residual_tensor)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def detach_(input: Composition) -> Composition:
-    torch.detach_(input._composition_tensor)
+    torch.detach_(input._component_tensor)
     torch.detach_(input._residual_tensor)
     return input
 
@@ -255,30 +261,30 @@ def add(
         if input.numc() != other.numc():
             raise component_num_error(input.numc(), other.numc())
         if out is None:
-            out_composition_tensor = input._composition_tensor.add(
-                other._composition_tensor, alpha=alpha
+            out_component_tensor = input._component_tensor.add(
+                other._component_tensor, alpha=alpha
             )
             out_residual_tensor = input._residual_tensor.add(
                 other._residual_tensor, alpha=alpha
             )
         else:
-            out_composition_tensor = input._composition_tensor.add(
-                other._composition_tensor, alpha=alpha, out=out._composition_tensor
+            out_component_tensor = input._component_tensor.add(
+                other._component_tensor, alpha=alpha, out=out._component_tensor
             )
             out_residual_tensor = input._residual_tensor.add(
                 other._residual_tensor, alpha=alpha, out=out._residual_tensor
             )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return _from_replce(out_component_tensor, out_residual_tensor)
     elif isinstance(other, (_int, _float, _bool, Tensor)):
-        out_composition_tensor = input._composition_tensor.clone()
+        out_component_tensor = input._component_tensor.clone()
         out_residual_tensor = input._residual_tensor.add(
             other,
             alpha=alpha,
             # TODO out=out._residual_tensor if out is not None else None,
         )
         if out is not None:
-            out._composition_tensor[:] = out_composition_tensor
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+            out._component_tensor[:] = out_component_tensor
+        return _from_replce(out_component_tensor, out_residual_tensor)
     else:
         raise unsupported_operand_error("add", type(input), type(other))
 
@@ -312,7 +318,11 @@ def subtract(input: Composition, other: Number, alpha: Number = 1) -> Compositio
 
 @_auto_registration
 def subtract(
-    input: Composition, other: Any, *, alpha: Number = 1, out: Optional[Tensor] = None,
+    input: Composition,
+    other: Any,
+    *,
+    alpha: Number = 1,
+    out: Optional[Tensor] = None,
 ) -> Composition:
     return sub(input, other=other, alpha=alpha, out=out)
 
@@ -331,20 +341,20 @@ def mul(
             new_size = (
                 (input.numc(),) + (1,) * (other.dim() - input.dim()) + input.size()
             )
-            out_composition_tensor = input._composition_tensor.view(new_size).mul(
-                other, out=out._composition_tensor
+            out_component_tensor = input._component_tensor.view(new_size).mul(
+                other, out=out._component_tensor
             )
         else:
-            out_composition_tensor = input._composition_tensor.mul(
-                other, out=out._composition_tensor
+            out_component_tensor = input._component_tensor.mul(
+                other, out=out._component_tensor
             )
         out_residual_tensor = input._residual_tensor.mul(
             other, out=out._residual_tensor
         )
     else:
-        out_composition_tensor = input._composition_tensor * other
+        out_component_tensor = input._component_tensor * other
         out_residual_tensor = input._residual_tensor * other
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -382,34 +392,40 @@ def div(
             new_size = (
                 (input.numc(),) + (1,) * (other.dim() - input.dim()) + input.size()
             )
-            out_composition_tensor = input._composition_tensor.view(new_size).div(
+            out_component_tensor = input._component_tensor.view(new_size).div(
                 other, rounding_mode=rounding_mode
             )
         else:
-            out_composition_tensor = input._composition_tensor.div(
+            out_component_tensor = input._component_tensor.div(
                 other, rounding_mode == rounding_mode
             )
         out_residual_tensor = input._residual_tensor.div(
             other, rounding_mode=rounding_mode
         )
     else:
-        out_composition_tensor = input._composition_tensor.div(
+        out_component_tensor = input._component_tensor.div(
             other, rounding_mode=rounding_mode
         )
         out_residual_tensor = input._residual_tensor.div(
             other, rounding_mode=rounding_mode
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
-def divide(input: Composition, other: Tensor,) -> Composition:
+def divide(
+    input: Composition,
+    other: Tensor,
+) -> Composition:
     ...
 
 
 @overload
 def divide(
-    input: Composition, other: Tensor, *, rounding_mode: Optional[str],
+    input: Composition,
+    other: Tensor,
+    *,
+    rounding_mode: Optional[str],
 ) -> Composition:
     ...
 
@@ -422,7 +438,10 @@ def divide(
 
 
 @overload
-def divide(input: Composition, other: Number,) -> Composition:
+def divide(
+    input: Composition,
+    other: Number,
+) -> Composition:
     ...
 
 
@@ -448,10 +467,10 @@ def mv(
             vec,
             out=out._residual_tensor if out is not None else None,
         )
-        out_composition_tensor = torch.matmul(
-            input._composition_tensor,
+        out_component_tensor = torch.matmul(
+            input._component_tensor,
             vec,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
     else:
         out_residual_tensor = torch.mv(
@@ -459,12 +478,12 @@ def mv(
             vec._residual_tensor,
             out=out._residual_tensor if out is not None else None,
         )
-        out_composition_tensor = torch.matmul(
+        out_component_tensor = torch.matmul(
             input,
-            vec._composition_tensor,
-            out=out._composition_tensor if out is not None else None,
+            vec._component_tensor,
+            out=out._component_tensor if out is not None else None,
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -484,10 +503,10 @@ def mm(
             mat2,
             out=out._residual_tensor if out is not None else None,
         )
-        out_composition_tensor = torch.matmul(
-            input._composition_tensor,
+        out_component_tensor = torch.matmul(
+            input._component_tensor,
             mat2,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
     else:
         out_residual_tensor = torch.mm(
@@ -495,12 +514,12 @@ def mm(
             mat2._residual_tensor,
             out=out._residual_tensor if out is not None else None,
         )
-        out_composition_tensor = torch.matmul(
+        out_component_tensor = torch.matmul(
             input,
-            mat2._composition_tensor,
-            out=out._composition_tensor if out is not None else None,
+            mat2._component_tensor,
+            out=out._component_tensor if out is not None else None,
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -520,10 +539,10 @@ def bmm(
             mat2,
             out=out._residual_tensor if out is not None else None,
         )
-        out_composition_tensor = torch.matmul(
-            input._composition_tensor,
+        out_component_tensor = torch.matmul(
+            input._component_tensor,
             mat2,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
     else:
         out_residual_tensor = torch.bmm(
@@ -531,12 +550,12 @@ def bmm(
             mat2._residual_tensor,
             out=out._residual_tensor if out is not None else None,
         )
-        out_composition_tensor = torch.matmul(
+        out_component_tensor = torch.matmul(
             input,
-            mat2._composition_tensor,
-            out=out._composition_tensor if out is not None else None,
+            mat2._component_tensor,
+            out=out._component_tensor if out is not None else None,
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -584,8 +603,8 @@ def all(input: Composition, *args: Any, **kwargs: Any) -> Tensor:
 @_auto_registration
 def unsqueeze(input: Composition, dim: _int) -> Composition:
     out_residual_tensor = input._residual_tensor.unsqueeze(dim)
-    out_composition_tensor = input._composition_tensor.unsqueeze(_shift_dim(dim))
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    out_component_tensor = input._component_tensor.unsqueeze(_shift_dim(dim))
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -602,29 +621,29 @@ def squeeze(input: Composition, dim: _int) -> Composition:
 def squeeze(input: Composition, dim: _int = None) -> Composition:
     if dim is None:
         out_residual_tensor = input._residual_tensor.squeeze()
-        out_composition_tensor = input._composition_tensor.squeeze()
+        out_component_tensor = input._component_tensor.squeeze()
         if input.numc() == 1:
-            out_composition_tensor = out_composition_tensor.unsqueeze(0)
+            out_component_tensor = out_component_tensor.unsqueeze(0)
     else:
         out_residual_tensor = input._residual_tensor.squeeze(dim)
-        out_composition_tensor = input._composition_tensor.squeeze(_shift_dim(dim))
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+        out_component_tensor = input._component_tensor.squeeze(_shift_dim(dim))
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def transpose(input: Composition, dim0: _int, dim1: _int) -> Composition:
     out_residual_tensor = input._residual_tensor.transpose(dim0, dim1)
-    out_composition_tensor = input._composition_tensor.transpose(
+    out_component_tensor = input._component_tensor.transpose(
         _shift_dim(dim0), _shift_dim(dim1)
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def permute(input: Composition, dims: _size) -> Composition:
     out_residual_tensor = input._residual_tensor.permute(dims)
-    out_composition_tensor = input._composition_tensor.permute((0,) + _shift_dims(dims))
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    out_component_tensor = input._component_tensor.permute((0,) + _shift_dims(dims))
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -655,12 +674,12 @@ def sum(
     out: Optional[Composition] = None,
 ) -> Composition:
     if dim is None:
-        dim = tuple(range(1, input._composition_tensor.dim()))
-        out_composition_tensor = torch.sum(
-            input._composition_tensor,
+        dim = tuple(range(1, input._component_tensor.dim()))
+        out_component_tensor = torch.sum(
+            input._component_tensor,
             dim=dim,
             dtype=dtype,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
         out_residual_tensor = torch.sum(
             input._residual_tensor,
@@ -677,20 +696,20 @@ def sum(
         )
         if isinstance(dim, _int):
             dim = (dim,)
-        out_composition_tensor = torch.sum(
-            input._composition_tensor,
+        out_component_tensor = torch.sum(
+            input._component_tensor,
             dim=_shift_dims(dim),
             keepdim=keepdim,
             dtype=dtype,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 def c_sum(input: Composition, *, dtype: Optional[_dtype] = None) -> Tensor:
-    return input._composition_tensor.sum(
-        dim=0, dtype=dtype
-    ) + input._residual_tensor.to(dtype=dtype)
+    return input._component_tensor.sum(dim=0, dtype=dtype) + input._residual_tensor.to(
+        dtype=dtype
+    )
 
 
 @overload
@@ -725,12 +744,12 @@ def mean(
             f"{mean.__name__}() dees not support keyword 'out' currently"
         )
     if dim is None:
-        dim = tuple(range(1, input._composition_tensor.dim()))
-        out_composition_tensor = torch.mean(
-            input._composition_tensor,
+        dim = tuple(range(1, input._component_tensor.dim()))
+        out_component_tensor = torch.mean(
+            input._component_tensor,
             dim=dim,
             dtype=dtype,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
         out_residual_tensor = torch.mean(
             input._residual_tensor,
@@ -747,21 +766,21 @@ def mean(
         )
         if isinstance(dim, _int):
             dim = (dim,)
-        out_composition_tensor = torch.mean(
-            input._composition_tensor,
+        out_component_tensor = torch.mean(
+            input._component_tensor,
             dim=_shift_dims(dim),
             keepdim=keepdim,
             dtype=dtype,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def reshape(input: Composition, shape: _size) -> Composition:
-    out_composition_tensor = input._composition_tensor.view((input.numc(),) + shape)
+    out_component_tensor = input._component_tensor.view((input.numc(),) + shape)
     out_residual_tensor = input._residual_tensor.view(shape)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -776,9 +795,9 @@ def masked_fill(input: Composition, mask: Tensor, value: Number) -> Composition:
 
 @_auto_registration
 def masked_fill(input: Composition, mask: Tensor, value: Any) -> Composition:
-    out_composition_tensor = input._composition_tensor.masked_fill(mask[None], value)
+    out_component_tensor = input._component_tensor.masked_fill(mask[None], value)
     out_residual_tensor = input._residual_tensor.masked_fill(mask, value)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -799,9 +818,9 @@ def c_masked_fill(input: Composition, mask: Tensor, value: Any) -> Composition:
             )
         mask_size = (input.numc(),) + (1,) * input.dim()
         mask = mask.view(mask_size)
-    out_composition_tensor = input._composition_tensor.masked_fill(mask, value)
+    out_component_tensor = input._component_tensor.masked_fill(mask, value)
     out_residual_tensor = input._residual_tensor.clone()
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 # TODO: to support 'out: Optional[Composition] = None'
@@ -809,28 +828,26 @@ def c_masked_fill(input: Composition, mask: Tensor, value: Any) -> Composition:
 def masked_select(
     input: Composition, mask: Tensor, *, out: Optional[Composition] = None
 ) -> Composition:
-    out_composition_tensor = torch.masked_select(
-        input._composition_tensor,
+    out_component_tensor = torch.masked_select(
+        input._component_tensor,
         mask[None],
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     ).reshape(input.numc(), -1)
     if out is not None:
-        out._composition_tensor = out._composition_tensor.reshape(input.numc(), -1)
+        out._component_tensor = out._component_tensor.reshape(input.numc(), -1)
     out_residual_tensor = torch.masked_select(
         input._residual_tensor,
         mask,
         out=out._residual_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def masked_scatter(input: Composition, mask: Tensor, source: Tensor) -> Composition:
-    out_composition_tensor = input._composition_tensor.masked_scatter(
-        mask[None], source
-    )
+    out_component_tensor = input._component_tensor.masked_scatter(mask[None], source)
     out_residual_tensor = input._residual_tensor.masked_scatter(mask, source)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -856,12 +873,12 @@ def gather(
     out: Optional[Composition] = None,
 ) -> Composition:
     c_index = index[None].expand((input.numc(),) + (-1,) * index.dim())
-    out_composition_tensor = torch.gather(
-        input._composition_tensor,
+    out_component_tensor = torch.gather(
+        input._component_tensor,
         _shift_dim(dim),
         c_index,
         sparse_grad=sparse_grad,
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = torch.gather(
         input._residual_tensor,
@@ -870,7 +887,7 @@ def gather(
         sparse_grad=sparse_grad,
         out=out._residual_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -946,7 +963,7 @@ def scatter(
         c_out = input + holder
         if out is not None:
             # TODO: use the out argument of `torch.add` raises an error
-            out._composition_tensor[:] = c_out._composition_tensor
+            out._component_tensor[:] = c_out._component_tensor
             out._residual_tensor[:] = c_out._residual_tensor
         return c_out
     else:
@@ -956,12 +973,12 @@ def scatter(
         else:
             c_src = src
         if reduce is None:
-            out_composition_tensor = torch.scatter(
-                input._composition_tensor,
+            out_component_tensor = torch.scatter(
+                input._component_tensor,
                 _shift_dim(dim),
                 c_index,
                 c_src,
-                out=out._composition_tensor if out is not None else None,
+                out=out._component_tensor if out is not None else None,
             )
             out_residual_tensor = torch.scatter(
                 input._residual_tensor,
@@ -971,13 +988,13 @@ def scatter(
                 out=out._residual_tensor if out is not None else None,
             )
         else:
-            out_composition_tensor = torch.scatter(
-                input._composition_tensor,
+            out_component_tensor = torch.scatter(
+                input._component_tensor,
                 _shift_dim(dim),
                 c_index,
                 c_src,
                 reduce=reduce,
-                out=out._composition_tensor if out is not None else None,
+                out=out._component_tensor if out is not None else None,
             )
             out_residual_tensor = torch.scatter(
                 input._residual_tensor,
@@ -987,7 +1004,7 @@ def scatter(
                 reduce=reduce,
                 out=out._residual_tensor if out is not None else None,
             )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -999,13 +1016,13 @@ def diagonal_scatter(
     ):  # for versions < 1.11.0, 'diagonal_scatter' does not exist.
         raise RuntimeError("`diagonal_scatter` requires a torch version >= 1.11.0")
     c_src = src[None].expand((input.numc(),) + (-1,) * src.dim())
-    out_composition_tensor = input._composition_tensor.diagonal_scatter(
+    out_component_tensor = input._component_tensor.diagonal_scatter(
         c_src, offset, _shift_dim(dim1), _shift_dim(dim2)
     )
     out_residual_tensor = input._residual_tensor.diagonal_scatter(
         src, offset, dim1, dim2
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -1019,11 +1036,11 @@ def index_select(
 def index_select(
     input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None
 ) -> Composition:
-    out_composition_tensor = torch.index_select(
-        input._composition_tensor,
+    out_component_tensor = torch.index_select(
+        input._component_tensor,
         dim=_shift_dim(dim),
         index=index,
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = torch.index_select(
         input._residual_tensor,
@@ -1031,7 +1048,7 @@ def index_select(
         index=index,
         out=out._residual_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -1052,11 +1069,11 @@ def c_index_select(
     *,
     out: Optional[Composition] = None,
 ) -> Composition:
-    out_composition_tensor = torch.index_select(
-        input._composition_tensor,
+    out_component_tensor = torch.index_select(
+        input._component_tensor,
         dim=0,
         index=index,
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     )
     if with_residual:
         if out is not None:
@@ -1069,17 +1086,17 @@ def c_index_select(
         out_residual_tensor = torch.zeros_like(input._residual_tensor).to(
             input._residual_tensor
         )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def masked_select(
     input: Composition, mask: Tensor, *, out: Optional[Composition] = None
 ) -> Composition:
-    out_composition_tensor = torch.masked_select(
-        input._composition_tensor,
+    out_component_tensor = torch.masked_select(
+        input._component_tensor,
         mask=mask[None],
-        out=out._composition_tensor if out is not None else None,
+        out=out._component_tensor if out is not None else None,
     ).reshape(input.numc(), -1)
     out_residual_tensor = torch.masked_select(
         input._residual_tensor,
@@ -1087,8 +1104,8 @@ def masked_select(
         out=out._residual_tensor if out is not None else None,
     )
     if out is not None:
-        out._composition_tensor = out._composition_tensor.reshape(input.numc(), -1)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+        out._component_tensor = out._component_tensor.reshape(input.numc(), -1)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -1107,13 +1124,13 @@ def index_fill(
 
 @_auto_registration
 def index_fill(input: Composition, dim: _int, index: Tensor, value: Any) -> Composition:
-    out_composition_tensor = input._composition_tensor.index_fill(
+    out_component_tensor = input._component_tensor.index_fill(
         dim=_shift_dim(dim), index=index, value=value
     )
     out_residual_tensor = input._residual_tensor.index_fill(
         dim=dim, index=index, value=value
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -1133,10 +1150,10 @@ def round(
     input: Composition, *, decimals: _int = None, out: Optional[Composition] = None
 ) -> Composition:
     if decimals is not None:
-        out_composition_tensor = torch.round(
-            input._composition_tensor,
+        out_component_tensor = torch.round(
+            input._component_tensor,
             decimals=decimals,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
         )
         out_residual_tensor = torch.round(
             input._residual_tensor,
@@ -1144,11 +1161,15 @@ def round(
             out=out._residual_tensor if out is not None else None,
         )
     else:
-        out_composition_tensor = torch.round(
-            input._composition_tensor, decimals=decimals,
+        out_component_tensor = torch.round(
+            input._component_tensor,
+            decimals=decimals,
         )
-        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+        out_residual_tensor = torch.round(
+            input._residual_tensor,
+            decimals=decimals,
+        )
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @overload
@@ -1164,10 +1185,10 @@ def round_(input: Composition, *, decimals: _int) -> Composition:
 @_auto_registration
 def round_(input: Composition, *, decimals: _int = None) -> Composition:
     if decimals is not None:
-        input._composition_tensor.round_(decimals=decimals)
+        input._component_tensor.round_(decimals=decimals)
         input._residual_tensor.round_(decimals=decimals)
     else:
-        input._composition_tensor.round_()
+        input._component_tensor.round_()
         input._residual_tensor.round_()
     return input
 
@@ -1213,9 +1234,9 @@ def zeros(*args: Any, **kwargs: Any):
         pin_memory: _bool = False,
         requires_grad: _bool = False,
     ):
-        out_composition_tensor = torch.zeros(
+        out_component_tensor = torch.zeros(
             (c_num,) + size,
-            out=out._composition_tensor if out is not None else None,
+            out=out._component_tensor if out is not None else None,
             dtype=dtype,
             layout=layout,
             device=device,
@@ -1231,7 +1252,7 @@ def zeros(*args: Any, **kwargs: Any):
             pin_memory=pin_memory,
             requires_grad=requires_grad,
         )
-        return _from_replce(out_composition_tensor, out_residual_tensor)
+        return _from_replce(out_component_tensor, out_residual_tensor)
 
     # parse args
     if len(args) > 0:
@@ -1255,8 +1276,8 @@ def zeros_like(
     requires_grad: _bool = False,
 ) -> Composition:
     # TODO: fix bug. Default: if None, defaults to the dtype of input.
-    out_composition_tensor = torch.zeros_like(
-        input._composition_tensor,
+    out_component_tensor = torch.zeros_like(
+        input._component_tensor,
         memory_format=memory_format,
         dtype=dtype,
         layout=layout,
@@ -1273,7 +1294,7 @@ def zeros_like(
         pin_memory=pin_memory,
         requires_grad=requires_grad,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 def empty_index_composition(
@@ -1292,30 +1313,29 @@ def empty_index_composition(
             )
         )
 
-    out_composition_tensor = torch.zeros(
-        size=(c_num,) + size, dtype=dtype, device=device
-    )
+    out_component_tensor = torch.zeros(size=(c_num,) + size, dtype=dtype, device=device)
     out_residual_tensor = torch.zeros(size=size, dtype=dtype, device=device)
-    out_composition_tensor[:] = IndexComposition.MASK_NUM
+    out_component_tensor[:] = IndexComposition.MASK_NUM
     out_residual_tensor[:] = IndexComposition.MASK_NUM
-    return IndexComposition(out_composition_tensor, out_residual_tensor)
+    return IndexComposition(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
-    out_composition_tensor = torch.abs(
-        input._composition_tensor,
-        out=out._composition_tensor if out is not None else None,
+    out_component_tensor = torch.abs(
+        input._component_tensor,
+        out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = torch.abs(
-        input._residual_tensor, out=out._residual_tensor if out is not None else None,
+        input._residual_tensor,
+        out=out._residual_tensor if out is not None else None,
     )
-    return _from_replce(out_composition_tensor, out_residual_tensor)
+    return _from_replce(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
 def abs_(input: Composition) -> Composition:
-    torch.abs_(input._composition_tensor)
+    torch.abs_(input._component_tensor)
     torch.abs_(input._residual_tensor)
     return input
 
@@ -1390,4 +1410,3 @@ def sigmoid_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition
         return out
     else:
         raise none_decomposition_func_error(get_decomposition_name())
-
