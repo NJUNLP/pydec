@@ -269,6 +269,7 @@ class Composition:
 
     @_auto_registration
     def __len__(self):
+        # TODO: maybe same as the behavior of tensor 
         return self._component_tensor.__len__()
 
     def __iter__(self):
