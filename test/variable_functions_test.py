@@ -2,7 +2,7 @@ import pydec
 from pydec import Composition
 import torch
 import pytest
-from .test_composition import init_composition
+from ._composition_test import init_composition
 
 torch.manual_seed(114514)
 

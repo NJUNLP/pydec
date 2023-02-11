@@ -1,5 +1,5 @@
 import pydec
-from .test_composition import init_composition
+from ._composition_test import init_composition
 
 
 class TestBiasArgs:
