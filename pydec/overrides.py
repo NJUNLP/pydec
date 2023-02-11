@@ -40,6 +40,8 @@ _whitelist_torch_functions = [
     torch.abs_,
     torch.sigmoid_,
     torch.tanh_,
+    torch._pack_padded_sequence,
+    torch._pad_packed_sequence,
     torch.nn.functional.relu_,
     torch.nn.functional.leaky_relu_,
 ]
