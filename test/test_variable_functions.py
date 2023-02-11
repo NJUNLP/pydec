@@ -37,7 +37,7 @@ class TestCCat:
         out = init_composition((3, 2), 6)
         out1 = pydec.c_cat(self.c_list, out=out)
         assert out.c_size() == (6, 3, 2)
-        assert (out1._composition_tensor == out._composition_tensor).all()
+        assert (out1._component_tensor == out._component_tensor).all()
 
     def test3(self):
         with pytest.raises(RuntimeError):
@@ -48,7 +48,7 @@ class TestApply:
     def test_abs(self):
         c = init_composition((3, 4))
         out = pydec.c_apply(c, torch.abs)
-        assert (out._composition_tensor == c._composition_tensor.abs()).all()
+        assert (out._component_tensor == c._component_tensor.abs()).all()
 
 
 class TestDiagonalInit:
@@ -62,9 +62,9 @@ class TestDiagonalInit:
         for i in range(self.c.numc()):
             for j in range(self.c.numc()):
                 if i == j:
-                    assert torch.all(out[i, :, j] == data[:, i])
+                    assert torch.all(out()[i, :, j] == data[:, i])
                 else:
-                    assert torch.all(out[i, :, j] == self.c[i, :, j])
+                    assert torch.all(out()[i, :, j] == self.c()[i, :, j])
 
     def test2(self):
         c = init_composition((2, 3), 4)
@@ -77,9 +77,9 @@ class TestDiagonalInit:
         for i in range(1, c.numc()):
             for j in range(c.size(1)):
                 if i + offset == j:
-                    assert torch.all(out[i, :, j] == data[:, j])
+                    assert torch.all(out()[i, :, j] == data[:, j])
                 else:
-                    assert torch.all(out[i, :, j] == c[i, :, j])
+                    assert torch.all(out()[i, :, j] == c()[i, :, j])
 
     def test3(self):
         component_num = 3
@@ -90,6 +90,6 @@ class TestDiagonalInit:
         for i in range(self.c.numc()):
             for j in range(self.c.numc()):
                 if i == j:
-                    assert torch.all(out[i, j] == x[i])
+                    assert torch.all(out()[i, j] == x[i])
                 else:
-                    assert torch.all(out[i, j] == c[i, j])
+                    assert torch.all(out()[i, j] == c()[i, j])

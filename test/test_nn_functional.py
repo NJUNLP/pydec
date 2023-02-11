@@ -31,7 +31,7 @@ class TestLegacyRelu:
         ref = input.c_sum()
         zero_mask = ref < 0
         ref_out = input.masked_fill(zero_mask, 0.0)
-        assert (out._composition_tensor == ref_out._composition_tensor).all()
+        assert (out._component_tensor == ref_out._component_tensor).all()
         assert (out._residual_tensor == ref_out._residual_tensor).all()
 
     def test_hybrid(self):
@@ -43,7 +43,7 @@ class TestLegacyRelu:
             eps=1e-6,
         ) -> Composition:
 
-            composition = context._composition_tensor
+            composition = context._component_tensor
             sum_composition = composition.sum(dim=0)
             abs_composition = composition.abs()
             abs_sum_composition = abs_composition.sum(dim=0, keepdim=True)
@@ -53,7 +53,7 @@ class TestLegacyRelu:
             composition[mask] = composition[mask].abs()
 
             multiplier = sum_value / composition.sum(dim=0)
-            context._composition_tensor *= multiplier
+            context._component_tensor *= multiplier
             context._residual_tensor = 0.0
             return context
 
@@ -75,5 +75,5 @@ class TestLegacyRelu:
         ref_out += delta_out
         ref_out._residual_tensor = residual_out
 
-        assert (out._composition_tensor == ref_out._composition_tensor).all()
+        assert (out._component_tensor == ref_out._component_tensor).all()
         assert (out._residual_tensor == ref_out._residual_tensor).all()

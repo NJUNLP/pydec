@@ -9,7 +9,7 @@ torch.manual_seed(114514)
 def init_composition(size, c_num=3, requires_grad=False):
     c = pydec.zeros(size, c_num, dtype=torch.float)
     for i in range(c_num):
-        c[i] = torch.randn(size, requires_grad=requires_grad)
+        c()[i] = torch.randn(size, requires_grad=requires_grad)
     return c
 
 
@@ -23,42 +23,42 @@ class TestIndexing:
     def test1(self):
         c = TestIndexing.init_composition()
         with pytest.raises(RuntimeError):
-            c[None]
+            c()[None]
         with pytest.raises(RuntimeError):
-            c[None] = 1
+            c()[None] = 1
 
     def test2(self):
         c = TestIndexing.init_composition()
-        c0 = c[0]
+        c0 = c()[0]
         assert isinstance(c0, torch.Tensor)
         assert c0.size() == c.size()
-        c02 = c[0:2]
+        c02 = c()[0:2]
         assert isinstance(c02, Composition)
         assert c02.numc() == 2
         assert c02.size() == c.size()
-        c02_ = c[:, 0:2]
+        c02_ = c()[:, 0:2]
         assert c02_.numc() == c.numc()
         assert c02_.size() == (2,) + c.size()[1:]
-        c0202 = c[:2, :2]
+        c0202 = c()[:2, :2]
         assert c0202.numc() == 2
         assert c0202.size() == (2,) + c.size()[1:]
 
     def test3(self):
         c = TestIndexing.init_composition()
-        c_ = c[:, None]
+        c_ = c()[:, None]
         assert c_.size() == (1,) + c.size()
         index_list = [0, 2]
-        c_ = c[index_list]
+        c_ = c()[index_list]
         assert isinstance(c_, Composition)
         assert c_.numc() == 2
         assert c_.size() == c.size()
-        c_ = c[index_list, index_list]
+        c_ = c()[index_list, index_list]
         assert c_.c_size() == (2,) + c.c_size()[2:]
 
-        c_ = c[index_list, index_list, index_list]
+        c_ = c()[index_list, index_list, index_list]
         assert c_.c_size() == (2,)
 
-        c_ = c[:, index_list, index_list]
+        c_ = c()[:, index_list, index_list]
         assert c_.c_size() == (4, 2)
 
 
@@ -72,7 +72,7 @@ class TestIndexingInAutotracing:
 
             c[None] = 1
             assert torch.all(c._residual_tensor == 0)
-            assert torch.all(c._composition_tensor == 1)
+            assert torch.all(c._component_tensor == 1)
 
     def test2(self):
         c = TestIndexing.init_composition()
@@ -116,11 +116,9 @@ class TestView:
     c = init_composition((2, 3))
 
     def test_view1(self):
-        assert self.c.view(torch.float16)._composition_tensor.dtype == torch.float16
+        assert self.c.view(torch.float16)._component_tensor.dtype == torch.float16
 
-        assert (
-            self.c.view(dtype=torch.float16)._composition_tensor.dtype == torch.float16
-        )
+        assert self.c.view(dtype=torch.float16)._component_tensor.dtype == torch.float16
 
     def test_view2(self):
         assert self.c.view((3, 2)).size() == (3, 2)
@@ -166,13 +164,12 @@ class TestPlus:
 
         with pydec.no_decomposition():
             c = self.c + 3
-            assert (self.c._composition_tensor == c._composition_tensor).all()
+            assert (self.c._component_tensor == c._component_tensor).all()
             assert (self.c._residual_tensor + 3 == c._residual_tensor).all()
 
     def test2(self):
         c = init_composition((2, 3))
         out = c + self.c
         assert torch.all(
-            self.c._composition_tensor + c._composition_tensor
-            == out._composition_tensor
+            self.c._component_tensor + c._component_tensor == out._component_tensor
         )
