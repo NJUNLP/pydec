@@ -116,44 +116,44 @@ def _auto_registration(func: T) -> T:
     return _register_function(torch_function, builtin=True)(func)
 
 
-def _hadle_self_is_tensor(func: T, inplace=False) -> T:
-    # TODO: inplace warning
+# def _hadle_self_is_tensor(func: T, inplace=False) -> T:
+#     # TODO: inplace warning
 
-    @functools.wraps(func)
-    def wrapped_func(self, *args, **kwargs):
-        if isinstance(self, torch.Tensor):
-            composition_index = None
-            for i in range(len(args)):
-                if isinstance(args[i], pydec.Composition):
-                    composition_index = i
-                    break
-            if composition_index is not None:
-                new_args = list(args)
-                self, new_args[composition_index] = new_args[composition_index], self
-                return func(self, *new_args, **kwargs)
-            composition_key = None
-            for k, v in kwargs.items():
-                if isinstance(v, pydec.Composition):
-                    composition_key = k
-                    break
-            if composition_key is not None:
-                self, kwargs[composition_key] = kwargs[composition_key], self
-                return func(self, *args, **kwargs)
-            else:
-                raise RuntimeError(
-                    f"there is no composition arguments for the invoking of function {func}"
-                )
-        else:
-            return func(self, *args, **kwargs)
+#     @functools.wraps(func)
+#     def wrapped_func(self, *args, **kwargs):
+#         if isinstance(self, torch.Tensor):
+#             composition_index = None
+#             for i in range(len(args)):
+#                 if isinstance(args[i], pydec.Composition):
+#                     composition_index = i
+#                     break
+#             if composition_index is not None:
+#                 new_args = list(args)
+#                 self, new_args[composition_index] = new_args[composition_index], self
+#                 return func(self, *new_args, **kwargs)
+#             composition_key = None
+#             for k, v in kwargs.items():
+#                 if isinstance(v, pydec.Composition):
+#                     composition_key = k
+#                     break
+#             if composition_key is not None:
+#                 self, kwargs[composition_key] = kwargs[composition_key], self
+#                 return func(self, *args, **kwargs)
+#             else:
+#                 raise RuntimeError(
+#                     f"there is no composition arguments for the invoking of function {func}"
+#                 )
+#         else:
+#             return func(self, *args, **kwargs)
 
-    return wrapped_func
+#     return wrapped_func
 
 
-def _hadle_self_is_tensor_inplace(func: T) -> T:
-    def wrapped_hadle_self_is_tensor(func: Callable):
-        return _hadle_self_is_tensor(func, inplace=True)
+# def _hadle_self_is_tensor_inplace(func: T) -> T:
+#     def wrapped_hadle_self_is_tensor(func: Callable):
+#         return _hadle_self_is_tensor(func, inplace=True)
 
-    return wrapped_hadle_self_is_tensor(func)
+#     return wrapped_hadle_self_is_tensor(func)
 
 
 def is_registered(torch_function: Callable) -> bool:
