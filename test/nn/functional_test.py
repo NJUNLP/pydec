@@ -25,7 +25,7 @@ class TestLegacyRelu:
         input = init_composition((3, 4))
         input._residual_tensor = torch.randn((3, 4))
         legacy_relu = pydec.nn.functional.legacy_relu
-        with pydec.using_decomposition_func("none"):
+        with pydec.core.decOVF.using_decomposition_func("none"):
             out = legacy_relu(input)
 
         ref = input.c_sum()
@@ -36,7 +36,11 @@ class TestLegacyRelu:
 
     def test_hybrid(self):
         def hybrid_decomposition_(
-            sum_value, context: Composition, *, threshold=0.15, eps=1e-6,
+            sum_value,
+            context: Composition,
+            *,
+            threshold=0.15,
+            eps=1e-6,
         ) -> Composition:
 
             composition = context._component_tensor
@@ -56,8 +60,8 @@ class TestLegacyRelu:
         input = init_composition((3, 4))
         input._residual_tensor = torch.randn((3, 4))
         legacy_relu = pydec.nn.functional.legacy_relu
-        with pydec.using_decomposition_func("hybrid_decomposition"):
-            with pydec.using_decomposition_args(threshold=0.15):
+        with pydec.core.decOVF.using_decomposition_func("hybrid_decomposition"):
+            with pydec.core.decOVF.using_decomposition_args(threshold=0.15):
                 out = legacy_relu(input)
 
         ref = input.c_sum()
@@ -282,4 +286,3 @@ class TestRNN:
 
         assert (pad_out.c_sum() - ref_pad_out).abs().sum() < 1e-2
         assert torch.all(ref_pad_lengths == pad_lengths)
-
