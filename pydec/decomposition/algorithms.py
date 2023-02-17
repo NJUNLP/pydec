@@ -21,7 +21,7 @@ from torch.types import (
     SymInt,
 )
 
-from .states import register_decomposition_func, set_decomposition_func
+# from ..core.states import register_decomposition_func, set_decomposition_func
 
 # def _non_linear_decompose(
 #     input: Composition, func: Callable[[Tensor], Tensor]
@@ -79,7 +79,7 @@ def _none_decomposition(
     inplace: _bool = False,
 ) -> Composition:
     r"""
-    Note: since Pydec TODO(add a version), this algorithm is no longer the default
+    Note: since PyDec 0.2.0, this algorithm is no longer the default
     decomposition algorithm for pydec, as the results it obtains do not make any sense.
 
     A trivial decomposition algorithm. Just add the output to residual.
@@ -579,7 +579,7 @@ Initialization
 try:
     set_decomposition_func("hybrid_decomposition")
 except ValueError:
-    from . import states
+    from ..core.decOVF import states
 
     set_decomposition_func(
         states._DECOMPOSITION_FUNC_REGISTRY.keys().__iter__().__next__()

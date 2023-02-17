@@ -2,16 +2,9 @@ from . import _composition
 from . import overrides
 from . import variable_functions as _variable_functions
 from ._composition import Composition, IndexComposition
-from .decomposition import (
-    set_decomposition_func,
-    get_decomposition_name,
-    get_decomposition_func,
-    using_decomposition_func,
-    no_decomposition,
-    set_decomposition_args,
-    get_decomposition_args,
-    using_decomposition_args,
-)
+from . import core
+
+# from .core import decBLAS, decOVF, decMVF
 
 from .error_check import (
     no_error_check,
@@ -26,7 +19,7 @@ from .autotracing import (
     is_tracing_enabled,
 )
 
-
+# TODO: need update
 __all__ = [
     "Composition",
     "set_decomposition_func",
@@ -72,4 +65,3 @@ for name in dir(_variable_functions):
 from .variable_functions import _from_replce
 
 import pydec.nn as nn
-

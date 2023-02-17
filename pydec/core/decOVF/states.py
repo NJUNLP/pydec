@@ -7,7 +7,7 @@ from torch.autograd.grad_mode import _DecoratorContextManager
 from typing import Dict, Tuple, Union, Any, Callable, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .._composition import Composition
+    from ..._composition import Composition
 
 from torch.types import (
     _int,
@@ -118,7 +118,9 @@ class using_decomposition_func(_DecoratorContextManager):
 
 
 class no_decomposition(_DecoratorContextManager):
-    def __init__(self,) -> None:
+    def __init__(
+        self,
+    ) -> None:
         self.prev = None
 
     def __enter__(self):
