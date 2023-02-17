@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import torch
+from . import core
+
 from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, overload
 from torch import Tensor
 from torch._C import memory_format
@@ -11,8 +13,6 @@ import sys
 from .overrides import (
     _register_builtin_function,
     _auto_registration,
-    _hadle_self_is_tensor,
-    _hadle_self_is_tensor_inplace,
     is_registered,
     dispatch_torch_function,
     get_customized_composition_methods,
@@ -114,9 +114,7 @@ class Composition:
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        def init_from_tensor(
-            component_tensor: Tensor, residual_tensor: Tensor = None
-        ):
+        def init_from_tensor(component_tensor: Tensor, residual_tensor: Tensor = None):
             if residual_tensor is not None:
                 if component_tensor.dtype != residual_tensor.dtype:
                     raise arg_value_error(
@@ -269,7 +267,7 @@ class Composition:
 
     @_auto_registration
     def __len__(self):
-        # TODO: maybe same as the behavior of tensor 
+        # TODO: maybe same as the behavior of tensor
         return self._component_tensor.__len__()
 
     def __iter__(self):
@@ -356,167 +354,120 @@ class Composition:
 
     @_auto_registration
     def __iadd__(self, other) -> Composition:
+        if not isinstance(self, Composition):
+            # TODO: maybe return a composition is a good choice
+            raise unsupported_operand_error("+=", type(self), type(other))
         if isinstance(other, Composition):
-            if self.numc() != other.numc():
-                raise component_num_error(self.numc(), other.numc())
-            self._component_tensor += other._component_tensor
-            self._residual_tensor += other._residual_tensor
-            return self
+            return core.decBLAS.cc_add_(self, other)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            self._residual_tensor += other
-            return self
+            return core.decBLAS.ct_add_(self, other)
         else:
             raise unsupported_operand_error("+=", type(self), type(other))
 
     @_auto_registration
     def __add__(self, other) -> Composition:
-        if isinstance(other, Composition):
-            if self.numc() != other.numc():
-                raise component_num_error(self.numc(), other.numc())
-            out_component_tensor = self._component_tensor + other._component_tensor
-            out_residual_tensor = self._residual_tensor + other._residual_tensor
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
-        elif isinstance(other, (_int, _float, _bool, Tensor)):
-            out_component_tensor = self._component_tensor.clone()
-            out_residual_tensor = self._residual_tensor + other
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
-        else:
+        try:
+            return pydec.add(self, other)
+        except TypeError:
             raise unsupported_operand_error("+", type(self), type(other))
 
     @_auto_registration
     def __radd__(self, other) -> Composition:
         try:
-            return self + other
+            return pydec.add(other, self)
         except TypeError:
             raise unsupported_operand_error("+", type(other), type(self))
 
     @_auto_registration
     def __sub__(self, other) -> Composition:
         try:
-            return self + (-other)
+            return pydec.sub(self, other)
         except TypeError:
             raise unsupported_operand_error("-", type(self), type(other))
 
     @_auto_registration
     def __rsub__(self, other) -> Composition:
         try:
-            return other + (-self)
+            return pydec.sub(other, self)
         except TypeError:
             raise unsupported_operand_error("-", type(other), type(self))
 
     @_auto_registration
     def __isub__(self, other) -> Composition:
-        try:
-            self += -other
-        except TypeError:
+        if not isinstance(self, Composition):
             raise unsupported_operand_error("-=", type(self), type(other))
-        return self
+        if isinstance(other, Composition):
+            return core.decBLAS.cc_sub_(self, other)
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_sub_(self, other)
+        else:
+            raise unsupported_operand_error("-=", type(self), type(other))
 
     @_auto_registration
     def __matmul__(self, other) -> Composition:
         if isinstance(other, Tensor):
-            out_component_tensor = self._component_tensor @ other
-            out_residual_tensor = self._residual_tensor @ other
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return core.decBLAS.ct_matmul(self, other)
         else:
             raise unsupported_operand_error("@", type(self), type(other))
 
     @_auto_registration
     def __rmatmul__(self, other) -> Composition:
         if isinstance(other, Tensor):
-            if self.dim() == 1:
-                # if the component_tensor's ndim is 2, the component dim
-                # will be incorrectly included in the multiplication
-                out_component_tensor = other @ self._component_tensor.unsqueeze(-1)
-                out_component_tensor.squeeze_(-1)
-                out_residual_tensor = other @ self._residual_tensor
-            else:
-                out_component_tensor = other @ self._component_tensor
-                out_residual_tensor = other @ self._residual_tensor
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return core.decBLAS.tc_matmul(other, self)
         else:
-            raise unsupported_operand_error("@=", type(self), type(other))
+            raise unsupported_operand_error("@=", type(other), type(other))
 
     @_auto_registration
     def __imul__(self, other) -> Composition:
-        if isinstance(other, Composition):
+        if not isinstance(self, Composition):
+            # TODO: maybe return a composition is a good choice
             raise unsupported_operand_error("*=", type(self), type(other))
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                self._component_tensor = self._component_tensor.view(new_size)
-            self._component_tensor *= other
-            self._residual_tensor *= other
+        if isinstance(other, Composition):
+            return core.decBLAS.cc_mul_(self, other)
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_mul_(self, other)
         else:
-            self._component_tensor *= other
-            self._residual_tensor *= other
-        return self
+            raise unsupported_operand_error("*=", type(self), type(other))
 
     @_auto_registration
     def __mul__(self, other) -> Composition:
-        if isinstance(other, Composition):
+        try:
+            return pydec.mul(self, other)
+        except TypeError:
             raise unsupported_operand_error("*", type(self), type(other))
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                out_component_tensor = self._component_tensor.view(new_size) * other
-            else:
-                out_component_tensor = self._component_tensor * other
-            out_residual_tensor = self._residual_tensor * other
-        else:
-            out_component_tensor = self._component_tensor * other
-            out_residual_tensor = self._residual_tensor * other
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def __rmul__(self, other) -> Composition:
         try:
-            return self * other
+            return pydec.mul(other, self)
         except TypeError:
             raise unsupported_operand_error("*", type(other), type(self))
 
     @_auto_registration
     def __itruediv__(self, other: Any) -> Composition:
-        if isinstance(other, Composition):
+        if not isinstance(self, Composition):
             raise unsupported_operand_error("/=", type(self), type(other))
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                self._component_tensor = self._component_tensor.view(new_size)
-            self._component_tensor /= other
-            self._residual_tensor /= other
+        if isinstance(other, Composition):
+            # TODO: not implement yet
+            return unsupported_operand_error("/=", type(self), type(other))
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_div_(self, other)
         else:
-            self._component_tensor /= other
-            self._residual_tensor /= other
-        return self
+            raise unsupported_operand_error("/=", type(self), type(other))
 
     @_auto_registration
     def __truediv__(self, other: Any) -> Composition:
-        if isinstance(other, Composition):
+        try:
+            return pydec.div(self, other)
+        except TypeError:
             raise unsupported_operand_error("/", type(self), type(other))
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                out_component_tensor = self._component_tensor.view(new_size) / other
-            else:
-                out_component_tensor = self._component_tensor / other
-            out_residual_tensor = self._residual_tensor / other
-        else:
-            out_component_tensor = self._component_tensor / other
-            out_residual_tensor = self._residual_tensor / other
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def __rtruediv__(self, other: Any) -> Composition:
-        raise unsupported_operand_error("/", type(other), type(self))
+        try:
+            return pydec.div(other, self)
+        except TypeError:
+            raise unsupported_operand_error("/", type(other), type(self))
 
     @_auto_registration
     def __eq__(self, other: Any) -> Tensor:
@@ -555,115 +506,92 @@ class Composition:
         return self.c_sum().__le__(other)
 
     @_auto_registration
-    @_hadle_self_is_tensor
     def add(
-        self,
-        other: Union[Composition, Tensor, Number],
-        *,
-        alpha: Optional[Number] = 1,
-        out: Optional[Composition] = None,
+        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
     ) -> Composition:
-        return pydec.add(self, other, alpha=alpha, out=out)
+        """
+        Note: although the function signature of `torch.Tensor.add` has parameter `out`, it is not working
+        """
+        return pydec.add(self, other, alpha=alpha)
 
     @_auto_registration
-    @_hadle_self_is_tensor_inplace
     def add_(
-        self,
-        other: Union[Composition, Tensor, Number],
-        *,
-        alpha: Optional[Number] = 1,
+        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
     ) -> Composition:
+        if not isinstance(self, Composition):
+            # TODO: maybe return a composition is a good choice
+            raise unsupported_operand_error("add_", type(self), type(other))
         if isinstance(other, Composition):
-            if self.numc() != other.numc():
-                raise component_num_error(self.numc(), other.numc())
-            self._component_tensor.add_(other.component_tensor, alpha=alpha)
-            self._residual_tensor.add_(other._residual_tensor, alpha=alpha)
-            return self
+            return core.decBLAS.cc_add_(self, other, alpha=alpha)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
-            self._residual_tensor.add_(other, alpha=alpha)
-            return self
+            return core.decBLAS.ct_add_(self, other, alpha=alpha)
         else:
             raise unsupported_operand_error("add_", type(self), type(other))
 
     @_auto_registration
-    @_hadle_self_is_tensor
     def sub(
-        self,
-        other: Union[Composition, Tensor, Number],
-        *,
-        alpha: Optional[Number] = 1,
-        out: Optional[Composition] = None,
+        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
     ) -> Composition:
-        return pydec.add(-other, alpha=alpha, out=out)
+        return pydec.sub(other, alpha=alpha)
 
     @_auto_registration
-    @_hadle_self_is_tensor_inplace
     def sub_(
         self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1
     ) -> Composition:
-        return self.add_(-other, alpha=alpha)
+        if not isinstance(self, Composition):
+            # TODO: maybe return a composition is a good choice
+            raise unsupported_operand_error("sub_", type(self), type(other))
+        if isinstance(other, Composition):
+            return core.decBLAS.cc_sub_(self, other)
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_sub_(self, other)
+        else:
+            raise unsupported_operand_error("sub_", type(self), type(other))
 
     @_auto_registration
-    @_hadle_self_is_tensor
-    def mul(
-        self, other: Union[Tensor, Number], *, out: Optional[Composition] = None
-    ) -> Composition:
-        return pydec.mul(self, other, out=out)
+    def mul(self, other: Union[Tensor, Number]) -> Composition:
+        return pydec.mul(self, other)
 
     @_auto_registration
-    @_hadle_self_is_tensor_inplace
     def mul_(self, other: Union[Tensor, Number]) -> Composition:
-        self *= other
-        return self
+        if not isinstance(self, Composition):
+            # TODO: maybe return a composition is a good choice
+            raise unsupported_operand_error("mul_", type(self), type(other))
+        if isinstance(other, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("mul_", type(self), type(other))
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_mul_(self, other)
+        else:
+            raise unsupported_operand_error("mul_", type(self), type(other))
 
     @_auto_registration
     def div(
         self, other: Union[Tensor, Number], *, rounding_mode: Optional[str] = None
     ) -> Composition:
-        # TODO: self tensor
         return pydec.div(self, other, rounding_mode=rounding_mode)
 
     @_auto_registration
     def div_(
         self, other: Union[Tensor, Number], *, rounding_mode: Optional[str] = None
     ) -> Composition:
-        # TODO: self tensor
+        if not isinstance(self, Composition):
+            # TODO: maybe return a composition is a good choice
+            raise unsupported_operand_error("div_", type(self), type(other))
         if isinstance(other, Composition):
-            raise args_error(
-                Composition.div_.__name__, self, other, rounding_mode=rounding_mode
-            )
-        if isinstance(other, Tensor):
-            if other.dim() > self.dim():
-                new_size = (
-                    (self.numc(),) + (1,) * (other.dim() - self.dim()) + self.size()
-                )
-                self._component_tensor.view(new_size).div_(
-                    other, rounding_mode=rounding_mode
-                )
-            else:
-                self._component_tensor.div_(other, rounding_mode == rounding_mode)
-            self._residual_tensor.div_(other, rounding_mode=rounding_mode)
+            # TODO: not implement yet
+            raise unsupported_operand_error("div_", type(self), type(other))
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_div_(self, other, rounding_mode=rounding_mode)
         else:
-            self._component_tensor.div_(other, rounding_mode=rounding_mode)
-            self._residual_tensor.div_(other, rounding_mode=rounding_mode)
-        return self
+            raise unsupported_operand_error("div_", type(self), type(other))
 
     @_auto_registration
     def mv(self, vec: Tensor) -> Composition:
-        r"""
-        Note that the use of Tensor.mv(Composition) is not supported and may raise an error in autoracing.
-        Use pydec.mv() instead or use torch.mv() in autotracing instead.
-        """
-        # TODO: self tensor
         return pydec.mv(self, vec)
 
     @_auto_registration
     def mm(self, mat2: Tensor) -> Composition:
-        r"""
-        Note that the use of Tensor.mm(Composition) is not supported and may raise an error in autoracing.
-        Use pydec.mm() instead or use torch.mm() in autotracing instead.
-        """
-        # TODO: self tensor
         return pydec.mm(self, mat2)
 
     @overload
@@ -1297,9 +1225,7 @@ class IndexComposition(Composition):
 
     @overload
     def __init__(
-        self,
-        component_tensor: Tensor,
-        residual_tensor: Tensor = None,
+        self, component_tensor: Tensor, residual_tensor: Tensor = None,
     ) -> None:
         ...
 

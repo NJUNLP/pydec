@@ -4,6 +4,7 @@ from torch import Tensor
 from torch.nn.parameter import Parameter
 from torch._C import memory_format
 
+import pydec.core as core
 from pydec._composition import Composition, IndexComposition
 from .overrides import _auto_registration, _register_builtin_function
 
@@ -29,13 +30,10 @@ from torch.types import (
 from torch import strided
 
 from pydec.utils import _shift_dim, _shift_dims
-from .decomposition import get_decomposition_func, get_decomposition_name
 from pydec.exception_utils import (
     arg_value_error,
     none_decomposition_func_error,
-    component_num_error,
     unsupported_operand_error,
-    args_error,
 )
 import builtins
 
@@ -243,6 +241,28 @@ def detach_(input: Composition) -> Composition:
     return input
 
 
+@overload
+def add(
+    input: Composition,
+    other: Union[Composition, Tensor, Number],
+    *,
+    alpha: Optional[Number] = 1,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def add(
+    input: Union[Composition, Tensor, Number],
+    other: Composition,
+    *,
+    alpha: Optional[Number] = 1,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
 @_auto_registration
 def add(
     input: Composition,
@@ -251,39 +271,22 @@ def add(
     alpha: Optional[Number] = 1,
     out: Optional[Composition] = None,
 ) -> Composition:
-    if isinstance(other, Composition):
-        if input.numc() != other.numc():
-            raise component_num_error(input.numc(), other.numc())
-        if out is None:
-            out_component_tensor = input._component_tensor.add(
-                other._component_tensor, alpha=alpha
-            )
-            out_residual_tensor = input._residual_tensor.add(
-                other._residual_tensor, alpha=alpha
-            )
+    if not isinstance(input, Composition) and not isinstance(other, Composition):
+        raise unsupported_operand_error("add", type(input), type(other))
+    if isinstance(input, Composition):
+        if isinstance(other, Composition):
+            return core.decBLAS.cc_add(input, other, alpha=alpha, out=out)
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_add(input, other, alpha=alpha, out=out)
         else:
-            out_component_tensor = input._component_tensor.add(
-                other._component_tensor, alpha=alpha, out=out._component_tensor
-            )
-            out_residual_tensor = input._residual_tensor.add(
-                other._residual_tensor, alpha=alpha, out=out._residual_tensor
-            )
-        return _from_replce(out_component_tensor, out_residual_tensor)
-    elif isinstance(other, (_int, _float, _bool, Tensor)):
-        out_component_tensor = input._component_tensor.clone()
-        out_residual_tensor = input._residual_tensor.add(
-            other,
-            alpha=alpha,
-            # TODO out=out._residual_tensor if out is not None else None,
-        )
-        if out is not None:
-            out._component_tensor[:] = out_component_tensor
-        return _from_replce(out_component_tensor, out_residual_tensor)
+            raise unsupported_operand_error("add", type(input), type(other))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.tc_add(input, other, alpha=alpha, out=out)
     else:
         raise unsupported_operand_error("add", type(input), type(other))
 
 
-@_auto_registration
+@overload
 def sub(
     input: Composition,
     other: Union[Composition, Tensor, Number],
@@ -291,7 +294,41 @@ def sub(
     alpha: Optional[Number] = 1,
     out: Optional[Composition] = None,
 ) -> Composition:
-    return add(-other, alpha=alpha, out=out)
+    ...
+
+
+@overload
+def sub(
+    input: Union[Composition, Tensor, Number],
+    other: Composition,
+    *,
+    alpha: Optional[Number] = 1,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@_auto_registration
+def sub(
+    input: Union[Composition, Tensor, Number],
+    other: Union[Composition, Tensor, Number],
+    *,
+    alpha: Optional[Number] = 1,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(other, Composition):
+        raise unsupported_operand_error("sub", type(input), type(other))
+    if isinstance(input, Composition):
+        if isinstance(other, Composition):
+            return core.decBLAS.cc_sub(input, other, alpha=alpha, out=out)
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_sub(input, other, alpha=alpha, out=out)
+        else:
+            raise unsupported_operand_error("sub", type(input), type(other))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.tc_sub(input, other, alpha=alpha, out=out)
+    else:
+        raise unsupported_operand_error("sub", type(input), type(other))
 
 
 @overload
@@ -311,40 +348,58 @@ def subtract(input: Composition, other: Number, alpha: Number = 1) -> Compositio
 
 
 @_auto_registration
-def subtract(
-    input: Composition, other: Any, *, alpha: Number = 1, out: Optional[Tensor] = None,
-) -> Composition:
-    return sub(input, other=other, alpha=alpha, out=out)
+def subtract(*args, **kwargs) -> Composition:
+    return sub(*args, **kwargs)
 
 
-@_auto_registration
+@overload
 def mul(
     input: Composition,
     other: Union[Tensor, Number],
     *,
     out: Optional[Composition] = None,
 ) -> Composition:
-    if isinstance(other, Composition):
-        raise args_error(Composition.mul.__name__, input, other, out=out)
-    if isinstance(other, Tensor):
-        if other.dim() > input.dim():
-            new_size = (
-                (input.numc(),) + (1,) * (other.dim() - input.dim()) + input.size()
-            )
-            out_component_tensor = input._component_tensor.view(new_size).mul(
-                other, out=out._component_tensor
-            )
+    ...
+
+
+@overload
+def mul(
+    input: Union[Tensor, Number],
+    other: Composition,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def mul(
+    input: Composition, other: Composition, *, out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@_auto_registration
+def mul(
+    input: Union[Composition, Tensor, Number],
+    other: Union[Composition, Tensor, Number],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(other, Composition):
+        raise unsupported_operand_error("mul", type(input), type(other))
+    if isinstance(input, Composition):
+        if isinstance(other, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("mul", type(input), type(other))
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_mul(input, other, out=out)
         else:
-            out_component_tensor = input._component_tensor.mul(
-                other, out=out._component_tensor
-            )
-        out_residual_tensor = input._residual_tensor.mul(
-            other, out=out._residual_tensor
-        )
+            raise unsupported_operand_error("mul", type(input), type(other))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.tc_mul(input, other, out=out)
     else:
-        out_component_tensor = input._component_tensor * other
-        out_residual_tensor = input._residual_tensor * other
-    return _from_replce(out_component_tensor, out_residual_tensor)
+        raise unsupported_operand_error("mul", type(input), type(other))
 
 
 @overload
@@ -366,50 +421,80 @@ def multiply(
     return mul(input, other=other, out=out)
 
 
-@_auto_registration
+@overload
 def div(
     input: Composition,
     other: Union[Tensor, Number],
     *,
     rounding_mode: Optional[str] = None,
-) -> Tensor:
-    if isinstance(other, Composition):
-        raise args_error(
-            Composition.div.__name__, input, other, rounding_mode=rounding_mode
-        )
-    if isinstance(other, Tensor):
-        if other.dim() > input.dim():
-            new_size = (
-                (input.numc(),) + (1,) * (other.dim() - input.dim()) + input.size()
-            )
-            out_component_tensor = input._component_tensor.view(new_size).div(
-                other, rounding_mode=rounding_mode
-            )
-        else:
-            out_component_tensor = input._component_tensor.div(
-                other, rounding_mode == rounding_mode
-            )
-        out_residual_tensor = input._residual_tensor.div(
-            other, rounding_mode=rounding_mode
-        )
-    else:
-        out_component_tensor = input._component_tensor.div(
-            other, rounding_mode=rounding_mode
-        )
-        out_residual_tensor = input._residual_tensor.div(
-            other, rounding_mode=rounding_mode
-        )
-    return _from_replce(out_component_tensor, out_residual_tensor)
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
 
 
 @overload
-def divide(input: Composition, other: Tensor,) -> Composition:
+def div(
+    input: Union[Tensor, Number],
+    other: Composition,
+    *,
+    rounding_mode: Optional[str] = None,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def div(
+    input: Composition,
+    other: Composition,
+    *,
+    rounding_mode: Optional[str] = None,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@_auto_registration
+def div(
+    input,
+    other,
+    *,
+    rounding_mode: Optional[str] = None,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(other, Composition):
+        raise unsupported_operand_error("div", type(input), type(other))
+    if isinstance(input, Composition):
+        if isinstance(other, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("div", type(input), type(other))
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_div(
+                input, other, rounding_mode=rounding_mode, out=out
+            )
+        else:
+            raise unsupported_operand_error("div", type(input), type(other))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        # TODO: not implement yet
+        raise unsupported_operand_error("div", type(input), type(other))
+    else:
+        raise unsupported_operand_error("div", type(input), type(other))
+
+
+@overload
+def divide(
+    input: Composition, other: Tensor, out: Optional[Composition] = None,
+) -> Composition:
     ...
 
 
 @overload
 def divide(
-    input: Composition, other: Tensor, *, rounding_mode: Optional[str],
+    input: Composition,
+    other: Tensor,
+    *,
+    rounding_mode: Optional[str],
+    out: Optional[Composition] = None,
 ) -> Composition:
     ...
 
@@ -427,80 +512,104 @@ def divide(input: Composition, other: Number,) -> Composition:
 
 
 @_auto_registration
-def divide(input: Composition, other: Any, *, rounding_mode: Optional[str]):
-    return div(input, other=other, rounding_mode=rounding_mode)
+def divide(*args, **kwargs):
+    return div(*args, **kwargs)
 
 
-@_auto_registration
+@overload
 def mv(
-    input: Union[Composition, Tensor],
+    input: Composition,
     vec: Union[Composition, Tensor],
     *,
     out: Optional[Composition] = None,
 ) -> Composition:
-    if isinstance(input, Composition) and isinstance(vec, Composition):
-        raise TypeError(
-            "mv(): argument 'input' and argument 'vec' cannot both be Composition"
-        )
-    if isinstance(input, Composition):
-        out_residual_tensor = torch.mv(
-            input._residual_tensor,
-            vec,
-            out=out._residual_tensor if out is not None else None,
-        )
-        out_component_tensor = torch.matmul(
-            input._component_tensor,
-            vec,
-            out=out._component_tensor if out is not None else None,
-        )
-    else:
-        out_residual_tensor = torch.mv(
-            input,
-            vec._residual_tensor,
-            out=out._residual_tensor if out is not None else None,
-        )
-        out_component_tensor = torch.matmul(
-            input,
-            vec._component_tensor,
-            out=out._component_tensor if out is not None else None,
-        )
-    return _from_replce(out_component_tensor, out_residual_tensor)
+    ...
+
+
+@overload
+def mv(
+    input: Union[Composition, Tensor],
+    vec: Composition,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
 
 
 @_auto_registration
+def mv(input, vec, *, out: Optional[Composition] = None,) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(vec, Composition):
+        raise unsupported_operand_error("mv", type(input), type(vec))
+    if isinstance(input, Composition):
+        if isinstance(vec, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("mv", type(input), type(vec))
+        elif isinstance(vec, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_mv(input, vec, out=out)
+        else:
+            raise unsupported_operand_error("mv", type(input), type(vec))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.ct_mv(input, vec, out=out)
+    else:
+        raise unsupported_operand_error("mv", type(input), type(vec))
+
+
+@overload
 def mm(
-    input: Union[Composition, Tensor],
+    input: Composition,
     mat2: Union[Composition, Tensor],
     *,
     out: Optional[Composition] = None,
 ) -> Composition:
-    if isinstance(input, Composition) and isinstance(mat2, Composition):
-        raise TypeError(
-            "mm(): argument 'input' and argument 'mat2' cannot both be Composition"
-        )
+    ...
+
+
+@overload
+def mm(
+    input: Union[Composition, Tensor],
+    mat2: Composition,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@_auto_registration
+def mm(input, mat2, *, out: Optional[Composition] = None,) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(mat2, Composition):
+        raise unsupported_operand_error("mm", type(input), type(mat2))
     if isinstance(input, Composition):
-        out_residual_tensor = torch.mm(
-            input._residual_tensor,
-            mat2,
-            out=out._residual_tensor if out is not None else None,
-        )
-        out_component_tensor = torch.matmul(
-            input._component_tensor,
-            mat2,
-            out=out._component_tensor if out is not None else None,
-        )
+        if isinstance(mat2, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("mm", type(input), type(mat2))
+        elif isinstance(mat2, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_mm(input, mat2, out=out)
+        else:
+            raise unsupported_operand_error("mm", type(input), type(mat2))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.tc_mm(input, mat2, out=out)
     else:
-        out_residual_tensor = torch.mm(
-            input,
-            mat2._residual_tensor,
-            out=out._residual_tensor if out is not None else None,
-        )
-        out_component_tensor = torch.matmul(
-            input,
-            mat2._component_tensor,
-            out=out._component_tensor if out is not None else None,
-        )
-    return _from_replce(out_component_tensor, out_residual_tensor)
+        raise unsupported_operand_error("mm", type(input), type(mat2))
+
+
+@overload
+def bmm(
+    input: Composition,
+    mat2: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def bmm(
+    input: Union[Composition, Tensor],
+    mat2: Composition,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
 
 
 @_auto_registration
@@ -509,34 +618,63 @@ def bmm(
     mat2: Union[Composition, Tensor],
     *,
     out: Optional[Composition] = None,
-) -> Tensor:
-    if isinstance(input, Composition) and isinstance(mat2, Composition):
-        raise TypeError(
-            "bmm(): argument 'input' and argument 'mat2' cannot both be Composition"
-        )
+) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(mat2, Composition):
+        raise unsupported_operand_error("bmm", type(input), type(mat2))
     if isinstance(input, Composition):
-        out_residual_tensor = torch.bmm(
-            input._residual_tensor,
-            mat2,
-            out=out._residual_tensor if out is not None else None,
-        )
-        out_component_tensor = torch.matmul(
-            input._component_tensor,
-            mat2,
-            out=out._component_tensor if out is not None else None,
-        )
+        if isinstance(mat2, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("bmm", type(input), type(mat2))
+        elif isinstance(mat2, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_bmm(input, mat2, out=out)
+        else:
+            raise unsupported_operand_error("bmm", type(input), type(mat2))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.tc_bmm(input, mat2, out=out)
     else:
-        out_residual_tensor = torch.bmm(
-            input,
-            mat2._residual_tensor,
-            out=out._residual_tensor if out is not None else None,
-        )
-        out_component_tensor = torch.matmul(
-            input,
-            mat2._component_tensor,
-            out=out._component_tensor if out is not None else None,
-        )
-    return _from_replce(out_component_tensor, out_residual_tensor)
+        raise unsupported_operand_error("bmm", type(input), type(mat2))
+
+
+@overload
+def matmul(
+    input: Composition,
+    other: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def matmul(
+    input: Union[Composition, Tensor],
+    other: Composition,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    ...
+
+
+def matmul(
+    input: Union[Composition, Tensor],
+    other: Union[Composition, Tensor],
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
+    if not isinstance(input, Composition) and not isinstance(other, Composition):
+        raise unsupported_operand_error("matmul", type(input), type(other))
+    if isinstance(input, Composition):
+        if isinstance(other, Composition):
+            # TODO: not implement yet
+            raise unsupported_operand_error("matmul", type(input), type(other))
+        elif isinstance(other, (_int, _float, _bool, Tensor)):
+            return core.decBLAS.ct_matmul(input, other, out=out)
+        else:
+            raise unsupported_operand_error("matmul", type(input), type(other))
+    elif isinstance(input, (_int, _float, _bool, Tensor)):
+        return core.decBLAS.tc_matmul(input, other, out=out)
+    else:
+        raise unsupported_operand_error("matmul", type(input), type(other))
 
 
 @overload
@@ -720,6 +858,7 @@ def mean(
     dtype: Optional[_dtype] = None,
     out: Optional[Composition] = None,
 ) -> Composition:
+    # TODO: move to BLAS
     if out is not None:
         raise arg_value_error(
             f"{mean.__name__}() dees not support keyword 'out' currently"
@@ -1315,74 +1454,32 @@ def abs_(input: Composition) -> Composition:
 
 @_auto_registration
 def relu(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        # TODO: inplace arg overwrite
-        out = decomposition_func(input=input, func=torch.nn.functional.relu, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.relu(input, ref=ref)
 
 
 @_auto_registration
 def relu_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        # TODO: inplace arg overwrite
-        out = decomposition_func(
-            input=input, func=torch.nn.functional.relu_, inplace=True, ref=ref
-        )
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.relu_(input, ref=ref)
 
 
 @_auto_registration
 def tanh(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.tanh, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.tanh(input, ref=ref)
 
 
 @_auto_registration
 def tanh_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.tanh_, inplace=True, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.tanh_(input, ref=ref)
 
 
 @_auto_registration
 def sigmoid(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.sigmoid, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.sigmoid(input, ref=ref)
 
 
 @_auto_registration
 def sigmoid_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(
-            input=input, func=torch.sigmoid_, inplace=True, ref=ref
-        )
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.sigmoid_(input, ref=ref)
 
 
 @_auto_registration
@@ -1578,6 +1675,11 @@ def _rnn_relu_packed(
             x = pydec.cat([x_, x_r], dim=-1)
             out_hx_list.append(out_hx)
             out_hx_list.append(out_hx_r)
+        if training and dropout > 0:
+            # TODO: should also apply dropout to out_hx?
+            x = pydec.nn.functional.dropout(
+                x, p=dropout, training=training, inplace=True
+            )
 
     out = x
     out_hx = pydec.stack(out_hx_list, dim=0)

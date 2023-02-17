@@ -5,10 +5,11 @@ import pydec
 from torch import Tensor
 import torch.nn.functional as F
 from .._composition import Composition, IndexComposition
-from ..decomposition import (
+from pydec.core.decOVF import (
     get_decomposition_func,
     get_decomposition_name,
 )
+from pydec import core
 from ..overrides import _auto_registration, _register_builtin_function
 from ..exception_utils import none_decomposition_func_error, arg_value_error
 
@@ -83,33 +84,39 @@ In-place version of :func:`~relu`.
 
 @_auto_registration
 def leaky_relu(
-    input: Composition, inplace=False, *, ref: Optional[Tensor] = None
+    input: Tensor,
+    negative_slope: float = 0.01,
+    inplace: bool = False,
+    *,
+    ref: Optional[Tensor] = None,
+) -> Tensor:
+    r"""
+    leaky_relu(input, negative_slope=0.01, inplace=False) -> Tensor
+
+    Applies element-wise,
+    :math:`\text{LeakyReLU}(x) = \max(0, x) + \text{negative\_slope} * \min(0, x)`
+
+    See :class:`~torch.nn.LeakyReLU` for more details.
+    """
+    if inplace:
+        result = core.decOVF.leaky_relu_(input, negative_slope)
+    else:
+        result = core.decOVF.leaky_relu(input, negative_slope)
+    return result
+
+
+@_auto_registration
+def leaky_relu_(
+    input: Composition, negative_slope: float = 0.01, *, ref: Optional[Tensor] = None
 ) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(
-            input=input, func=torch.nn.functional.leaky_relu, ref=ref, inplace=inplace
-        )
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+    return core.decOVF.leaky_relu_(input, negative_slope, ref=ref)
 
 
 @_auto_registration
-def leaky_relu_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    return leaky_relu(input=input, inplace=True, ref=ref)
-
-
-@_auto_registration
-def gelu(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    decomposition_func = get_decomposition_func()
-    if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.nn.functional.gelu, ref=ref)
-        assert isinstance(out, Composition)
-        return out
-    else:
-        raise none_decomposition_func_error(get_decomposition_name())
+def gelu(
+    input: Composition, approximate: str = "none", *, ref: Optional[Tensor] = None
+) -> Composition:
+    return core.decOVF.gelu(input, approximate, ref=ref)
 
 
 def tanh(input, *, ref: Optional[Tensor] = None):
@@ -220,10 +227,22 @@ def conv2d(
         )
     if len(input.size()) == 3:
         out_component_tensor = F.conv2d(
-            input._component_tensor, weight, None, stride, padding, dilation, groups,
+            input._component_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
         out_residual_tensor = F.conv2d(
-            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+            input._residual_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
     else:
         out_component_tensor = F.conv2d(
@@ -236,7 +255,13 @@ def conv2d(
             groups,
         ).view((-1,) + input.size())
         out_residual_tensor = F.conv2d(
-            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+            input._residual_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
     out_residual_tensor += bias
     return pydec._from_replce(out_component_tensor, out_residual_tensor)
