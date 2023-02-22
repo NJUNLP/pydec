@@ -1,13 +1,7 @@
 import pydec
 from pydec import Composition
 import torch
-
-
-def init_composition(size, c_num=3, requires_grad=False):
-    c = pydec.zeros(size, c_num, dtype=torch.float)
-    for i in range(c_num):
-        c[i] = torch.randn(size, requires_grad=requires_grad)
-    return c
+from test._composition_test import init_composition
 
 
 class TestRelu:
@@ -286,3 +280,47 @@ class TestRNN:
 
         assert (pad_out.c_sum() - ref_pad_out).abs().sum() < 1e-2
         assert torch.all(ref_pad_lengths == pad_lengths)
+
+
+class TestLayerNorm:
+    def test1(self):
+        c_input = init_composition((2, 3, 4))
+        input = c_input.c_sum()
+
+        ref = torch.nn.functional.layer_norm(input, normalized_shape=[4])
+        c_out = torch.nn.functional.layer_norm(c_input, normalized_shape=[4])
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+        ref = torch.nn.functional.layer_norm(input, normalized_shape=[3, 4])
+        c_out = torch.nn.functional.layer_norm(c_input, normalized_shape=[3, 4])
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+    def test2(self):
+        c_input = init_composition((2, 3, 4))
+        input = c_input.c_sum()
+
+        layernorm = torch.nn.LayerNorm((4,))
+        ref = torch.nn.functional.layer_norm(
+            input, normalized_shape=[4], weight=layernorm.weight, bias=layernorm.bias
+        )
+        c_out = torch.nn.functional.layer_norm(
+            c_input, normalized_shape=[4], weight=layernorm.weight, bias=layernorm.bias
+        )
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+        layernorm = torch.nn.LayerNorm(
+            (
+                3,
+                4,
+            )
+        )
+        ref = torch.nn.functional.layer_norm(
+            input, normalized_shape=[3, 4], weight=layernorm.weight, bias=layernorm.bias
+        )
+        c_out = torch.nn.functional.layer_norm(
+            c_input,
+            normalized_shape=[3, 4],
+            weight=layernorm.weight,
+            bias=layernorm.bias,
+        )
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
