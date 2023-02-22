@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Type, Union, Optional
 import torch
 from torch.types import _int, _float
 
@@ -50,7 +50,7 @@ def overflow_error(error: _float, error_bound=1e-2) -> RuntimeError:
     )
 
 
-def none_decomposition_func_error(func_name: str = None) -> RuntimeError:
+def none_decomposition_func_error(func_name: Optional[str] = None) -> RuntimeError:
     return RuntimeError(
         f"Cannot find the currently used decomposition function with key name ({func_name})"
     )

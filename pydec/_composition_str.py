@@ -1,6 +1,6 @@
 import torch
 from torch._tensor_str import _tensor_str, _add_suffixes, PRINT_OPTS
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 
 
 def _c_add_suffixes(composition_str, suffixes, indent, force_newline):
@@ -253,7 +253,10 @@ def _tensor_str_intern(inp, *, tensor_contents=None, prefix_indent=0):
 
 
 def _t_str(
-    self: torch.Tensor, *, tensor_contents: str = None, prefix_indent=0
+    self: torch.Tensor,
+    *,
+    tensor_contents: Optional[str] = None,
+    prefix_indent: Optional[int] = 0,
 ) -> Tuple:
     with torch.no_grad():
         return _tensor_str_intern(
@@ -261,7 +264,7 @@ def _t_str(
         )
 
 
-def _c_str(self, *, composition_contents: List[str] = None):
+def _c_str(self, *, composition_contents: Optional[List[Union[str, None]]] = None):
     """
     Args:
         self: the composition to be represented
