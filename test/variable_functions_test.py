@@ -93,3 +93,39 @@ class TestDiagonalInit:
                     assert torch.all(out()[i, j] == x[i])
                 else:
                     assert torch.all(out()[i, j] == c()[i, j])
+
+
+class TestVar:
+    def test1(self):
+        c_input = init_composition((2, 3, 4))
+        input = c_input.c_sum()
+
+        ref = torch.var(input)
+        c_out = torch.var(c_input)
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+        ref = torch.var(input, False)
+        c_out = torch.var(c_input, False)
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+    def test2(self):
+        c_input = init_composition((2, 3, 4))
+        input = c_input.c_sum()
+        ref = torch.var(input, -1)
+        c_out = torch.var(c_input, -1)
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+        ref = torch.var(input, -1, unbiased=False)
+        c_out = torch.var(c_input, -1, unbiased=False)
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+    def test3(self):
+        c_input = init_composition((2, 3, 4))
+        input = c_input.c_sum()
+        ref = torch.var(input, dim=(0, 2))
+        c_out = torch.var(c_input, dim=(0, 2))
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+        ref = torch.var(input, dim=(0, 2), unbiased=False)
+        c_out = torch.var(c_input, dim=(0, 2), unbiased=False)
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
