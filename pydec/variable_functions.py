@@ -14,6 +14,7 @@ from typing import Any, Union, List, Tuple, Optional, Callable, overload
 # top-level values.  The underscore variants let us refer to these
 # types.  See https://github.com/python/mypy/issues/4146 for why these
 # workarounds is necessary
+# In the future, this will become useful if mypy is introduced into pydec
 from torch.types import (
     _int,
     _float,
@@ -374,7 +375,12 @@ def mul(
 
 @overload
 def mul(
-    input: Composition, other: Composition, *, out: Optional[Composition] = None,
+    input: Composition,
+    other: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref_input: Optional[Tensor] = None,
+    ref_other: Optional[Tensor] = None,
 ) -> Composition:
     ...
 
@@ -385,13 +391,16 @@ def mul(
     other: Union[Composition, Tensor, Number],
     *,
     out: Optional[Composition] = None,
+    ref_input: Optional[Tensor] = None,
+    ref_other: Optional[Tensor] = None,
 ) -> Composition:
     if not isinstance(input, Composition) and not isinstance(other, Composition):
         raise unsupported_operand_error("mul", type(input), type(other))
     if isinstance(input, Composition):
         if isinstance(other, Composition):
-            # TODO: not implement yet
-            raise unsupported_operand_error("mul", type(input), type(other))
+            return core.decMVF.cc_mul(
+                input, other, out=out, ref_input=ref_input, ref_other=ref_other
+            )
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_mul(input, other, out=out)
         else:
@@ -450,6 +459,8 @@ def div(
     *,
     rounding_mode: Optional[str] = None,
     out: Optional[Composition] = None,
+    ref_input: Optional[Tensor] = None,
+    ref_other: Optional[Tensor] = None,
 ) -> Composition:
     ...
 
@@ -461,13 +472,20 @@ def div(
     *,
     rounding_mode: Optional[str] = None,
     out: Optional[Composition] = None,
+    ref_input: Optional[Tensor] = None,
+    ref_other: Optional[Tensor] = None,
 ) -> Composition:
     if not isinstance(input, Composition) and not isinstance(other, Composition):
         raise unsupported_operand_error("div", type(input), type(other))
     if isinstance(input, Composition):
         if isinstance(other, Composition):
-            # TODO: not implement yet
-            raise unsupported_operand_error("div", type(input), type(other))
+            return core.decMVF.cc_div(
+                input,
+                other,
+                rounding_mode=rounding_mode,
+                ref_input=ref_input,
+                ref_other=ref_other,
+            )
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_div(
                 input, other, rounding_mode=rounding_mode, out=out
@@ -655,6 +673,7 @@ def matmul(
     ...
 
 
+@_auto_registration
 def matmul(
     input: Union[Composition, Tensor],
     other: Union[Composition, Tensor],
@@ -665,8 +684,7 @@ def matmul(
         raise unsupported_operand_error("matmul", type(input), type(other))
     if isinstance(input, Composition):
         if isinstance(other, Composition):
-            # TODO: not implement yet
-            raise unsupported_operand_error("matmul", type(input), type(other))
+            return core.decMVF.cc_matmul(input, other)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_matmul(input, other, out=out)
         else:
@@ -737,7 +755,7 @@ def squeeze(input: Composition, dim: _int) -> Composition:
 
 
 @_auto_registration
-def squeeze(input: Composition, dim: _int = None) -> Composition:
+def squeeze(input: Composition, dim=None) -> Composition:
     if dim is None:
         out_residual_tensor = input._residual_tensor.squeeze()
         out_component_tensor = input._component_tensor.squeeze()
@@ -852,7 +870,7 @@ def mean(
 @_auto_registration
 def mean(
     input: Composition,
-    dim: Union[_int, _size] = None,
+    dim: Union[None, _int, _size] = None,
     keepdim: _bool = False,
     *,
     dtype: Optional[_dtype] = None,
@@ -1436,6 +1454,7 @@ def empty_index_composition(
 
 @_auto_registration
 def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
+    # TODO: bug: c.abs() not eqal to c.c_sum().abs()
     out_component_tensor = torch.abs(
         input._component_tensor, out=out._component_tensor if out is not None else None,
     )
@@ -1447,6 +1466,7 @@ def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition
 
 @_auto_registration
 def abs_(input: Composition) -> Composition:
+    # TODO: bug: c.abs() not eqal to c.c_sum().abs()
     torch.abs_(input._component_tensor)
     torch.abs_(input._residual_tensor)
     return input
@@ -1463,8 +1483,13 @@ def relu_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
 
 
 @_auto_registration
-def tanh(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    return core.decOVF.tanh(input, ref=ref)
+def tanh(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.tanh(input, out=out, ref=ref)
 
 
 @_auto_registration
@@ -1473,8 +1498,13 @@ def tanh_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
 
 
 @_auto_registration
-def sigmoid(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
-    return core.decOVF.sigmoid(input, ref=ref)
+def sigmoid(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.sigmoid(input, out=out, ref=ref)
 
 
 @_auto_registration
@@ -1779,3 +1809,114 @@ def rnn_relu(*args,):
             training,
             bidirectional,
         )
+
+
+@_auto_registration
+def reciprocal(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.reciprocal(input, out=out, ref=ref)
+
+
+@_auto_registration
+def reciprocal_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
+    return core.decOVF.reciprocal_(input, ref=ref)
+
+
+@_auto_registration
+def exp(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.exp(input, out=out, ref=ref)
+
+
+@_auto_registration
+def exp_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
+    return core.decOVF.exp_(input, ref=ref)
+
+
+@overload
+def softmax(
+    input: Composition,
+    dim: _int,
+    dtype: Optional[_dtype] = None,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    ...
+
+
+@_auto_registration
+def softmax(
+    input: Composition,
+    dim: _int,
+    dtype: Optional[_dtype] = None,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    # TODO: dtype and out arg
+    # TODO: should we disable grad here?
+    bias = -torch.max(input.c_sum(), dim=dim, keepdim=True)[0]
+    input = core.decOVF.biased_exp(input, bias=bias, ref=ref)
+    return pydec.div(input, input.sum(dim=dim, keepdim=True), out=out)
+
+
+@_auto_registration
+def sqrt(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.sqrt(input, out=out, ref=ref)
+
+
+@_auto_registration
+def sqrt_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
+    return core.decOVF.sqrt_(input, ref=ref)
+
+
+@overload
+def var(
+    input: Composition,
+    dim: Union[_int, _size],
+    unbiased: _bool = True,
+    keepdim: _bool = False,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    ...
+
+
+@overload
+def var(
+    input: Composition, unbiased: _bool = True, *, ref: Optional[Tensor] = None,
+) -> Composition:
+    ...
+
+
+@_auto_registration
+def var(
+    input: Composition,
+    dim: Union[_int, _size] = None,
+    unbiased: _bool = True,
+    keepdim: _bool = False,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    if isinstance(dim, _bool):
+        unbiased = dim
+        dim = None
+    if dim is None:
+        dim = tuple(range(0, input.dim()))
+    return core.decMVF.var(input, dim, unbiased, keepdim, out=out, ref=ref)
