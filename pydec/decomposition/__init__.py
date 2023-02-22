@@ -1,3 +1,7 @@
+"""
+ deprecated
+"""
+
 # from ..core.states import (
 #     set_decomposition_func,
 #     get_decomposition_name,
