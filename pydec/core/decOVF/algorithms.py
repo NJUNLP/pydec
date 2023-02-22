@@ -26,11 +26,16 @@ from pydec.core.decOVF import register_decomposition_func, set_decomposition_fun
 __all__ = ["abs_decomposition", "_none_decomposition", "hybrid_decomposition"]
 
 
+# TODO: all inplace operations should be re-examined, `ref` args should not be overridden
+# TODO: algorithms should support `out` argument
+
+
 @register_decomposition_func("abs_decomposition")
 def abs_decomposition(
     input: Composition,
     func: Callable[[Tensor], Tensor],
     *,
+    out: Optional[Composition] = None,
     ref: Optional[Tensor] = None,
     threshold: _float = 0.15,
     inplace: _bool = False,
