@@ -22,6 +22,7 @@ from .overrides import (
 # top-level values.  The underscore variants let us refer to these
 # types.  See https://github.com/python/mypy/issues/4146 for why these
 # workarounds is necessary
+# In the future, this will become useful if mypy is introduced into pydec
 from torch.types import (
     _int,
     _float,
@@ -105,7 +106,7 @@ class Composition:
 
     @overload
     def __init__(
-        self, component_tensor: Tensor, residual_tensor: Tensor = None
+        self, component_tensor: Tensor, residual_tensor: Optional[Tensor] = None
     ) -> None:
         ...
 
@@ -114,7 +115,9 @@ class Composition:
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        def init_from_tensor(component_tensor: Tensor, residual_tensor: Tensor = None):
+        def init_from_tensor(
+            component_tensor: Tensor, residual_tensor: Optional[Tensor] = None
+        ):
             if residual_tensor is not None:
                 if component_tensor.dtype != residual_tensor.dtype:
                     raise arg_value_error(
@@ -150,8 +153,8 @@ class Composition:
             for name, func in method_dict.items():
                 setattr(self, name, types.MethodType(func, self))
 
-        self._component_tensor: Tensor = None
-        self._residual_tensor: Tensor = None
+        self._component_tensor: Tensor = None  # type: ignore[no-redef, assignment]
+        self._residual_tensor: Tensor = None  # type: ignore[no-redef, assignment]
         input_kwargs = kwargs.copy()  # for error hint
 
         if len(args) == 0 and len(kwargs) == 0:
@@ -193,14 +196,14 @@ class Composition:
     ) -> Composition:
         # support autotracing
         if pydec.autotracing.is_tracing_enabled():  # TODO
-            if isinstance(indices, Tuple):
+            if isinstance(indices, tuple):
                 indices = (slice(None, None, None),) + indices
             else:
                 indices = (
                     slice(None, None, None),
                     indices,
                 )
-        return self.__c_getitem__(indices)
+        return self.__c_getitem__(indices)  # type: ignore[return-value]
 
     @_auto_registration
     def __setitem__(
@@ -210,7 +213,7 @@ class Composition:
     ) -> None:
         # support autotracing
         if pydec.autotracing.is_tracing_enabled():  # TODO
-            if isinstance(indices, Tuple):
+            if isinstance(indices, tuple):
                 indices = (slice(None, None, None),) + indices
             else:
                 indices = (
@@ -224,6 +227,7 @@ class Composition:
     ) -> Union[Composition, Tensor]:
         if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
+        assert isinstance(indices, tuple)  # make mypy ignore [index] errors
         if indices[0] is None:
             raise arg_value_error(
                 "The first dimension of indices should not be NoneType"
@@ -242,6 +246,7 @@ class Composition:
     ) -> None:
         if isinstance(indices, (type(None), _int, slice, List, Tensor)):
             indices = (indices,)
+        assert isinstance(indices, tuple)  # make mypy ignore [index] errors
         if indices[0] is None:
             raise arg_value_error(
                 "The first dimension of indices should not be NoneType"
@@ -281,8 +286,10 @@ class Composition:
     def __contains__(self, element):
         return self._component_tensor.__contains__(element)
 
-    @_auto_registration
-    def __repr__(self, *, composition_contents: List[str] = None) -> str:
+    @_auto_registration  # type: ignore[arg-type]
+    def __repr__(
+        self, *, composition_contents: Optional[List[Union[str, None]]] = None
+    ) -> str:
         return _c_str(self, composition_contents=composition_contents)
 
     @_auto_registration
@@ -297,7 +304,7 @@ class Composition:
 
     @_auto_registration
     def clone(self, *, memory_format: Optional[memory_format] = None) -> Composition:
-        return pydec.clone(input, memory_format=memory_format)
+        return pydec.clone(self, memory_format=memory_format)
 
     @_auto_registration
     def detach(self) -> Composition:
@@ -423,7 +430,7 @@ class Composition:
             # TODO: maybe return a composition is a good choice
             raise unsupported_operand_error("*=", type(self), type(other))
         if isinstance(other, Composition):
-            return core.decBLAS.cc_mul_(self, other)
+            return core.decMVF.cc_mul_(self, other)
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_mul_(self, other)
         else:
@@ -449,7 +456,7 @@ class Composition:
             raise unsupported_operand_error("/=", type(self), type(other))
         if isinstance(other, Composition):
             # TODO: not implement yet
-            return unsupported_operand_error("/=", type(self), type(other))
+            raise unsupported_operand_error("/=", type(self), type(other))
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_div_(self, other)
         else:
@@ -470,13 +477,13 @@ class Composition:
             raise unsupported_operand_error("/", type(other), type(self))
 
     @_auto_registration
-    def __eq__(self, other: Any) -> Tensor:
+    def __eq__(self, other: Any) -> Tensor:  # type: ignore[override]
         if isinstance(other, Composition):
             return other.__eq__(self.c_sum())
         return self.c_sum().__eq__(other)
 
     @_auto_registration
-    def __ne__(self, other: Any) -> Tensor:
+    def __ne__(self, other: Any) -> Tensor:  # type: ignore[override]
         if isinstance(other, Composition):
             return other.__ne__(self.c_sum())
         return self.c_sum().__ne__(other)
@@ -532,7 +539,7 @@ class Composition:
     def sub(
         self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
     ) -> Composition:
-        return pydec.sub(other, alpha=alpha)
+        return pydec.sub(self, other, alpha=alpha)
 
     @_auto_registration
     def sub_(
@@ -631,7 +638,7 @@ class Composition:
         ...
 
     @_auto_registration
-    def squeeze(self, dim: _int = None) -> Composition:
+    def squeeze(self, dim=None) -> Composition:
         return pydec.squeeze(self, dim)
 
     @_auto_registration
@@ -649,7 +656,7 @@ class Composition:
         ...
 
     @_auto_registration
-    def squeeze_(self, dim: _int = None) -> Composition:
+    def squeeze_(self, dim=None) -> Composition:
         if dim is None:
             self._residual_tensor.squeeze_()
             if self.numc() == 1:
@@ -707,7 +714,7 @@ class Composition:
     def sum(
         self, dim=None, keepdim: _bool = False, *, dtype: Optional[_dtype] = None
     ) -> Composition:
-        return pydec.sum(dim=dim, keepdim=keepdim, dtype=dtype)
+        return pydec.sum(self, dim=dim, keepdim=keepdim, dtype=dtype)
 
     def c_sum(self, *, dtype: Optional[_dtype] = None) -> Tensor:
         return pydec.c_sum(self, dtype=dtype)
@@ -728,11 +735,7 @@ class Composition:
 
     @_auto_registration
     def mean(
-        self,
-        dim: Union[_int, _size] = None,
-        keepdim: _bool = False,
-        *,
-        dtype: Optional[_dtype] = None,
+        self, dim=None, keepdim: _bool = False, *, dtype: Optional[_dtype] = None,
     ):
         return pydec.mean(self, dim, keepdim, dtype=dtype)
 
@@ -789,7 +792,7 @@ class Composition:
 
     @_auto_registration
     def reshape_as(self, other: Tensor) -> Composition:
-        return self.reshape_as(other.size())
+        return self.reshape(other.size())
 
     @_auto_registration
     def contiguous(self, memory_format=torch.contiguous_format) -> Composition:
@@ -831,6 +834,9 @@ class Composition:
 
     @_auto_registration
     def to(self, *args, **kwargs) -> Composition:
+        if isinstance(self, Tensor):
+            assert isinstance(args[0], Composition)
+            return self.to(args[0].residual)
         if isinstance(args[0], Composition):
             return self.to(args[0]._component_tensor, *args[1:], **kwargs)
         else:
@@ -914,15 +920,9 @@ class Composition:
         self._residual_tensor.masked_scatter_(mask, source)
         return self
 
-    @overload
-    def gather(
-        self, dim: _int, index: Tensor, *, sparse_grad: _bool = False
-    ) -> Composition:
-        ...
-
     @_auto_registration
     def gather(
-        self, dim: Any, index: Tensor, *, sparse_grad: _bool = False
+        self, dim: _int, index: Tensor, *, sparse_grad: _bool = False
     ) -> Composition:
         return pydec.gather(self, dim, index, sparse_grad=sparse_grad)
 
@@ -1204,6 +1204,42 @@ class Composition:
     @_auto_registration
     def sigmoid_(self, *, ref: Optional[Tensor] = None) -> Composition:
         return pydec.sigmoid_(self, ref=ref)
+
+    @_auto_registration
+    def reciprocal(self) -> Composition:
+        return pydec.reciprocal(self)
+
+    @_auto_registration
+    def reciprocal_(self) -> Composition:
+        return pydec.reciprocal_(self)
+
+    @_auto_registration
+    def exp(self) -> Composition:
+        return pydec.exp(self)
+
+    @_auto_registration
+    def exp(self) -> Composition:
+        return pydec.exp_(self)
+
+    @overload
+    def softmax(self, dim: _int, dtype: Optional[_dtype] = None) -> Composition:
+        ...
+
+    @overload
+    def softmax(
+        self, dim: Union[str, ellipsis, None], *, dtype: Optional[_dtype] = None
+    ) -> Composition:
+        ...
+
+    @_auto_registration
+    def softmax(self, dim: Any, *, dtype: Optional[_dtype] = None) -> Composition:
+        return pydec.softmax(self, dim, dtype)
+
+    def sqrt(self) -> Composition:
+        return pydec.sqrt(self)
+
+    def sqrt_(self) -> Composition:
+        return pydec.sqrt_(self)
 
 
 class IndexComposition(Composition):
