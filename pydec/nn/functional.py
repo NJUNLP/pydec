@@ -13,12 +13,13 @@ from pydec import core
 from ..overrides import _auto_registration, _register_builtin_function
 from ..exception_utils import none_decomposition_func_error, arg_value_error
 
-from torch.nn.functional import _no_grad_embedding_renorm_
+from torch.nn.functional import _no_grad_embedding_renorm_, _get_softmax_dim
 
 # In some cases, these basic types are shadowed by corresponding
 # top-level values.  The underscore variants let us refer to these
 # types.  See https://github.com/python/mypy/issues/4146 for why these
 # workarounds is necessary
+# In the future, this will become useful if mypy is introduced into pydec
 from torch.types import (
     _int,
     _float,
@@ -45,7 +46,14 @@ from typing import (
     NamedTuple,
     Sequence,
     TypeVar,
+    TYPE_CHECKING,
 )
+
+if TYPE_CHECKING:
+    from torch.types import _dtype as DType
+else:
+    # The JIT doesn't understand Union, nor torch.dtype here
+    DType = int
 
 import warnings
 
@@ -159,6 +167,45 @@ def layer_norm(
     weight: Optional[Tensor] = None,
     bias: Optional[Tensor] = None,
     eps: float = 1e-5,
+    *,
+    ref: Optional[Tensor] = None,
+    linearize: bool = False,
+) -> Tensor:
+    r"""Applies Layer Normalization for last certain number of dimensions.
+
+    See :class:`~torch.nn.LayerNorm` for details.
+    """
+    if linearize:
+        return layer_norm_linearized(
+            input, normalized_shape, weight, bias, eps, ref=ref
+        )
+    normalized_dims = tuple(range(-len(normalized_shape), 0))
+    input_mean = input.mean(dim=normalized_dims, keepdim=True)
+    if ref is None:
+        ref = input.c_sum()
+    input_std = pydec.sqrt(
+        pydec.var(input, dim=normalized_dims, unbiased=False, keepdim=True, ref=ref)
+        + eps,
+    )
+    if weight is not None:
+        out = (input - input_mean) * weight / input_std
+    else:
+        out = (input - input_mean) / input_std
+
+    if bias is not None:
+        out += bias
+        return out
+    else:
+        return out
+
+
+def layer_norm_linearized(
+    input: Composition,
+    normalized_shape: List[int],
+    weight: Optional[Tensor] = None,
+    bias: Optional[Tensor] = None,
+    eps: float = 1e-5,
+    *,
     ref: Optional[Tensor] = None,
 ) -> Tensor:
     r"""Applies Layer Normalization for last certain number of dimensions.
@@ -173,7 +220,10 @@ def layer_norm(
     input_std = torch.sqrt(
         torch.var(ref, dim=normalized_dims, unbiased=False, keepdim=True) + eps
     )
-    out = (input - input_mean) * weight / input_std
+    if weight is not None:
+        out = (input - input_mean) * weight / input_std
+    else:
+        out = (input - input_mean) / input_std
 
     if bias is not None:
         out += bias
@@ -315,6 +365,7 @@ def max_pool2d_with_indices(
     Applies a 2D max pooling over an input composition.
     TODO: need to support arguments [kernel_size, stride, padding, dilation, ceil_mode]
     """
+    # TODO: api name is duplicated with torch.nn.functional.max_pool2d_with_indices
     if len(input.size()) != 4 or len(input.size()) != 3:
         raise arg_value_error(
             f"Expected 3D (unbatched) or 4D (batched) input to conv2d, but got input of size: [{len(input.size())}]"
@@ -491,3 +542,43 @@ def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition
         return out
     else:
         raise none_decomposition_func_error(get_decomposition_name())
+
+
+@_auto_registration
+def softmax(
+    input: Composition,
+    dim: Optional[int] = None,
+    _stacklevel: int = 3,
+    dtype: Optional[DType] = None,
+) -> Composition:
+    r"""Applies a softmax function.
+
+    Softmax is defined as:
+
+    :math:`\text{Softmax}(x_{i}) = \frac{\exp(x_i)}{\sum_j \exp(x_j)}`
+
+    It is applied to all slices along dim, and will re-scale them so that the elements
+    lie in the range `[0, 1]` and sum to 1.
+
+    See :class:`~torch.nn.Softmax` for more details.
+
+    Args:
+        input (Composition): input
+        dim (int): A dimension along which softmax will be computed.
+        dtype (:class:`torch.dtype`, optional): the desired data type of returned composition.
+          If specified, the input composition is casted to :attr:`dtype` before the operation
+          is performed. This is useful for preventing data type overflows. Default: None.
+
+    .. note::
+        This function doesn't work directly with NLLLoss,
+        which expects the Log to be computed between the Softmax and itself.
+        Use log_softmax instead (it's faster and has better numerical properties).
+
+    """
+    if dim is None:
+        dim = _get_softmax_dim("softmax", input.dim(), _stacklevel)
+    if dtype is None:
+        ret = input.softmax(dim)
+    else:
+        ret = input.softmax(dim, dtype=dtype)
+    return ret
