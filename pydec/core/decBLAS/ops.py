@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 # top-level values.  The underscore variants let us refer to these
 # types.  See https://github.com/python/mypy/issues/4146 for why these
 # workarounds is necessary
+# In the future, this will become useful if mypy is introduced into pydec
 from torch.types import (
     _int,
     _float,
@@ -286,7 +287,7 @@ def tc_mul(
     *,
     out: Optional[Composition] = None,
 ) -> Composition:
-    return ct_mul(input, other, out=out)
+    return ct_mul(other, input, out=out)
 
 
 def ct_div(
@@ -295,7 +296,7 @@ def ct_div(
     *,
     rounding_mode: Optional[str] = None,
     out: Optional[Composition] = None,
-):
+) -> Composition:
     if isinstance(other, Tensor) and other.dim() > input.dim():
         # handle broadcast
         new_size = (input.numc(),) + (1,) * (other.dim() - input.dim()) + input.size()
@@ -326,7 +327,7 @@ def ct_div_(
     other: Union[Tensor, Number],
     *,
     rounding_mode: Optional[str] = None,
-):
+) -> Composition:
     if isinstance(other, Tensor) and other.dim() > input.dim():
         # handle broadcast
         new_size = (input.numc(),) + (1,) * (other.dim() - input.dim()) + input.size()
@@ -361,7 +362,9 @@ def ct_matmul(
     return pydec._from_replce(out_component_tensor, out_residual_tensor)
 
 
-def tc_matmul(input: Tensor, other: Composition, *, out: Optional[Composition] = None):
+def tc_matmul(
+    input: Tensor, other: Composition, *, out: Optional[Composition] = None
+) -> Composition:
     if input.dim() == 1:
         # if the component_tensor's ndim is 2, the component dim
         # will be incorrectly included in the multiplication
@@ -392,7 +395,7 @@ def ct_mv(
     vec: Tensor,
     *,
     out: Optional[Composition] = None,
-):
+) -> Composition:
     out_residual_tensor = torch.mv(
         input._residual_tensor,
         vec,
@@ -411,7 +414,7 @@ def tc_mv(
     vec: Composition,
     *,
     out: Optional[Composition] = None,
-):
+) -> Composition:
     out_residual_tensor = torch.mv(
         input,
         vec._residual_tensor,
@@ -433,7 +436,7 @@ def ct_mm(
     mat2: Tensor,
     *,
     out: Optional[Composition] = None,
-):
+) -> Composition:
     out_residual_tensor = torch.mm(
         input._residual_tensor,
         mat2,
@@ -452,7 +455,7 @@ def tc_mm(
     mat2: Composition,
     *,
     out: Optional[Composition] = None,
-):
+) -> Composition:
     out_residual_tensor = torch.mm(
         input,
         mat2._residual_tensor,
