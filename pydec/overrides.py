@@ -44,6 +44,9 @@ _whitelist_torch_functions = [
     torch._pad_packed_sequence,
     torch.nn.functional.relu_,
     torch.nn.functional.leaky_relu_,
+    torch.reciprocal_,
+    torch.exp_,
+    torch.sqrt_,
 ]
 
 
@@ -68,7 +71,7 @@ def _register_function(torch_function: T, builtin: bool = False) -> Callable[[T]
                 _HANDLED_COMPOSITION_METHODS[torch_function.__name__] = func
                 if hasattr(pydec.Composition, torch_function.__name__):
                     warnings.warn(
-                        f"pydec.Composition already has built-in method ({torch_function.__name__}), and will be overrided by {func}",
+                        f"pydec.Composition already has built-in method ({torch_function.__name__}), and will be overridden by {func}",
                         stacklevel=2,
                     )
             # else:
