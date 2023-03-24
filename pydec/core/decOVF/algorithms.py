@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import pydec
+import torch
 from torch import Tensor
 
 from typing import Dict, Tuple, Union, Any, Callable, Optional, TYPE_CHECKING
@@ -71,7 +73,7 @@ def hybrid_decomposition(
     func: Callable[[Tensor], Tensor],
     *,
     ref: Optional[Tensor] = None,
-    threshold: _float = 0.15,
+    threshold: _float = 0.0,
     inplace: _bool = False,
 ) -> Composition:
     if ref is None:
@@ -84,18 +86,20 @@ def hybrid_decomposition(
     decompose_out = recovery_out - residual_out
 
     composition = input._component_tensor
-    sum_composition = composition.sum(dim=0)
-    abs_composition = composition.abs()
-    abs_sum_composition = abs_composition.sum(dim=0, keepdim=True)
-    instability_ratio = sum_composition.abs() / abs_sum_composition
-    mask = (instability_ratio < threshold).expand_as(composition)
+    if threshold > 0:
+        sum_composition = composition.sum(dim=0)
+        abs_composition = composition.abs()
+        abs_sum_composition = abs_composition.sum(dim=0, keepdim=True)
+        instability_ratio = sum_composition.abs() / abs_sum_composition
+        mask = (instability_ratio < threshold).expand_as(composition)
 
-    if not inplace:
-        composition = composition.clone()
+        if not inplace:
+            composition = composition.clone()
 
-    composition[mask] = composition[mask].abs()
+        composition[mask] = composition[mask].abs()
 
     multiplier = decompose_out / composition.sum(dim=0)
+    multiplier.nan_to_num_(0, 0, 0)
 
     if inplace:
         input._component_tensor *= multiplier
@@ -135,3 +139,33 @@ def _none_decomposition(
         out = pydec.zeros_like(input)
         out._residual_tensor += recovery_out
         return out
+
+
+@register_decomposition_func("uptake_residual_decomposition")
+def uptake_residual_decomposition(
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    inplace: _bool = False,
+) -> Composition:
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
+    recovery_out = func(recovery)
+    residual_out = func(input._residual_tensor)
+    composition = torch.cat([input.components, input.residual[None]], dim=0)
+
+    multiplier = recovery_out / composition.sum(dim=0)
+    multiplier.nan_to_num_(0, 0, 0)
+
+    if inplace:
+        input._component_tensor *= multiplier[:-1]
+        input._residual_tensor *= multiplier[-1]
+        return input
+    else:
+        out_composition = composition * multiplier
+        out_components = out_composition[:-1]
+        out_residual = out_composition[-1]
+        return pydec._from_replce(out_components, out_residual)
