@@ -69,7 +69,9 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -107,7 +109,9 @@ def c_cat(
 
     c_tensors = tuple(c._component_tensor for c in compositions)
     out_component_tensor = torch.cat(
-        c_tensors, 0, out=out._component_tensor if out is not None else None,
+        c_tensors,
+        0,
+        out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = None
     if sum_residual:
@@ -136,7 +140,9 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors, dim, out=out._residual_tensor if out is not None else None,
+        r_tensors,
+        dim,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -153,7 +159,9 @@ def c_stack(
             )
 
     out_component_tensor = torch.stack(
-        components, 0, out=out._component_tensor if out is not None else None,
+        components,
+        0,
+        out=out._component_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor)
 
@@ -501,7 +509,9 @@ def div(
 
 @overload
 def divide(
-    input: Composition, other: Tensor, out: Optional[Composition] = None,
+    input: Composition,
+    other: Tensor,
+    out: Optional[Composition] = None,
 ) -> Composition:
     ...
 
@@ -525,7 +535,10 @@ def divide(
 
 
 @overload
-def divide(input: Composition, other: Number,) -> Composition:
+def divide(
+    input: Composition,
+    other: Number,
+) -> Composition:
     ...
 
 
@@ -555,7 +568,12 @@ def mv(
 
 
 @_auto_registration
-def mv(input, vec, *, out: Optional[Composition] = None,) -> Composition:
+def mv(
+    input,
+    vec,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
     if not isinstance(input, Composition) and not isinstance(vec, Composition):
         raise unsupported_operand_error("mv", type(input), type(vec))
     if isinstance(input, Composition):
@@ -593,7 +611,12 @@ def mm(
 
 
 @_auto_registration
-def mm(input, mat2, *, out: Optional[Composition] = None,) -> Composition:
+def mm(
+    input,
+    mat2,
+    *,
+    out: Optional[Composition] = None,
+) -> Composition:
     if not isinstance(input, Composition) and not isinstance(mat2, Composition):
         raise unsupported_operand_error("mm", type(input), type(mat2))
     if isinstance(input, Composition):
@@ -641,13 +664,13 @@ def bmm(
         raise unsupported_operand_error("bmm", type(input), type(mat2))
     if isinstance(input, Composition):
         if isinstance(mat2, Composition):
-            # TODO: not implement yet
-            raise unsupported_operand_error("bmm", type(input), type(mat2))
+            return core.decMVF.cc_bmm(input, mat2, out=out)
         elif isinstance(mat2, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_bmm(input, mat2, out=out)
         else:
             raise unsupported_operand_error("bmm", type(input), type(mat2))
-    elif isinstance(input, (_int, _float, _bool, Tensor)):
+    elif isinstance(input, Tensor):
+        assert isinstance(mat2, Composition)  # narrow type
         return core.decBLAS.tc_bmm(input, mat2, out=out)
     else:
         raise unsupported_operand_error("bmm", type(input), type(mat2))
@@ -735,6 +758,20 @@ def all(
 @_auto_registration
 def all(input: Composition, *args: Any, **kwargs: Any) -> Tensor:
     return torch.all(input.c_sum(), *args, **kwargs)
+
+
+@_auto_registration
+def isinf(input: Composition) -> Composition:
+    out_residual = torch.isinf(input.residual)
+    out_components = torch.isinf(input.components)
+    return _from_replce(out_components, out_residual)
+
+
+@_auto_registration
+def isnan(input: Composition) -> Composition:
+    out_residual = torch.isnan(input.residual)
+    out_components = torch.isnan(input.components)
+    return _from_replce(out_components, out_residual)
 
 
 @_auto_registration
@@ -1081,23 +1118,25 @@ def scatter(
 @_auto_registration
 def scatter(
     input: Composition,
-    dim: Any,
+    dim: _int,
     index: Tensor,
-    src: Any = None,
-    value: Any = None,
+    src_value: Optional[Union[Tensor, Number]] = None,
     *,
-    reduce: str = None,
+    reduce: Optional[str] = None,
     out: Optional[Composition] = None,
+    src: Optional[Tensor] = None,
+    value: Optional[Number] = None,
 ) -> Composition:
     r"""
     Unsafe.
     Safe when reduce is not None.
     """
-    if src is None:
-        src = value
+    if src_value is None:
+        src_value = src if src is not None else value
+    assert src_value is not None
     if reduce == "add":
         holder = torch.zeros_like(input._residual_tensor).to(input._residual_tensor)
-        holder = holder.scatter(dim, index, src, reduce=reduce)
+        holder = holder.scatter(dim, index, src_value, reduce=reduce)
         c_out = input + holder
         if out is not None:
             # TODO: use the out argument of `torch.add` raises an error
@@ -1106,10 +1145,11 @@ def scatter(
         return c_out
     else:
         c_index = index[None].expand((input.numc(),) + (-1,) * index.dim())
-        if isinstance(src, Tensor):
-            c_src = src[None].expand((input.numc(),) + (-1,) * src.dim())
+        c_src: Union[Tensor, Number]
+        if isinstance(src_value, Tensor):
+            c_src = src_value[None].expand((input.numc(),) + (-1,) * src_value.dim())
         else:
-            c_src = src
+            c_src = src_value
         if reduce is None:
             out_component_tensor = torch.scatter(
                 input._component_tensor,
@@ -1122,7 +1162,7 @@ def scatter(
                 input._residual_tensor,
                 dim,
                 index,
-                src,
+                src_value,
                 out=out._residual_tensor if out is not None else None,
             )
         else:
@@ -1138,7 +1178,7 @@ def scatter(
                 input._residual_tensor,
                 dim,
                 index,
-                src,
+                src_value,
                 reduce=reduce,
                 out=out._residual_tensor if out is not None else None,
             )
@@ -1299,8 +1339,14 @@ def round(
             out=out._residual_tensor if out is not None else None,
         )
     else:
-        out_component_tensor = torch.round(input._component_tensor, decimals=decimals,)
-        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
+        out_component_tensor = torch.round(
+            input._component_tensor,
+            decimals=decimals,
+        )
+        out_residual_tensor = torch.round(
+            input._residual_tensor,
+            decimals=decimals,
+        )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
 
@@ -1456,10 +1502,12 @@ def empty_index_composition(
 def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
     # TODO: bug: c.abs() not eqal to c.c_sum().abs()
     out_component_tensor = torch.abs(
-        input._component_tensor, out=out._component_tensor if out is not None else None,
+        input._component_tensor,
+        out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = torch.abs(
-        input._residual_tensor, out=out._residual_tensor if out is not None else None,
+        input._residual_tensor,
+        out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -1567,24 +1615,31 @@ def _pad_packed_sequence(
     return padded_input, lengths
 
 
-def _rnn_relu_cell(
+def _rnn_cell(
     input: Composition,
     hx: Union[Tensor, Composition],
     weight_ih: Parameter,
     weight_hh: Parameter,
     bias_ih: Parameter = None,
     bias_hh: Parameter = None,
+    nonlinearity: str = "tanh",
     *,
     ref: Optional[Tensor] = None,
 ):
-    return relu(
+    if nonlinearity == "tanh":
+        activation = tanh
+    elif nonlinearity == "relu":
+        activation = relu
+    else:
+        raise ValueError("Unknown nonlinearity '{}'".format(nonlinearity))
+    return activation(
         pydec.nn.functional.linear(input, weight_ih, bias_ih)
         + pydec.nn.functional.linear(hx, weight_hh, bias_hh),
         ref=ref,
     )
 
 
-def _rnn_relu_layer(
+def _rnn_layer(
     input: Composition,
     batch_sizes: Optional[Tensor],
     hx: Tensor,
@@ -1593,6 +1648,7 @@ def _rnn_relu_layer(
     bias_ih: Parameter,
     bias_hh: Parameter,
     reverse: bool = False,
+    nonlinearity: str = "tanh",
 ):
     """
     Could optimize performance by dropping completed samples
@@ -1622,14 +1678,17 @@ def _rnn_relu_layer(
                         device=hx.device,
                     ).to(hx)
                     append_hx.residual[:] = orig_hx[batch_size_old:batch_size_new]
-                    hx = pydec.cat([hx, append_hx], dim=0,)
+                    hx = pydec.cat(
+                        [hx, append_hx],
+                        dim=0,
+                    )
         if not reverse:
             batch = input[batch_start : batch_start + batch_size]
             batch_start += batch_size
         else:
             batch = input[batch_start - batch_size : batch_start]
             batch_start -= batch_size
-        hx = _rnn_relu_cell(batch, hx, weight_ih, weight_hh, bias_ih, bias_hh)
+        hx = _rnn_cell(batch, hx, weight_ih, weight_hh, bias_ih, bias_hh, nonlinearity)
         out.append(hx)
         if not reverse:
             batch_size_new = batch_sizes[i + 1] if i + 1 < len(batch_sizes) else 0
@@ -1647,7 +1706,7 @@ def _rnn_relu_layer(
     return out, out_hx
 
 
-def _rnn_relu_packed(
+def _rnn_packed(
     input: Composition,
     batch_sizes: Tensor,
     hx: Tensor,
@@ -1657,6 +1716,7 @@ def _rnn_relu_packed(
     dropout: float,
     training: bool,
     bidirectional: bool,
+    nonlinearity: str = "tanh",
 ):
     x = input
     weight_group_len = 2 * (2 if bias else 1) * (2 if bidirectional else 1)
@@ -1675,8 +1735,15 @@ def _rnn_relu_packed(
             bias_hh = weight_group[3]
         if not bidirectional:
             hx_layer = hx[i]
-            x, out_hx = _rnn_relu_layer(
-                x, batch_sizes, hx_layer, weight_ih, weight_hh, bias_ih, bias_hh
+            x, out_hx = _rnn_layer(
+                x,
+                batch_sizes,
+                hx_layer,
+                weight_ih,
+                weight_hh,
+                bias_ih,
+                bias_hh,
+                nonlinearity=nonlinearity,
             )
             out_hx_list.append(out_hx)
         else:
@@ -1689,10 +1756,17 @@ def _rnn_relu_packed(
                 bias_ih_r = weight_group[2]
                 bias_hh_r = weight_group[3]
 
-            x_, out_hx = _rnn_relu_layer(
-                x, batch_sizes, hx_layer, weight_ih, weight_hh, bias_ih, bias_hh
+            x_, out_hx = _rnn_layer(
+                x,
+                batch_sizes,
+                hx_layer,
+                weight_ih,
+                weight_hh,
+                bias_ih,
+                bias_hh,
+                nonlinearity=nonlinearity,
             )
-            x_r, out_hx_r = _rnn_relu_layer(
+            x_r, out_hx_r = _rnn_layer(
                 x,
                 batch_sizes,
                 hx_layer_r,
@@ -1701,6 +1775,7 @@ def _rnn_relu_packed(
                 bias_ih_r,
                 bias_hh_r,
                 True,
+                nonlinearity=nonlinearity,
             )
             x = pydec.cat([x_, x_r], dim=-1)
             out_hx_list.append(out_hx)
@@ -1718,17 +1793,17 @@ def _rnn_relu_packed(
 
 @overload
 def rnn_relu(
-    input: Composition,
+    data: Composition,
     batch_sizes: Tensor,
     hx: Tensor,
-    flat_weights: List[Parameter],
-    bias: bool,
-    num_layers: int,
-    dropout: float,
-    training: bool,
-    bidirectional: bool,
+    params: Union[Tuple[Tensor, ...], List[Tensor]],
+    has_biases: _bool,
+    num_layers: _int,
+    dropout: _float,
+    train: _bool,
+    bidirectional: _bool,
     /,
-):
+) -> Tuple[Composition, Composition]:
     ...
 
 
@@ -1736,29 +1811,34 @@ def rnn_relu(
 def rnn_relu(
     input: Composition,
     hx: Tensor,
-    flat_weights: List[Parameter],
-    bias: bool,
-    num_layers: int,
-    dropout: float,
-    training: bool,
-    bidirectional: bool,
-    batch_first: bool,
+    params: Union[Tuple[Tensor, ...], List[Tensor]],
+    has_biases: _bool,
+    num_layers: _int,
+    dropout: _float,
+    train: _bool,
+    bidirectional: _bool,
+    batch_first: _bool,
     /,
-):
+) -> Tuple[Composition, Composition]:
     ...
 
 
 @_auto_registration
-def rnn_relu(*args,):
+def rnn_relu(
+    *args,
+):
+    """
+    Only supports the positional arguments in current version
+    """
     if isinstance(args[3], bool):
         (
             input,
             hx,
-            flat_weights,
-            bias,
+            params,
+            has_biases,
             num_layers,
             dropout,
-            training,
+            train,
             bidirectional,
             batch_first,
         ) = args
@@ -1771,16 +1851,17 @@ def rnn_relu(*args,):
             [batch_size] * input.size(0), dtype=torch.long, device="cpu"
         )
         input = input.view(seq_len * batch_size, -1)
-        out, out_hx = _rnn_relu_packed(
+        out, out_hx = _rnn_packed(
             input,
             batch_sizes,
             hx,
-            flat_weights,
-            bias,
+            params,
+            has_biases,
             num_layers,
             dropout,
-            training,
+            train,
             bidirectional,
+            nonlinearity="relu",
         )
         out = out.view(seq_len, batch_size, -1)
         if batch_first:
@@ -1788,26 +1869,129 @@ def rnn_relu(*args,):
         return out, out_hx
     else:
         (
-            input,
+            data,
             batch_sizes,
             hx,
-            flat_weights,
-            bias,
+            params,
+            has_biases,
             num_layers,
             dropout,
-            training,
+            train,
             bidirectional,
         ) = args
-        return _rnn_relu_packed(
+        return _rnn_packed(
+            data,
+            batch_sizes,
+            hx,
+            params,
+            has_biases,
+            num_layers,
+            dropout,
+            train,
+            bidirectional,
+            nonlinearity="relu",
+        )
+
+
+@overload
+def rnn_tanh(
+    data: Composition,
+    batch_sizes: Tensor,
+    hx: Tensor,
+    params: Union[Tuple[Tensor, ...], List[Tensor]],
+    has_biases: _bool,
+    num_layers: _int,
+    dropout: _float,
+    train: _bool,
+    bidirectional: _bool,
+    /,
+) -> Tuple[Composition, Composition]:
+    ...
+
+
+@overload
+def rnn_tanh(
+    input: Composition,
+    hx: Tensor,
+    params: Union[Tuple[Tensor, ...], List[Tensor]],
+    has_biases: _bool,
+    num_layers: _int,
+    dropout: _float,
+    train: _bool,
+    bidirectional: _bool,
+    batch_first: _bool,
+    /,
+) -> Tuple[Composition, Composition]:
+    ...
+
+
+@_auto_registration
+def rnn_tanh(
+    *args,
+):
+    """
+    Only supports the positional arguments in current version
+    """
+    if isinstance(args[3], bool):
+        (
+            input,
+            hx,
+            params,
+            has_biases,
+            num_layers,
+            dropout,
+            train,
+            bidirectional,
+            batch_first,
+        ) = args
+        batch_sizes = None
+        if batch_first:
+            input: Composition = input.transpose(0, 1)
+        seq_len = input.size(0)
+        batch_size = input.size(1)
+        batch_sizes = torch.tensor(
+            [batch_size] * input.size(0), dtype=torch.long, device="cpu"
+        )
+        input = input.view(seq_len * batch_size, -1)
+        out, out_hx = _rnn_packed(
             input,
             batch_sizes,
             hx,
-            flat_weights,
-            bias,
+            params,
+            has_biases,
             num_layers,
             dropout,
-            training,
+            train,
             bidirectional,
+            nonlinearity="tanh",
+        )
+        out = out.view(seq_len, batch_size, -1)
+        if batch_first:
+            out.transpose_(0, 1)
+        return out, out_hx
+    else:
+        (
+            data,
+            batch_sizes,
+            hx,
+            params,
+            has_biases,
+            num_layers,
+            dropout,
+            train,
+            bidirectional,
+        ) = args
+        return _rnn_packed(
+            data,
+            batch_sizes,
+            hx,
+            params,
+            has_biases,
+            num_layers,
+            dropout,
+            train,
+            bidirectional,
+            nonlinearity="tanh",
         )
 
 
@@ -1822,7 +2006,11 @@ def reciprocal(
 
 
 @_auto_registration
-def reciprocal_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
+def reciprocal_(
+    input: Composition,
+    *,
+    ref: Optional[Tensor] = None,
+) -> Composition:
     return core.decOVF.reciprocal_(input, ref=ref)
 
 
@@ -1837,7 +2025,11 @@ def exp(
 
 
 @_auto_registration
-def exp_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
+def exp_(
+    input: Composition,
+    *,
+    ref: Optional[Tensor] = None,
+) -> Composition:
     return core.decOVF.exp_(input, ref=ref)
 
 
@@ -1862,11 +2054,22 @@ def softmax(
     out: Optional[Composition] = None,
     ref: Optional[Tensor] = None,
 ) -> Composition:
-    # TODO: dtype and out arg
     # TODO: should we disable grad here?
-    bias = -torch.max(input.c_sum(), dim=dim, keepdim=True)[0]
+    if dtype is not None:
+        input = input.to(dtype)
+        if ref is not None:
+            ref = ref.to(dtype)
+    input = _softmax_rescale(input)
+    components_bias = torch.max(input.components, dim=0, keepdim=False)[0]
+    components_bias = -torch.max(components_bias, dim=dim, keepdim=True)[0]
+    residual_bias = -torch.max(input.residual, dim=dim, keepdim=True)[0]
+    bias = torch.min(components_bias, residual_bias)
     input = core.decOVF.biased_exp(input, bias=bias, ref=ref)
-    return pydec.div(input, input.sum(dim=dim, keepdim=True), out=out)
+    if ref is None:
+        exp_sum = input.c_sum().sum(dim=dim, keepdim=True)
+    else:
+        exp_sum = torch.exp(ref + bias)
+    return pydec.div(input, exp_sum, out=out)
 
 
 @_auto_registration
@@ -1880,7 +2083,11 @@ def sqrt(
 
 
 @_auto_registration
-def sqrt_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
+def sqrt_(
+    input: Composition,
+    *,
+    ref: Optional[Tensor] = None,
+) -> Composition:
     return core.decOVF.sqrt_(input, ref=ref)
 
 
@@ -1899,7 +2106,10 @@ def var(
 
 @overload
 def var(
-    input: Composition, unbiased: _bool = True, *, ref: Optional[Tensor] = None,
+    input: Composition,
+    unbiased: _bool = True,
+    *,
+    ref: Optional[Tensor] = None,
 ) -> Composition:
     ...
 
@@ -1920,3 +2130,39 @@ def var(
     if dim is None:
         dim = tuple(range(0, input.dim()))
     return core.decMVF.var(input, dim, unbiased, keepdim, out=out, ref=ref)
+
+
+@_auto_registration
+def square(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.square(input, out=out, ref=ref)
+
+
+@_auto_registration
+def square_(
+    input: Composition,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    return core.decOVF.square_(input, ref=ref)
+
+
+def _softmax_rescale(input: Composition) -> Composition:
+    """
+    This is not a standard api of PyTorch.
+    Use to deal with numerical explosion problem in decomposition.
+    """
+    combine_components = torch.cat(
+        (
+            input.components,
+            input.residual[None],
+        )
+    )
+    softmax_components = torch.softmax(combine_components, dim=0)
+    rescaled_components = softmax_components * input.c_sum()
+    out_components = rescaled_components[:-1]
+    out_residual = rescaled_components[-1]
+    return _from_replce(out_components, out_residual)
