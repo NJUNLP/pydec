@@ -514,7 +514,10 @@ class Composition:
 
     @_auto_registration
     def add(
-        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
+        self,
+        other: Union[Composition, Tensor, Number],
+        *,
+        alpha: Optional[Number] = 1,
     ) -> Composition:
         """
         Note: although the function signature of `torch.Tensor.add` has parameter `out`, it is not working
@@ -523,7 +526,10 @@ class Composition:
 
     @_auto_registration
     def add_(
-        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
+        self,
+        other: Union[Composition, Tensor, Number],
+        *,
+        alpha: Optional[Number] = 1,
     ) -> Composition:
         if not isinstance(self, Composition):
             # TODO: maybe return a composition is a good choice
@@ -537,7 +543,10 @@ class Composition:
 
     @_auto_registration
     def sub(
-        self, other: Union[Composition, Tensor, Number], *, alpha: Optional[Number] = 1,
+        self,
+        other: Union[Composition, Tensor, Number],
+        *,
+        alpha: Optional[Number] = 1,
     ) -> Composition:
         return pydec.sub(self, other, alpha=alpha)
 
@@ -735,7 +744,11 @@ class Composition:
 
     @_auto_registration
     def mean(
-        self, dim=None, keepdim: _bool = False, *, dtype: Optional[_dtype] = None,
+        self,
+        dim=None,
+        keepdim: _bool = False,
+        *,
+        dtype: Optional[_dtype] = None,
     ):
         return pydec.mean(self, dim, keepdim, dtype=dtype)
 
@@ -951,12 +964,15 @@ class Composition:
         self,
         dim: _int,
         index: Tensor,
-        src: Any = None,
-        value: Any = None,
+        src_value: Optional[Union[Tensor, Number]] = None,
         *,
-        reduce: str = None,
+        reduce: Optional[str] = None,
+        src: Optional[Tensor] = None,
+        value: Optional[Number] = None,
     ) -> Composition:
-        return pydec.scatter(self, dim, index, src, value, reduce=reduce)
+        if src_value is None:
+            src_value = src if src is not None else value
+        return pydec.scatter(self, dim, index, src_value, reduce=reduce)  # type: ignore[arg-type]
 
     @overload
     def scatter_(self, dim: _int, index: Tensor, src: Tensor) -> Tensor:
@@ -1232,7 +1248,7 @@ class Composition:
         ...
 
     @_auto_registration
-    def softmax(self, dim: Any, *, dtype: Optional[_dtype] = None) -> Composition:
+    def softmax(self, dim: Any, dtype: Optional[_dtype] = None) -> Composition:
         return pydec.softmax(self, dim, dtype)
 
     def sqrt(self) -> Composition:
@@ -1261,7 +1277,9 @@ class IndexComposition(Composition):
 
     @overload
     def __init__(
-        self, component_tensor: Tensor, residual_tensor: Tensor = None,
+        self,
+        component_tensor: Tensor,
+        residual_tensor: Tensor = None,
     ) -> None:
         ...
 
