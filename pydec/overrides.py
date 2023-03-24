@@ -47,6 +47,7 @@ _whitelist_torch_functions = [
     torch.reciprocal_,
     torch.exp_,
     torch.sqrt_,
+    torch.square_,
 ]
 
 
