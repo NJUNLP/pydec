@@ -129,3 +129,14 @@ class TestVar:
         ref = torch.var(input, dim=(0, 2), unbiased=False)
         c_out = torch.var(c_input, dim=(0, 2), unbiased=False)
         assert (ref - c_out.c_sum()).abs().sum() < 1e-3
+
+
+class TestBmm:
+    def test1(self):
+        c_input1 = init_composition((2, 3, 4))
+        c_input2 = init_composition((2, 4, 5))
+        input1 = c_input1.c_sum()
+        input2 = c_input2.c_sum()
+        ref = torch.bmm(input1, input2)
+        c_out = torch.bmm(c_input1, c_input2)
+        assert (ref - c_out.c_sum()).abs().sum() < 1e-3
