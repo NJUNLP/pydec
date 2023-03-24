@@ -38,6 +38,8 @@ __all__ = [
     "biased_exp",
     "sqrt",
     "sqrt_",
+    "square",
+    "square_",
 ]
 
 
@@ -182,6 +184,7 @@ def exp(
     out: Optional[Composition] = None,
     ref: Optional[Tensor] = None,
 ) -> Composition:
+    # TODO: need a special dec to address numerical  explosion
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         out = decomposition_func(input=input, func=torch.exp, ref=ref)
@@ -208,6 +211,7 @@ def biased_exp(
     out: Optional[Composition] = None,
     ref: Optional[Tensor] = None,
 ) -> Composition:
+    # TODO: need a special dec to address numerical  explosion
     if ref is None:
         ref = input.c_sum()
     new_input = pydec._from_replce(input.components, input.residual + bias)
@@ -218,6 +222,29 @@ def biased_exp(
         return out
     else:
         raise none_decomposition_func_error(get_decomposition_name())
+
+
+# def biased_exp_stable(
+#     input: Composition,
+#     bias: Tensor,
+#     *,
+#     out: Optional[Composition] = None,
+#     ref: Optional[Tensor] = None,
+# ) -> Composition:
+#     if ref is None:
+#         ref = input.c_sum()
+#     new_components = torch.cat([input.components, input.residual[None]])
+#     new_residual = torch.zeros_like(input.residual).fill_(-torch.inf)
+#     new_input = pydec._from_replce(new_components, new_residual)
+#     decomposition_func = get_decomposition_func()
+#     if decomposition_func is not None:
+#         out = decomposition_func(input=new_input, func=torch.exp, ref=ref + bias)
+#         assert isinstance(out, pydec.Composition)
+#         out_components = out.components[:-1]
+#         out_residual = out.components[-1]
+#         return pydec._from_replce(out_components, out_residual)
+#     else:
+#         raise none_decomposition_func_error(get_decomposition_name())
 
 
 def sqrt(
@@ -243,3 +270,34 @@ def sqrt_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
         return out
     else:
         raise none_decomposition_func_error(get_decomposition_name())
+
+
+def square(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    if ref is None:
+        ref = input.c_sum()
+    out_residual = torch.square(
+        input.residual, out=out.residual if out is not None else None
+    )
+    out_components = torch.mul(
+        input.components,
+        ref + input.residual,
+        out=out.components if out is not None else None,
+    )
+    return pydec._from_replce(out_components, out_residual)
+
+
+def square_(
+    input: Composition,
+    ref: Optional[Tensor] = None,
+) -> Composition:
+    if ref is None:
+        ref = input.c_sum()
+    ref = ref + input.residual
+    input.residual.square_()
+    input.components.mul_(ref)
+    return input
