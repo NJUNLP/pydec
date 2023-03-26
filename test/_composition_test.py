@@ -22,6 +22,55 @@ class TestIndexing:
 
     def test1(self):
         c = TestIndexing.init_composition()
+        c_ = c[None]
+        assert c_.numc() == c.numc()
+        assert c_.size() == (1,) + c.size()
+
+        c[None] = 1
+        assert torch.all(c._residual_tensor == 0)
+        assert torch.all(c._component_tensor == 1)
+
+    def test2(self):
+        c = TestIndexing.init_composition()
+        with pydec.autotracing.set_tracing_enabled(True):
+            c0 = c[0]
+            assert isinstance(c0, Composition)
+            assert c0.numc() == c.numc()
+            assert c0.size() == c.size()[1:]
+            c02 = c[0:2]
+            assert isinstance(c02, Composition)
+            assert c02.numc() == c.numc()
+            assert c02.size() == (2,) + c.size()[1:]
+            c02_ = c[:, 0:2]
+            assert c02_.numc() == c.numc()
+            assert c02_.size() == c.size()[:1] + (2,)
+            c0202 = c[:2, :2]
+            assert c0202.numc() == c.numc()
+            assert c0202.size() == (2, 2)
+
+    def test3(self):
+        c = TestIndexing.init_composition()
+        with pydec.autotracing.set_tracing_enabled(True):
+            c_ = c[:, None]
+            assert c_.size() == c.size()[:1] + (1,) + c.size()[1:]
+            index_list = [0, 2]
+            c_ = c[index_list]
+            assert isinstance(c_, Composition)
+            assert c_.numc() == c.numc()
+            assert c_.size() == (2,) + c.size()[1:]
+            c_ = c[index_list, index_list]
+            assert c_.c_size() == (c.numc(), 2)
+
+            with pytest.raises(IndexError):
+                c_ = c[index_list, index_list, index_list]
+
+            with pytest.raises(IndexError):
+                c_ = c[:, index_list, index_list]
+
+
+class TestIndexingWithSyntacticSugar:
+    def test1(self):
+        c = TestIndexing.init_composition()
         with pytest.raises(RuntimeError):
             c()[None]
         with pytest.raises(RuntimeError):
@@ -62,54 +111,50 @@ class TestIndexing:
         assert c_.c_size() == (4, 2)
 
 
-class TestIndexingInAutotracing:
+class Test_C_AccessingIndexing:
+    @pydec.enable_c_accessing()
     def test1(self):
         c = TestIndexing.init_composition()
-        with pydec.autotracing.set_tracing_enabled(True):
-            c_ = c[None]
-            assert c_.numc() == c.numc()
-            assert c_.size() == (1,) + c.size()
-
+        with pytest.raises(RuntimeError):
+            c[None]
+        with pytest.raises(RuntimeError):
             c[None] = 1
-            assert torch.all(c._residual_tensor == 0)
-            assert torch.all(c._component_tensor == 1)
 
+    @pydec.enable_c_accessing()
     def test2(self):
         c = TestIndexing.init_composition()
-        with pydec.autotracing.set_tracing_enabled(True):
-            c0 = c[0]
-            assert isinstance(c0, Composition)
-            assert c0.numc() == c.numc()
-            assert c0.size() == c.size()[1:]
-            c02 = c[0:2]
-            assert isinstance(c02, Composition)
-            assert c02.numc() == c.numc()
-            assert c02.size() == (2,) + c.size()[1:]
-            c02_ = c[:, 0:2]
-            assert c02_.numc() == c.numc()
-            assert c02_.size() == c.size()[:1] + (2,)
-            c0202 = c[:2, :2]
-            assert c0202.numc() == c.numc()
-            assert c0202.size() == (2, 2)
+        c0 = c[0]
+        assert isinstance(c0, torch.Tensor)
+        assert c0.size() == c.size()
+        c02 = c[0:2]
+        assert isinstance(c02, Composition)
+        assert c02.numc() == 2
+        assert c02.size() == c.size()
+        c02_ = c[:, 0:2]
+        assert c02_.numc() == c.numc()
+        assert c02_.size() == (2,) + c.size()[1:]
+        c0202 = c[:2, :2]
+        assert c0202.numc() == 2
+        assert c0202.size() == (2,) + c.size()[1:]
 
+    @pydec.enable_c_accessing()
     def test3(self):
         c = TestIndexing.init_composition()
-        with pydec.autotracing.set_tracing_enabled(True):
-            c_ = c[:, None]
-            assert c_.size() == c.size()[:1] + (1,) + c.size()[1:]
-            index_list = [0, 2]
-            c_ = c[index_list]
-            assert isinstance(c_, Composition)
-            assert c_.numc() == c.numc()
-            assert c_.size() == (2,) + c.size()[1:]
-            c_ = c[index_list, index_list]
-            assert c_.c_size() == (c.numc(), 2)
+        c_ = c[:, None]
+        assert c_.size() == (1,) + c.size()
+        index_list = [0, 2]
+        c_ = c[index_list]
+        assert isinstance(c_, Composition)
+        assert c_.numc() == 2
+        assert c_.size() == c.size()
+        c_ = c[index_list, index_list]
+        assert c_.c_size() == (2,) + c.c_size()[2:]
 
-            with pytest.raises(IndexError):
-                c_ = c[index_list, index_list, index_list]
+        c_ = c[index_list, index_list, index_list]
+        assert c_.c_size() == (2,)
 
-            with pytest.raises(IndexError):
-                c_ = c[:, index_list, index_list]
+        c_ = c[:, index_list, index_list]
+        assert c_.c_size() == (4, 2)
 
 
 class TestView:

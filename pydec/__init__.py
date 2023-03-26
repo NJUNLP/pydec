@@ -1,7 +1,13 @@
 from . import _composition
 from . import overrides
 from . import variable_functions as _variable_functions
-from ._composition import Composition, IndexComposition
+from ._composition import (
+    Composition,
+    IndexComposition,
+    enable_c_accessing,
+    set_c_accessing_enabled,
+    is_c_accessing_enabled,
+)
 from . import core
 
 # from .core import decBLAS, decOVF, decMVF

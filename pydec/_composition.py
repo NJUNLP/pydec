@@ -6,6 +6,7 @@ from . import core
 from typing import Any, Dict, Union, List, Tuple, Sequence, Optional, Callable, overload
 from torch import Tensor
 from torch._C import memory_format
+from torch.autograd.grad_mode import _DecoratorContextManager
 import pydec
 from ._composition_str import _c_str
 import types
@@ -194,8 +195,7 @@ class Composition:
     def __getitem__(
         self, indices: Union[None, _int, slice, Tensor, List, Tuple]
     ) -> Composition:
-        # support autotracing
-        if pydec.autotracing.is_tracing_enabled():  # TODO
+        if not pydec.is_c_accessing_enabled():
             if isinstance(indices, tuple):
                 indices = (slice(None, None, None),) + indices
             else:
@@ -211,8 +211,7 @@ class Composition:
         indices: Union[None, _int, slice, Tensor, List, Tuple],
         val: Union[Composition, Tensor, Number],
     ) -> None:
-        # support autotracing
-        if pydec.autotracing.is_tracing_enabled():  # TODO
+        if not pydec.is_c_accessing_enabled():
             if isinstance(indices, tuple):
                 indices = (slice(None, None, None),) + indices
             else:
@@ -264,11 +263,11 @@ class Composition:
                 self._component_tensor[indices] = val._component_tensor
                 self._residual_tensor[indices[1:]] = val._residual_tensor
 
-    def __call__(self) -> _SliceComposition:
+    def __call__(self) -> _C_AccessingComposition:
         """
         Shortcut for `__c_getitem__` and `__c_setitem__`, e.g., `c()[2]` equals to `c.__c_getitem__(2)`.
         """
-        return _SliceComposition(self)
+        return _C_AccessingComposition(self)
 
     @_auto_registration
     def __len__(self):
@@ -1308,7 +1307,48 @@ class IndexComposition(Composition):
         return super().__repr__(composition_contents=composition_contents)
 
 
-class _SliceComposition(Composition):
+class _C_AccessingMode:
+    is_enabled = False
+
+    @classmethod
+    def set_enabled(cls, enabled: _bool):
+        cls.is_enabled = enabled
+
+
+def is_c_accessing_enabled() -> _bool:
+    return _C_AccessingMode.is_enabled
+
+
+class enable_c_accessing(_DecoratorContextManager):
+    r"""Context-manager that enables component indexing and slicing."""
+
+    def __enter__(self) -> None:
+        self.prev = is_c_accessing_enabled()
+        _C_AccessingMode.set_enabled(True)
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        _C_AccessingMode.set_enabled(self.prev)
+
+
+class set_c_accessing_enabled(_DecoratorContextManager):
+    r"""Context-manager that sets c_accessing to on or off."""
+
+    def __init__(self, mode: bool) -> None:
+        self.prev = is_c_accessing_enabled()
+        _C_AccessingMode.set_enabled(mode)
+        self.mode = mode
+
+    def __enter__(self) -> None:
+        pass
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        _C_AccessingMode.set_enabled(self.prev)
+
+    def clone(self):
+        return self.__class__(self.mode)
+
+
+class _C_AccessingComposition(Composition):
     r"""
     TODO: A temporary type for implementation of component subscript accessing for Composition.
     """
