@@ -8,7 +8,15 @@ import pydec.core as core
 from pydec._composition import Composition, IndexComposition
 from .overrides import _auto_registration, _register_builtin_function
 
-from typing import Any, Union, List, Tuple, Optional, Callable, overload
+from typing import (
+    Any,
+    Union,
+    List,
+    Tuple,
+    Optional,
+    Callable,
+    overload,
+)
 
 # In some cases, these basic types are shadowed by corresponding
 # top-level values.  The underscore variants let us refer to these
@@ -69,9 +77,7 @@ def cat(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.cat(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -109,9 +115,7 @@ def c_cat(
 
     c_tensors = tuple(c._component_tensor for c in compositions)
     out_component_tensor = torch.cat(
-        c_tensors,
-        0,
-        out=out._component_tensor if out is not None else None,
+        c_tensors, 0, out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = None
     if sum_residual:
@@ -140,9 +144,7 @@ def stack(
     )
     r_tensors = tuple(c._residual_tensor for c in compositions)
     out_residual_tensor = torch.stack(
-        r_tensors,
-        dim,
-        out=out._residual_tensor if out is not None else None,
+        r_tensors, dim, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -159,9 +161,7 @@ def c_stack(
             )
 
     out_component_tensor = torch.stack(
-        components,
-        0,
-        out=out._component_tensor if out is not None else None,
+        components, 0, out=out._component_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor)
 
@@ -225,7 +225,7 @@ def numc(input: Composition) -> _int:
 
 @_auto_registration
 def clone(
-    input: Composition, *, memory_format: Optional[memory_format] = None
+    input: Composition, *, memory_format: Optional[memory_format] = None,
 ) -> Composition:
     out_component_tensor = torch.clone(
         input._component_tensor, memory_format=memory_format
@@ -407,7 +407,7 @@ def mul(
     if isinstance(input, Composition):
         if isinstance(other, Composition):
             return core.decMVF.cc_mul(
-                input, other, out=out, ref_input=ref_input, ref_other=ref_other
+                input, other, out=out, ref_input=ref_input, ref_other=ref_other,
             )
         elif isinstance(other, (_int, _float, _bool, Tensor)):
             return core.decBLAS.ct_mul(input, other, out=out)
@@ -509,9 +509,7 @@ def div(
 
 @overload
 def divide(
-    input: Composition,
-    other: Tensor,
-    out: Optional[Composition] = None,
+    input: Composition, other: Tensor, out: Optional[Composition] = None,
 ) -> Composition:
     ...
 
@@ -535,10 +533,7 @@ def divide(
 
 
 @overload
-def divide(
-    input: Composition,
-    other: Number,
-) -> Composition:
+def divide(input: Composition, other: Number,) -> Composition:
     ...
 
 
@@ -568,12 +563,7 @@ def mv(
 
 
 @_auto_registration
-def mv(
-    input,
-    vec,
-    *,
-    out: Optional[Composition] = None,
-) -> Composition:
+def mv(input, vec, *, out: Optional[Composition] = None,) -> Composition:
     if not isinstance(input, Composition) and not isinstance(vec, Composition):
         raise unsupported_operand_error("mv", type(input), type(vec))
     if isinstance(input, Composition):
@@ -611,12 +601,7 @@ def mm(
 
 
 @_auto_registration
-def mm(
-    input,
-    mat2,
-    *,
-    out: Optional[Composition] = None,
-) -> Composition:
+def mm(input, mat2, *, out: Optional[Composition] = None,) -> Composition:
     if not isinstance(input, Composition) and not isinstance(mat2, Composition):
         raise unsupported_operand_error("mm", type(input), type(mat2))
     if isinstance(input, Composition):
@@ -847,18 +832,20 @@ def sum(
     dtype: Optional[_dtype] = None,
     out: Optional[Composition] = None,
 ) -> Composition:
+    out_components = {}
+    out_residual = {}
+    if out is not None:
+        out_components["out"] = out.components
+        out_residual["out"] = out.residual
     if dim is None:
+        if input.ndim == 0:
+            return input
         dim = tuple(range(1, input._component_tensor.dim()))
         out_component_tensor = torch.sum(
-            input._component_tensor,
-            dim=dim,
-            dtype=dtype,
-            out=out._component_tensor if out is not None else None,
+            input._component_tensor, dim=dim, dtype=dtype, **out_components,
         )
         out_residual_tensor = torch.sum(
-            input._residual_tensor,
-            dtype=dtype,
-            out=out._residual_tensor if out is not None else None,
+            input._residual_tensor, dtype=dtype, **out_residual
         )
     else:
         out_residual_tensor = torch.sum(
@@ -866,7 +853,7 @@ def sum(
             dim=dim,
             keepdim=keepdim,
             dtype=dtype,
-            out=out._residual_tensor if out is not None else None,
+            **out_residual,
         )
         if isinstance(dim, _int):
             dim = (dim,)
@@ -875,7 +862,7 @@ def sum(
             dim=_shift_dims(dim),
             keepdim=keepdim,
             dtype=dtype,
-            out=out._component_tensor if out is not None else None,
+            **out_components,
         )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -1001,7 +988,7 @@ def c_masked_fill(input: Composition, mask: Tensor, value: Any) -> Composition:
 # TODO: to support 'out: Optional[Composition] = None'
 @_auto_registration
 def masked_select(
-    input: Composition, mask: Tensor, *, out: Optional[Composition] = None
+    input: Composition, mask: Tensor, *, out: Optional[Composition] = None,
 ) -> Composition:
     out_component_tensor = torch.masked_select(
         input._component_tensor,
@@ -1187,7 +1174,7 @@ def scatter(
 
 @_auto_registration
 def diagonal_scatter(
-    input: Composition, src: Tensor, offset: _int = 0, dim1: _int = 0, dim2: _int = 1
+    input: Composition, src: Tensor, offset: _int = 0, dim1: _int = 0, dim2: _int = 1,
 ) -> Composition:
     if (
         torch.__version__ < "1.11.0"
@@ -1205,14 +1192,14 @@ def diagonal_scatter(
 
 @overload
 def index_select(
-    input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None
+    input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None,
 ) -> Composition:
     ...
 
 
 @_auto_registration
 def index_select(
-    input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None
+    input: Composition, dim: _int, index: Tensor, *, out: Optional[Composition] = None,
 ) -> Composition:
     out_component_tensor = torch.index_select(
         input._component_tensor,
@@ -1269,7 +1256,7 @@ def c_index_select(
 
 @_auto_registration
 def masked_select(
-    input: Composition, mask: Tensor, *, out: Optional[Composition] = None
+    input: Composition, mask: Tensor, *, out: Optional[Composition] = None,
 ) -> Composition:
     out_component_tensor = torch.masked_select(
         input._component_tensor,
@@ -1318,14 +1305,14 @@ def round(input: Composition, *, out: Optional[Composition] = None) -> Compositi
 
 @overload
 def round(
-    input: Composition, *, decimals: _int, out: Optional[Composition] = None
+    input: Composition, *, decimals: _int, out: Optional[Composition] = None,
 ) -> Composition:
     ...
 
 
 @_auto_registration
 def round(
-    input: Composition, *, decimals: _int = None, out: Optional[Composition] = None
+    input: Composition, *, decimals: _int = None, out: Optional[Composition] = None,
 ) -> Composition:
     if decimals is not None:
         out_component_tensor = torch.round(
@@ -1339,14 +1326,8 @@ def round(
             out=out._residual_tensor if out is not None else None,
         )
     else:
-        out_component_tensor = torch.round(
-            input._component_tensor,
-            decimals=decimals,
-        )
-        out_residual_tensor = torch.round(
-            input._residual_tensor,
-            decimals=decimals,
-        )
+        out_component_tensor = torch.round(input._component_tensor, decimals=decimals,)
+        out_residual_tensor = torch.round(input._residual_tensor, decimals=decimals,)
     return _from_replce(out_component_tensor, out_residual_tensor)
 
 
@@ -1502,12 +1483,10 @@ def empty_index_composition(
 def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
     # TODO: bug: c.abs() not eqal to c.c_sum().abs()
     out_component_tensor = torch.abs(
-        input._component_tensor,
-        out=out._component_tensor if out is not None else None,
+        input._component_tensor, out=out._component_tensor if out is not None else None,
     )
     out_residual_tensor = torch.abs(
-        input._residual_tensor,
-        out=out._residual_tensor if out is not None else None,
+        input._residual_tensor, out=out._residual_tensor if out is not None else None,
     )
     return _from_replce(out_component_tensor, out_residual_tensor)
 
@@ -1589,7 +1568,7 @@ def _pad_packed_sequence(
     max_batch_size = batch_sizes[0]
     feature_size = packed_input.size(-1)
     lengths = torch.zeros(
-        (max_batch_size,), dtype=torch.long, device=packed_input.device
+        (max_batch_size,), dtype=torch.long, device=packed_input.device,
     )
     for i in range(max_seq_length):
         batch_size = 0 if i >= len(batch_sizes) else batch_sizes[i]
@@ -1678,17 +1657,14 @@ def _rnn_layer(
                         device=hx.device,
                     ).to(hx)
                     append_hx.residual[:] = orig_hx[batch_size_old:batch_size_new]
-                    hx = pydec.cat(
-                        [hx, append_hx],
-                        dim=0,
-                    )
+                    hx = pydec.cat([hx, append_hx], dim=0,)
         if not reverse:
             batch = input[batch_start : batch_start + batch_size]
             batch_start += batch_size
         else:
             batch = input[batch_start - batch_size : batch_start]
             batch_start -= batch_size
-        hx = _rnn_cell(batch, hx, weight_ih, weight_hh, bias_ih, bias_hh, nonlinearity)
+        hx = _rnn_cell(batch, hx, weight_ih, weight_hh, bias_ih, bias_hh, nonlinearity,)
         out.append(hx)
         if not reverse:
             batch_size_new = batch_sizes[i + 1] if i + 1 < len(batch_sizes) else 0
@@ -1724,8 +1700,18 @@ def _rnn_packed(
 
     for i in range(num_layers):
         hx_layer, hx_layer_r = None, None
-        weight_ih, weight_hh, bias_ih, bias_hh = None, None, None, None
-        weight_ih_r, weight_hh_r, bias_ih_r, bias_hh_r = None, None, None, None
+        weight_ih, weight_hh, bias_ih, bias_hh = (
+            None,
+            None,
+            None,
+            None,
+        )
+        weight_ih_r, weight_hh_r, bias_ih_r, bias_hh_r = (
+            None,
+            None,
+            None,
+            None,
+        )
         weight_group = flat_weights[weight_group_len * i : weight_group_len * (i + 1)]
 
         weight_ih = weight_group[0]
@@ -1824,9 +1810,7 @@ def rnn_relu(
 
 
 @_auto_registration
-def rnn_relu(
-    *args,
-):
+def rnn_relu(*args,):
     """
     Only supports the positional arguments in current version
     """
@@ -1848,7 +1832,7 @@ def rnn_relu(
         seq_len = input.size(0)
         batch_size = input.size(1)
         batch_sizes = torch.tensor(
-            [batch_size] * input.size(0), dtype=torch.long, device="cpu"
+            [batch_size] * input.size(0), dtype=torch.long, device="cpu",
         )
         input = input.view(seq_len * batch_size, -1)
         out, out_hx = _rnn_packed(
@@ -1926,9 +1910,7 @@ def rnn_tanh(
 
 
 @_auto_registration
-def rnn_tanh(
-    *args,
-):
+def rnn_tanh(*args,):
     """
     Only supports the positional arguments in current version
     """
@@ -1950,7 +1932,7 @@ def rnn_tanh(
         seq_len = input.size(0)
         batch_size = input.size(1)
         batch_sizes = torch.tensor(
-            [batch_size] * input.size(0), dtype=torch.long, device="cpu"
+            [batch_size] * input.size(0), dtype=torch.long, device="cpu",
         )
         input = input.view(seq_len * batch_size, -1)
         out, out_hx = _rnn_packed(
@@ -2006,11 +1988,7 @@ def reciprocal(
 
 
 @_auto_registration
-def reciprocal_(
-    input: Composition,
-    *,
-    ref: Optional[Tensor] = None,
-) -> Composition:
+def reciprocal_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
     return core.decOVF.reciprocal_(input, ref=ref)
 
 
@@ -2025,11 +2003,7 @@ def exp(
 
 
 @_auto_registration
-def exp_(
-    input: Composition,
-    *,
-    ref: Optional[Tensor] = None,
-) -> Composition:
+def exp_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
     return core.decOVF.exp_(input, ref=ref)
 
 
@@ -2083,11 +2057,7 @@ def sqrt(
 
 
 @_auto_registration
-def sqrt_(
-    input: Composition,
-    *,
-    ref: Optional[Tensor] = None,
-) -> Composition:
+def sqrt_(input: Composition, *, ref: Optional[Tensor] = None,) -> Composition:
     return core.decOVF.sqrt_(input, ref=ref)
 
 
@@ -2106,10 +2076,7 @@ def var(
 
 @overload
 def var(
-    input: Composition,
-    unbiased: _bool = True,
-    *,
-    ref: Optional[Tensor] = None,
+    input: Composition, unbiased: _bool = True, *, ref: Optional[Tensor] = None,
 ) -> Composition:
     ...
 
@@ -2143,10 +2110,7 @@ def square(
 
 
 @_auto_registration
-def square_(
-    input: Composition,
-    ref: Optional[Tensor] = None,
-) -> Composition:
+def square_(input: Composition, ref: Optional[Tensor] = None,) -> Composition:
     return core.decOVF.square_(input, ref=ref)
 
 
@@ -2155,12 +2119,7 @@ def _softmax_rescale(input: Composition) -> Composition:
     This is not a standard api of PyTorch.
     Use to deal with numerical explosion problem in decomposition.
     """
-    combine_components = torch.cat(
-        (
-            input.components,
-            input.residual[None],
-        )
-    )
+    combine_components = torch.cat((input.components, input.residual[None],))
     softmax_components = torch.softmax(combine_components, dim=0)
     rescaled_components = softmax_components * input.c_sum()
     out_components = rescaled_components[:-1]
