@@ -30,11 +30,7 @@ class TestLegacyRelu:
 
     def test_hybrid(self):
         def hybrid_decomposition_(
-            sum_value,
-            context: Composition,
-            *,
-            threshold=0.15,
-            eps=1e-6,
+            sum_value, context: Composition, *, threshold=0.15, eps=1e-6,
         ) -> Composition:
 
             composition = context._component_tensor
@@ -308,12 +304,7 @@ class TestLayerNorm:
         )
         assert (ref - c_out.c_sum()).abs().sum() < 1e-3
 
-        layernorm = torch.nn.LayerNorm(
-            (
-                3,
-                4,
-            )
-        )
+        layernorm = torch.nn.LayerNorm((3, 4,))
         ref = torch.nn.functional.layer_norm(
             input, normalized_shape=[3, 4], weight=layernorm.weight, bias=layernorm.bias
         )
@@ -330,8 +321,6 @@ class TestSoftmax:
     def test1(self):
         c_input = init_composition((2, 4))
         input = c_input.c_sum()
-
-        print(c_input)
         ref = torch.nn.functional.softmax(input, -1)
         c_out = torch.nn.functional.softmax(c_input, -1)
         assert (ref - c_out.c_sum()).abs().sum() < 1e-3
