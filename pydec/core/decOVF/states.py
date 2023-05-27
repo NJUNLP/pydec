@@ -1,3 +1,4 @@
+from __future__ import annotations
 import functools
 import inspect
 
@@ -5,7 +6,8 @@ from torch.autograd.grad_mode import _DecoratorContextManager
 
 from typing import Dict, Tuple, Union, Any, Callable, Optional, TYPE_CHECKING
 
-from ..composition import Composition
+if TYPE_CHECKING:
+    from ..._composition import Composition
 
 from torch.types import (
     _int,

@@ -12,7 +12,7 @@ When PyDec is initialized its default bias decomposition algorithm is {% include
 
 {% include function.html content="Parameters:" %}
 
-* **name** ([str](https://docs.python.org/3/library/stdtypes.html#str)) - Specifies the name of the bias decomposition algorithm used by Pydec. Must be the name of a registered algorithm.
+* **name** ([str](https://docs.python.org/3/library/stdtypes.html#str)) - Specifies the name of the bias decomposition algorithm used by PyDec. Must be the name of a registered algorithm.
 
 Examples:
 ```python

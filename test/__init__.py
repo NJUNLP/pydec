@@ -1,1 +1,1 @@
-import test.test_composition as test_composition
+import test._composition_test as _composition_test

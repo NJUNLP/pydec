@@ -1,16 +1,16 @@
-from . import composition as _composition
+from . import _composition
+from . import overrides
 from . import variable_functions as _variable_functions
-from .composition import Composition
-from .decomposition import (
-    set_decomposition_func,
-    get_decomposition_name,
-    get_decomposition_func,
-    using_decomposition_func,
-    no_decomposition,
-    set_decomposition_args,
-    get_decomposition_args,
-    using_decomposition_args,
+from ._composition import (
+    Composition,
+    IndexComposition,
+    enable_c_accessing,
+    set_c_accessing_enabled,
+    is_c_accessing_enabled,
 )
+from . import core
+
+# from .core import decBLAS, decOVF, decMVF
 
 from .error_check import (
     no_error_check,
@@ -25,7 +25,7 @@ from .autotracing import (
     is_tracing_enabled,
 )
 
-
+# TODO: need update
 __all__ = [
     "Composition",
     "set_decomposition_func",
@@ -52,7 +52,6 @@ PRIVATE_NAME = ["memory_format", "strided"]
 PRIVATE_NAME.extend(dir(_typing))
 PRIVATE_NAME.extend(dir(_types))
 
-import pydec.nn as nn
 
 from typing import TYPE_CHECKING
 
@@ -69,6 +68,6 @@ for name in dir(_variable_functions):
     if not name.startswith("_"):
         __all__.append(name)
 
-# initialization
+from .variable_functions import _from_replce
 
-_composition._from_replce = _variable_functions._from_replce
+import pydec.nn as nn

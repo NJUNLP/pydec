@@ -133,12 +133,12 @@ There are a few main ways to create a composition, depending on your use case.
 * To create a composition with specific shape, pass in the shape of the component and specify the number of components.
 * To create a composition with the same shape (and similar types) as another composition, use `pydec.*_like` composition creation ops (see {% include doc.html name="Creation Ops" path="pythonapi/pydec/#creation-ops" %}).
 
-{% include attribute.html content="Composition._composition_tensor" %}
+{% include attribute.html content="Composition._component_tensor" %}
 
 This is the data structure inside composition that stores the components. Its first dimension represents the number of components and the subsequent dimensions represent the shape of the components, i.e.,
 
-`Composition._composition_tensor.size(0)` is equal to {% include codelink.html name="Composition.numc()" path="pythonapi/pydec.Composition/numc" %}.
-`Composition._composition_tensor.size()[1:]` is equal to {% include codelink.html name="Composition.size()" path="pythonapi/pydec.Composition/size" %}.
+`Composition._component_tensor.size(0)` is equal to {% include codelink.html name="Composition.numc()" path="pythonapi/pydec.Composition/numc" %}.
+`Composition._component_tensor.size()[1:]` is equal to {% include codelink.html name="Composition.size()" path="pythonapi/pydec.Composition/size" %}.
 
 {% include attribute.html content="Composition._residual_tensor" %}
 
