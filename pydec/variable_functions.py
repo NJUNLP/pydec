@@ -940,8 +940,8 @@ def mean(
 
 @_auto_registration
 def reshape(input: Composition, shape: _size) -> Composition:
-    out_component_tensor = input._component_tensor.view((input.numc(),) + shape)
-    out_residual_tensor = input._residual_tensor.view(shape)
+    out_component_tensor = input._component_tensor.reshape((input.numc(),) + shape)
+    out_residual_tensor = input._residual_tensor.reshape(shape)
     return _from_replce(out_component_tensor, out_residual_tensor)
 
 
