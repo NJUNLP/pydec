@@ -92,10 +92,8 @@ tensor([0.7023, 0.3492, 0.7771, 0.0157])
 Output tensor:
 tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
 ```
-To decompose the output, first wrap the model using `pydec.autotracing.compile` and then input the Composition initialized from `x`:
+To decompose the output, just input the Composition initialized from `x`:
 ```python
-tinymodel = pydec.autotracing.compile(tinymodel)
-
 c = pydec.zeros(x.size(), c_num=x.size(0))
 c = pydec.diagonal_init(c, src=x, dim=0)
 
@@ -141,18 +139,6 @@ print(c_out.c_sum())
 Out:
 ```
 Sum of each component:
-tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
-```
-To restore the ability of the model to forward tensor, use `trace()` to turn off autotracing:
-```python
-tinymodel.trace(False)
-
-print("Output tensor:")
-print(tinymodel(x))
-```
-Out:
-```
-Output tensor:
 tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
 ```
 
