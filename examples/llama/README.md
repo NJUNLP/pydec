@@ -4,7 +4,7 @@ https://arxiv.org/abs/2302.13971
 ## Introduction
 LLaMA is an auto-regressive language model, based on the transformer architecture. The model comes in different sizes: 7B, 13B, 33B and 65B parameters.
 
-This implementation is based on [Hugging Face LLaMA](https://huggingface.co/docs/transformers/model_doc/llama), and we have made few modifications to the code to generate the decomposition of the output.
+This implementation is based on **[Hugging Face LLaMA](https://huggingface.co/docs/transformers/model_doc/llama)**, and we have made few modifications to the code to generate the decomposition of the output.
 
 ## Example usage
 To use it, first prepare the model checkpoints and configuration information.
