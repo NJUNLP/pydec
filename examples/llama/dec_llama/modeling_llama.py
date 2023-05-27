@@ -291,6 +291,8 @@ class LlamaAttention(nn.Module):
             key_states = torch.cat([past_key_value[0], key_states], dim=2)
 
             # edited by pydec
+            # if v is a Composition, the component number of value_states does not match that of past_value.
+            # Padding a zero component to fix this.
             past_value = past_key_value[1]
             if isinstance(value_states, pydec.Composition):
                 assert isinstance(past_value, pydec.Composition)
