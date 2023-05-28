@@ -7,9 +7,12 @@ LLaMA is an auto-regressive language model, based on the transformer architectur
 This implementation is based on **[Hugging Face LLaMA](https://huggingface.co/docs/transformers/model_doc/llama)**, and we have made few modifications to the code to generate the decomposition of the output.
 
 ## Example usage
-To use it, first prepare the model checkpoints and configuration information.
+#### Setup
 
-##### decompose LLaMA in generation:
+To use it, first prepare the model checkpoints and configuration information. [Here](https://huggingface.co/yahma/llama-7b-hf) is an example, as a ready-to-use resource.
+
+
+#### Decompose LLaMA in generation
 
 We occupy the 'attentions' field of the output to store the decomposition results
 
