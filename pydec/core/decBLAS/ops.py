@@ -74,7 +74,7 @@ def cc_add(
         input._residual_tensor,
         other._residual_tensor,
         alpha=alpha,
-        out=out.out_residual_tensor if out is not None else None,
+        out=out._residual_tensor if out is not None else None,
     )
     return pydec._from_replce(out_component_tensor, out_residual_tensor)
 
@@ -365,12 +365,12 @@ def ct_matmul(
 def tc_matmul(
     input: Tensor, other: Composition, *, out: Optional[Composition] = None
 ) -> Composition:
-    if input.dim() == 1:
+    if other.dim() == 1:
         # if the component_tensor's ndim is 2, the component dim
         # will be incorrectly included in the multiplication
         out_component_tensor = torch.matmul(
-            other,
-            input._component_tensor.unsqueeze(-1),
+            input,
+            other._component_tensor.unsqueeze(-1),
             out=out._component_tensor.unsqueeze_(-1) if out is not None else None,
         )
         out_component_tensor.squeeze_(-1)
@@ -378,13 +378,13 @@ def tc_matmul(
             out._component_tensor.squeeze_(-1)
     else:
         out_component_tensor = torch.matmul(
-            other,
-            input._component_tensor,
+            input,
+            other._component_tensor,
             out=out._component_tensor if out is not None else None,
         )
     out_residual_tensor = torch.matmul(
-        other,
-        input._residual_tensor,
+        input,
+        other._residual_tensor,
         out=out._residual_tensor if out is not None else None,
     )
     return pydec._from_replce(out_component_tensor, out_residual_tensor)

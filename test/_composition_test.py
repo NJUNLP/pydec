@@ -32,40 +32,38 @@ class TestIndexing:
 
     def test2(self):
         c = TestIndexing.init_composition()
-        with pydec.autotracing.set_tracing_enabled(True):
-            c0 = c[0]
-            assert isinstance(c0, Composition)
-            assert c0.numc() == c.numc()
-            assert c0.size() == c.size()[1:]
-            c02 = c[0:2]
-            assert isinstance(c02, Composition)
-            assert c02.numc() == c.numc()
-            assert c02.size() == (2,) + c.size()[1:]
-            c02_ = c[:, 0:2]
-            assert c02_.numc() == c.numc()
-            assert c02_.size() == c.size()[:1] + (2,)
-            c0202 = c[:2, :2]
-            assert c0202.numc() == c.numc()
-            assert c0202.size() == (2, 2)
+        c0 = c[0]
+        assert isinstance(c0, Composition)
+        assert c0.numc() == c.numc()
+        assert c0.size() == c.size()[1:]
+        c02 = c[0:2]
+        assert isinstance(c02, Composition)
+        assert c02.numc() == c.numc()
+        assert c02.size() == (2,) + c.size()[1:]
+        c02_ = c[:, 0:2]
+        assert c02_.numc() == c.numc()
+        assert c02_.size() == c.size()[:1] + (2,)
+        c0202 = c[:2, :2]
+        assert c0202.numc() == c.numc()
+        assert c0202.size() == (2, 2)
 
     def test3(self):
         c = TestIndexing.init_composition()
-        with pydec.autotracing.set_tracing_enabled(True):
-            c_ = c[:, None]
-            assert c_.size() == c.size()[:1] + (1,) + c.size()[1:]
-            index_list = [0, 2]
-            c_ = c[index_list]
-            assert isinstance(c_, Composition)
-            assert c_.numc() == c.numc()
-            assert c_.size() == (2,) + c.size()[1:]
-            c_ = c[index_list, index_list]
-            assert c_.c_size() == (c.numc(), 2)
+        c_ = c[:, None]
+        assert c_.size() == c.size()[:1] + (1,) + c.size()[1:]
+        index_list = [0, 2]
+        c_ = c[index_list]
+        assert isinstance(c_, Composition)
+        assert c_.numc() == c.numc()
+        assert c_.size() == (2,) + c.size()[1:]
+        c_ = c[index_list, index_list]
+        assert c_.c_size() == (c.numc(), 2)
 
-            with pytest.raises(IndexError):
-                c_ = c[index_list, index_list, index_list]
+        with pytest.raises(IndexError):
+            c_ = c[index_list, index_list, index_list]
 
-            with pytest.raises(IndexError):
-                c_ = c[:, index_list, index_list]
+        with pytest.raises(IndexError):
+            c_ = c[:, index_list, index_list]
 
 
 class TestIndexingWithSyntacticSugar:
