@@ -74,7 +74,7 @@ def cc_add(
         input._residual_tensor,
         other._residual_tensor,
         alpha=alpha,
-        out=out.out_residual_tensor if out is not None else None,
+        out=out._residual_tensor if out is not None else None,
     )
     return pydec._from_replce(out_component_tensor, out_residual_tensor)
 

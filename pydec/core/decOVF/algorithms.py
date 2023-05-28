@@ -154,7 +154,7 @@ def uptake_residual_decomposition(
     else:
         recovery = ref
     recovery_out = func(recovery)
-    residual_out = func(input._residual_tensor)
+    # residual_out = func(input._residual_tensor)
     composition = torch.cat([input.components, input.residual[None]], dim=0)
 
     multiplier = recovery_out / composition.sum(dim=0)
