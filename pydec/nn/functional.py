@@ -20,7 +20,7 @@ from torch.nn.functional import (  # type: ignore[attr-defined]
     _in_projection_packed,
     _in_projection,
     pad,
-    _scaled_dot_product_attention,
+    # _scaled_dot_product_attention,
 )
 
 # In some cases, these basic types are shadowed by corresponding
@@ -288,10 +288,22 @@ def conv2d(
         )
     if len(input.size()) == 3:
         out_component_tensor = F.conv2d(
-            input._component_tensor, weight, None, stride, padding, dilation, groups,
+            input._component_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
         out_residual_tensor = F.conv2d(
-            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+            input._residual_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
     else:
         out_component_tensor = F.conv2d(
@@ -304,7 +316,13 @@ def conv2d(
             groups,
         ).view((-1,) + input.size())
         out_residual_tensor = F.conv2d(
-            input._residual_tensor, weight, None, stride, padding, dilation, groups,
+            input._residual_tensor,
+            weight,
+            None,
+            stride,
+            padding,
+            dilation,
+            groups,
         )
     out_residual_tensor += bias
     return pydec._from_replce(out_component_tensor, out_residual_tensor)
