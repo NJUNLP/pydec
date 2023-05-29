@@ -108,7 +108,11 @@ composition{
 """
 ```
 ## Component Accessing
-Normally, all operations on Composition will be in the tensor dimension only, so as not to disturb its transformation in the model.
+Under normal circumstances, operations on compositions will only be carried out on the tensor dimensions, so as not to interfere with its transformation in the model. If you need to access its components, pydec provides context managers `pydec.enable_c_accessing()` and `pydec.set_c_accessing_enabled()` to achieve this:
+```python
+
+
+```
 
 ## Attributes of a Composition
 **Size**
