@@ -228,7 +228,7 @@ def c_numel(input: Composition, count_residual=False) -> _int:
 
 
 def numc(input: Composition) -> _int:
-    return len(input)
+    return len(input.components)
 
 
 @_auto_registration
