@@ -292,7 +292,7 @@ def _c_str(self, *, composition_contents: Optional[List[Union[str, None]]] = Non
             else None,
             prefix_indent=indent + 2,  # second indent
         )[0]
-        for i in range(len(self))
+        for i in range(self.numc())
     ]
     residual_repr, suffixes = _t_str(
         self._residual_tensor,
