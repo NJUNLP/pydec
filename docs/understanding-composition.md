@@ -108,10 +108,55 @@ composition{
 """
 ```
 ## Component Accessing
-Under normal circumstances, operations on compositions will only be carried out on the tensor dimensions, so as not to interfere with its transformation in the model. If you need to access its components, pydec provides context managers `pydec.enable_c_accessing()` and `pydec.set_c_accessing_enabled()` to achieve this:
+Under normal circumstances, operations on compositions will only be carried out on the tensor dimensions, so as not to interfere with its transformation in the model. If you need to access its components, pydec provides context managers `pydec.enable_c_accessing()` and `pydec.set_c_accessing_enabled()` to achieve this.
+
+In the context of c_accessing, the first dimension of indices is used to access components. If indexing a single component, a tensor is returned. If indexing multiple components, they are returned as a composition. Some functions, such as `len()` and `iter()`, are also affected.
+
 ```python
-
-
+>>> c = pydec.Composition(torch.rand((3,4)))
+>>> c
+"""
+composition{
+  components:
+    tensor([0.6555, 0.6707, 0.4085, 0.3020]),
+    tensor([0.4141, 0.7358, 0.7060, 0.7372]),
+    tensor([0.6290, 0.7565, 0.0648, 0.1895]),
+  residual:
+    tensor([0., 0., 0., 0.])}
+"""
+>>> with pydec.enable_c_accessing():
+...     c[0]
+...     c[0:1]
+...     c[0:2, :2]
+...     len(c)
+"""
+tensor([0.6555, 0.6707, 0.4085, 0.3020])
+composition{
+  components:
+    tensor([0.6555, 0.6707, 0.4085, 0.3020]),
+  residual:
+    tensor([0., 0., 0., 0.])}
+composition{
+  components:
+    tensor([0.6555, 0.6707]),
+    tensor([0.4141, 0.7358]),
+  residual:
+    tensor([0., 0.])}
+3
+"""
+```
+For convenience, pydec also provides a syntax sugar that eliminates the need for context managers. You only need to add a pair of parentheses after the composition being accessed:
+```python
+>>> c()[0] = -1
+>>> c()[:-1]
+"""
+composition{
+  components:
+    tensor([-1., -1., -1., -1.]),
+    tensor([0.4141, 0.7358, 0.7060, 0.7372]),
+  residual:
+    tensor([0., 0., 0., 0.])}
+"""
 ```
 
 ## Attributes of a Composition
