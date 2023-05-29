@@ -1,0 +1,4 @@
+- Versions
+  - [v0.3 (stable release)](/)
+  - [v0.2](/v0.2/)
+  - [v0.1](/v0.1/)
