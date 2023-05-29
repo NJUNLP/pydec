@@ -17,7 +17,7 @@ from .algorithms import *
 Initialization
 """
 try:
-    set_decomposition_func("hybrid_decomposition")
+    set_decomposition_func("affine")
 except ValueError:
     from . import states
 

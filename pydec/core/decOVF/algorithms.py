@@ -25,21 +25,26 @@ from torch.types import (
 import pydec
 from pydec.core.decOVF import register_decomposition_func, set_decomposition_func
 
-__all__ = ["abs_decomposition", "_none_decomposition", "hybrid_decomposition"]
+__all__ = [
+    "abs_affine_decomposition",
+    "hybrid_affine_decomposition",
+    "affine_decomposition",
+    "scaling_decomposition",
+    "_none_decomposition",
+]
 
 
 # TODO: all inplace operations should be re-examined, `ref` args should not be overridden
 # TODO: algorithms should support `out` argument
 
 
-@register_decomposition_func("abs_decomposition")
-def abs_decomposition(
+@register_decomposition_func("abs_affine")
+def abs_affine_decomposition(
     input: Composition,
     func: Callable[[Tensor], Tensor],
     *,
     out: Optional[Composition] = None,
     ref: Optional[Tensor] = None,
-    threshold: _float = 0.15,
     inplace: _bool = False,
 ) -> Composition:
     if ref is None:
@@ -67,13 +72,13 @@ def abs_decomposition(
         return pydec._from_replce(out_component_tensor, out_residual_tensor)
 
 
-@register_decomposition_func("hybrid_decomposition")
-def hybrid_decomposition(
+@register_decomposition_func("hybrid_affine")
+def hybrid_affine_decomposition(
     input: Composition,
     func: Callable[[Tensor], Tensor],
     *,
     ref: Optional[Tensor] = None,
-    threshold: _float = 0.0,
+    threshold: _float = 0,
     inplace: _bool = False,
 ) -> Composition:
     if ref is None:
@@ -98,6 +103,37 @@ def hybrid_decomposition(
 
         composition[mask] = composition[mask].abs()
 
+    multiplier = decompose_out / composition.sum(dim=0)
+    multiplier.nan_to_num_(0, 0, 0)
+
+    if inplace:
+        input._component_tensor *= multiplier
+        input._residual_tensor = residual_out
+        return input
+    else:
+        out_component_tensor = composition * multiplier
+        out_residual_tensor = residual_out
+        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+
+
+@register_decomposition_func("affine")
+def affine_decomposition(
+    input: Composition,
+    func: Callable[[Tensor], Tensor],
+    *,
+    ref: Optional[Tensor] = None,
+    inplace: _bool = False,
+) -> Composition:
+    if ref is None:
+        recovery = input.c_sum()
+    else:
+        recovery = ref
+    recovery_out = func(recovery)
+    residual_out = func(input._residual_tensor)
+
+    decompose_out = recovery_out - residual_out
+
+    composition = input._component_tensor
     multiplier = decompose_out / composition.sum(dim=0)
     multiplier.nan_to_num_(0, 0, 0)
 
@@ -141,8 +177,8 @@ def _none_decomposition(
         return out
 
 
-@register_decomposition_func("uptake_residual_decomposition")
-def uptake_residual_decomposition(
+@register_decomposition_func("scaling")
+def scaling_decomposition(
     input: Composition,
     func: Callable[[Tensor], Tensor],
     *,

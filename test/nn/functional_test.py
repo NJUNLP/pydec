@@ -53,7 +53,7 @@ class TestLegacyRelu:
         input = init_composition((3, 4))
         input._residual_tensor = torch.randn((3, 4))
         legacy_relu = pydec.nn.functional.legacy_relu
-        with pydec.core.decOVF.using_decomposition_func("hybrid_decomposition"):
+        with pydec.core.decOVF.using_decomposition_func("hybrid_affine"):
             with pydec.core.decOVF.using_decomposition_args(threshold=0.15):
                 out = legacy_relu(input)
 
