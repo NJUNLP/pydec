@@ -1,35 +1,44 @@
 # Error Control
+Although theoretically the results recovered from the composition are exactly equal to the ground truth, in practice, floating-point calculations introduce errors. Particularly in deep networks, these errors may be amplified to an unacceptable degree. We propose some recommendations for reducing errors.
 
-Although in theory the recovery from Composition is exactly equivalent to the ground truth. However, in practice, there will be errors brought by the computer. Especially in deep networks, the error may be magnified to an unacceptable degree. We give some suggestions for reducing errors and provide tools for error checking.
+$$
+h \approx \frac{\mathscr{D}h}{\mathscr{D}\{x_1\}} + \cdots + \frac{\mathscr{D}h}{\mathscr{D}\{x_m\}} + \frac{\mathscr{D}h}{\mathscr{D}\{b^1\cdots\mathscr{D}b^L\}}.
+$$
 
-<div class="alert alert-info" role="info">
-<h4 class="alert-heading">NOTE</h4>
-To get the recovery of the composition, use {% include codelink.html name="Composition.c_sum()" path="pythonapi/pydec.Composition/c_sum" %}.
-</div>
+?> Call [Composition.c_sum()]() to add up each components and obtain the recovery of a composition.
+
+## Error statistics
+Here, we present the relative error between the output (Logits) and output decomposition of the [RoBERTa model](https://arxiv.org/abs/1907.11692) on the SST-2 and IMDB dataset.
+
+*\* the relative error (%) with standard deviation* 
+| Precision | SST-2                | IMDB                |
+| --------- | -------------------- | ------------------- |
+| float16   | 0.526 (6.390)        | 0.243 (2.718)       |
+| float32   | 1.723e-4 (2.821e-3)  | 1.411e04 (3.675e-3) |
+| float64   | 2.664e-10 (1.200e-8) |                     |
+
 
 ## Error Reduction
 
-Our most recommended method for reducing errors is to use double precision computations, usually by simply adding `model=model.double()` after the model is loaded. If you enable double precision calculations, the error from the decomposition is almost negligible.
+Our most recommended method for reducing errors is to use single or double precision calculation. Usually, you only need to add `model=model.float()` or `model=model.double()` after loading the model. If you don't care about error, you can use half precision to achieve faster inference speed and reduce memory usage.
 
-When double precision computation cannot be enabled for speed and memory reasons, you may consider adding the error term to Composition as bias. Depending on the bias reallocation policy, the error is added to the residual or assigned to each component.
+Another way to reduce errors is to use the ground truth as a reference input to each operator in the forward propagation process, and the output of the operator will be accurate. However, this requires providing the ground truth of intermediate variables, so you need to modify a lot of model code to track the forward propagation of tensors and compositions simultaneously.
 
-You can even consider making the ground truth equal to Composition's recovery, but this may change the classification result of the network.
-
-## Error Checking
-You can use {% include codelink.html name="pydec.check_error()" path="pythonapi/pydec/check_error" %} to check the error of the given Composition and reference. In order to provide ground truth as a reference, you usually need to keep the forward process of the original network. We recommend that you use it often during development, not only for error control, but also to help you find bugs in your code.
-
-### Context management
-
-PyDec provides two context managers to locally enable or disable error checking, i.e., {% include codelink.html name="pydec.error_check()" path="pythonapi/pydec/error_check" %} and {% include codelink.html name="pydec.no_error_check()" path="pythonapi/pydec/no_error_check" %}. This way, you don't have to modify your code when you want to disable error checking in your production environment.
-
-Example:
 ```python
-# The code here will perform error checking.
-...
-with pydec.no_error_check():
-    # The code here does not perform any error checking, even if you call `pydec.check_error`.
-    ...
-    with pydec.error_check():
-        # The code here will perform error checking.
-        ...
+class TinyModel(torch.nn.Module):
+    def __init__(self):
+        super(TinyModel, self).__init__()
+        self.linear1 = torch.nn.Linear(4, 10)
+        self.linear2 = torch.nn.Linear(10, 2)
+
+    def forward(self, x: torch.Tensor, c_x: pydec.Composition):
+        c_x = self.linear1(c_x)
+        x = self.linear1(x)
+        # input the ground truth as reference
+        c_x = pydec.nn.functional.relu(c_x, ref=x)
+        x = torch.nn.functional.relu(x)
+        assert (x - c_x.c_sum()).abs().mean() < 1e-5
+        c_x = self.linear2(c_x)
+        x = self.linear2(x)
+        return x, c_x
 ```
