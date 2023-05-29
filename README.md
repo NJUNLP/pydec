@@ -145,3 +145,7 @@ tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
 # Documentation
 
 The [full documentation](https://doublevii.github.io/pydec/) contains examples of implementations on realistic models, tutorials, notes and Python API.
+
+
+# Linear Decomposition Theory
+To understand the principles and theories behind PyDec, see our paper [Local Interpretation of Transformer Based on Linear Decomposition]().

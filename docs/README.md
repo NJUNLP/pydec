@@ -11,6 +11,9 @@ PyDec is a linear decomposition toolkit for neural network based on [PyTorch](ht
 
 Check out the [examples](https://github.com/DoubleVII/pydec/tree/master/examples) to see the use of pydec on real-world models.
 
+## Linear Decomposition Theory
+To understand the principles and theories behind PyDec, see our paper [Local Interpretation of Transformer Based on Linear Decomposition]().
+
 ## About
 
 This is the documentation page for [PyDec](https://github.com/DoubleVII/pydec). This documentation page is powered by [docsify](https://github.com/docsifyjs/docsify).
