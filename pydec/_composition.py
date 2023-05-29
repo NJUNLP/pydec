@@ -271,11 +271,17 @@ class Composition:
 
     @_auto_registration
     def __len__(self):
-        # TODO: maybe same as the behavior of tensor
-        return self._component_tensor.__len__()
+        if pydec.is_c_accessing_enabled():
+            return self.components.__len__()
+        else:
+            return self.residual.__len__()
 
     def __iter__(self):
-        return self._component_tensor.__iter__()
+        if pydec.is_c_accessing_enabled():
+            return self._component_tensor.__iter__()
+        else:
+            # TODO: return a iterator
+            raise NotImplementedError
 
     @_auto_registration
     def __reversed__(self):
@@ -1369,3 +1375,10 @@ class _C_AccessingComposition(Composition):
         val: Union[Composition, Tensor, Number],
     ) -> None:
         return super().__c_setitem__(indices, val)
+    
+
+    def __len__(self):
+        return self.components.__len__()
+
+    def __iter__(self):
+        return self._component_tensor.__iter__()
