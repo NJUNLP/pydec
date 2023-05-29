@@ -11,7 +11,7 @@ class TestRelu:
         x = torch.nn.functional.relu(x)
         c = pydec.nn.functional.relu(c)
         assert c.numc() == 3
-        pydec.check_error(c, x)
+        assert (c.c_sum() - x).abs().mean() < 1e-5
 
 
 class TestLegacyRelu:
@@ -30,9 +30,12 @@ class TestLegacyRelu:
 
     def test_hybrid(self):
         def hybrid_decomposition_(
-            sum_value, context: Composition, *, threshold=0.15, eps=1e-6,
+            sum_value,
+            context: Composition,
+            *,
+            threshold=0.15,
+            eps=1e-6,
         ) -> Composition:
-
             composition = context._component_tensor
             sum_composition = composition.sum(dim=0)
             abs_composition = composition.abs()
@@ -304,7 +307,12 @@ class TestLayerNorm:
         )
         assert (ref - c_out.c_sum()).abs().sum() < 1e-3
 
-        layernorm = torch.nn.LayerNorm((3, 4,))
+        layernorm = torch.nn.LayerNorm(
+            (
+                3,
+                4,
+            )
+        )
         ref = torch.nn.functional.layer_norm(
             input, normalized_shape=[3, 4], weight=layernorm.weight, bias=layernorm.bias
         )
