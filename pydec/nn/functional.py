@@ -325,7 +325,7 @@ def conv2d(
             groups,
         )
     out_residual_tensor += bias
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 @_auto_registration
@@ -531,7 +531,7 @@ def embedding(
     )
     out_component_tensor[component_tensor_mask] = 0
     out_residual_tensor[residual_tensor_mask] = 0
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
@@ -543,8 +543,7 @@ def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition
     masked_residual_out = out._residual_tensor
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
-
-        delta_context = pydec._from_replce(input._component_tensor, residual_out)
+        delta_context = pydec.as_composition(input._component_tensor, residual_out)
         delta_out = decomposition_func(
             input=delta_context, func=lambda x: x, ref=masked_residual_out
         )

@@ -69,7 +69,7 @@ def abs_affine_decomposition(
     else:
         out_component_tensor = abs_composition * multiplier
         out_residual_tensor = residual_out
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 @register_decomposition_func("hybrid_affine")
@@ -113,7 +113,7 @@ def hybrid_affine_decomposition(
     else:
         out_component_tensor = composition * multiplier
         out_residual_tensor = residual_out
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 @register_decomposition_func("affine")
@@ -144,7 +144,7 @@ def affine_decomposition(
     else:
         out_component_tensor = composition * multiplier
         out_residual_tensor = residual_out
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 @register_decomposition_func("none")
@@ -204,4 +204,4 @@ def scaling_decomposition(
         out_composition = composition * multiplier
         out_components = out_composition[:-1]
         out_residual = out_composition[-1]
-        return pydec._from_replce(out_components, out_residual)
+        return pydec.as_composition(out_components, out_residual)

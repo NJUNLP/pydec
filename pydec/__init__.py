@@ -45,6 +45,4 @@ for name in dir(_variable_functions):
     if not name.startswith("_"):
         __all__.append(name)
 
-from .variable_functions import _from_replce
-
 import pydec.nn as nn

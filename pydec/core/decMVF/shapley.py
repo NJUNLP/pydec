@@ -37,7 +37,10 @@ def comb(n, m):
     return math.factorial(n) / math.factorial(m) / math.factorial(n - m)
 
 
-def c_shapley(input: Composition, func: Callable,) -> Composition:
+def c_shapley(
+    input: Composition,
+    func: Callable,
+) -> Composition:
     numc = input.numc()
     out_residual = func(input.residual)
     out_size = func(input.c_sum()).size()
@@ -57,4 +60,4 @@ def c_shapley(input: Composition, func: Callable,) -> Composition:
         shapley_i /= numc
         shapley_values[i] = shapley_i
 
-    return pydec._from_replce(shapley_values, out_residual)
+    return pydec.as_composition(shapley_values, out_residual)

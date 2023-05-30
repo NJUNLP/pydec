@@ -240,7 +240,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor[indices]
             out_residual_tensor = self._residual_tensor[indices[1:]]
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     def __c_setitem__(
         self,
@@ -362,11 +362,11 @@ class Composition:
 
     @_auto_registration
     def __neg__(self) -> Composition:
-        return pydec._from_replce(-self._component_tensor, -self._residual_tensor)
+        return pydec.as_composition(-self._component_tensor, -self._residual_tensor)
 
     @_auto_registration
     def __pos__(self) -> Composition:
-        return pydec._from_replce(+self._component_tensor, +self._residual_tensor)
+        return pydec.as_composition(+self._component_tensor, +self._residual_tensor)
 
     @_auto_registration
     def __iadd__(self, other) -> Composition:
@@ -789,7 +789,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor.view((self.numc(),) + size)
             out_residual_tensor = self._residual_tensor.view(size)
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def view_as(self, other: Union[Tensor, Composition]) -> Composition:
@@ -820,7 +820,7 @@ class Composition:
     def contiguous(self, memory_format=torch.contiguous_format) -> Composition:
         out_component_tensor = self._component_tensor.contiguous()
         out_residual_tensor = self._residual_tensor.contiguous()
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def is_contiguous(self, memory_format=torch.contiguous_format) -> _bool:
@@ -864,7 +864,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor.to(*args, **kwargs)
             out_residual_tensor = self._residual_tensor.to(*args, **kwargs)
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @overload
     def masked_fill(self, mask: Tensor, value: Tensor) -> Composition:
@@ -1044,13 +1044,13 @@ class Composition:
         out_residual_tensor = self._residual_tensor.cuda(
             device=device, non_blocking=non_blocking
         )
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def cpu(self) -> Composition:
         out_component_tensor = self._component_tensor.cpu()
         out_residual_tensor = self._residual_tensor.cpu()
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     def is_cuda(self):
         return self._residual_tensor.is_cuda
@@ -1112,7 +1112,7 @@ class Composition:
             dim=_shift_dim(dim), index=index
         )
         out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @overload
     def type(self, dtype: None = None, non_blocking: _bool = False) -> str:
@@ -1133,7 +1133,7 @@ class Composition:
             out_residual_tensor = self._residual_tensor.type(
                 dtype=dtype, non_blocking=non_blocking
             )
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def type_as(self, other: Union[Tensor, Composition]) -> Composition:
@@ -1145,7 +1145,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor.type_as(other)
             out_residual_tensor = self._residual_tensor.type_as(other)
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @overload
     def round(self) -> Composition:
