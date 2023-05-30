@@ -86,6 +86,10 @@ class Composition:
         return self._residual_tensor.dtype
 
     @property
+    def layout(self) -> _dtype:
+        return self._residual_tensor.layout
+
+    @property
     def T(self) -> Composition:
         return self.permute(*torch.arange(self.ndim - 1, -1, -1))
 
@@ -1293,7 +1297,6 @@ class IndexComposition(Composition):
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-
         super().__init__(*args, **kwargs)
 
         if len(args) + len(kwargs) == 0:
@@ -1375,7 +1378,6 @@ class _C_AccessingComposition(Composition):
         val: Union[Composition, Tensor, Number],
     ) -> None:
         return super().__c_setitem__(indices, val)
-    
 
     def __len__(self):
         return self.components.__len__()
