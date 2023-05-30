@@ -108,6 +108,10 @@ class Composition:
     @property
     def residual(self) -> Tensor:
         return self._residual_tensor
+    
+    @property
+    def recovery(self) -> Tensor:
+        return self.c_sum()
 
     @overload
     def __init__(
