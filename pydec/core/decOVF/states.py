@@ -117,20 +117,6 @@ class using_decomposition_func(_DecoratorContextManager):
         return self.__class__(self.using_name)
 
 
-class no_decomposition(_DecoratorContextManager):
-    def __init__(
-        self,
-    ) -> None:
-        self.prev = None
-
-    def __enter__(self):
-        self.prev = _DecompositionState.decomposition_name
-        _DecompositionState.decomposition_name = "none"
-
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        _DecompositionState.decomposition_name = self.prev
-
-
 def set_decomposition_args(update: _bool = True, **kwargs) -> None:
     if update:
         _DecompositionState.decomposition_args.update(kwargs)
