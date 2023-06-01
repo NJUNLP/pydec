@@ -108,7 +108,7 @@ class Composition:
     @property
     def residual(self) -> Tensor:
         return self._residual_tensor
-    
+
     @property
     def recovery(self) -> Tensor:
         return self.c_sum()
@@ -492,37 +492,37 @@ class Composition:
     @_auto_registration
     def __eq__(self, other: Any) -> Tensor:  # type: ignore[override]
         if isinstance(other, Composition):
-            return other.__eq__(self.c_sum())
+            return self.c_sum().__eq__(other.c_sum())
         return self.c_sum().__eq__(other)
 
     @_auto_registration
     def __ne__(self, other: Any) -> Tensor:  # type: ignore[override]
         if isinstance(other, Composition):
-            return other.__ne__(self.c_sum())
+            return self.c_sum().__ne__(other.c_sum())
         return self.c_sum().__ne__(other)
 
     @_auto_registration
     def __gt__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__lt__(self.c_sum())
+            return self.c_sum().__gt__(other.c_sum())
         return self.c_sum().__gt__(other)
 
     @_auto_registration
     def __lt__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__gt__(self.c_sum())
+            return self.c_sum().__lt__(other.c_sum())
         return self.c_sum().__lt__(other)
 
     @_auto_registration
     def __ge__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__le__(self.c_sum())
+            return self.c_sum().__ge__(other.c_sum())
         return self.c_sum().__ge__(other)
 
     @_auto_registration
     def __le__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__ge__(self.c_sum())
+            return self.c_sum().__le__(other.c_sum())
         return self.c_sum().__le__(other)
 
     @_auto_registration
@@ -646,6 +646,114 @@ class Composition:
     @_auto_registration
     def all(self, *args: Any, **kwargs: Any) -> Tensor:
         return pydec.all(self, *args, **kwargs)
+
+    @overload
+    def eq(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def eq(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def eq(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def eq(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().eq(other.c_sum())
+        return self.c_sum().eq(other)
+
+    @overload
+    def ne(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def ne(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def ne(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def ne(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().ne(other.c_sum())
+        return self.c_sum().ne(other)
+
+    @overload
+    def gt(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def gt(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def gt(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def gt(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().gt(other.c_sum())
+        return self.c_sum().gt(other)
+
+    @overload
+    def lt(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def lt(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def lt(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def lt(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().lt(other.c_sum())
+        return self.c_sum().lt(other)
+
+    @overload
+    def ge(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def ge(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def ge(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def ge(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().ge(other.c_sum())
+        return self.c_sum().ge(other)
+
+    @overload
+    def le(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def le(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def le(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def le(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().le(other.c_sum())
+        return self.c_sum().le(other)
 
     @_auto_registration
     def unsqueeze(self, dim: _int) -> Composition:
