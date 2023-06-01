@@ -8,6 +8,7 @@
   <meta name="description" content="Description">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <script src="_media/auto_link.js"></script>
 </head>
 
 <body>
@@ -22,7 +23,16 @@
       auto2top: true,
       maxLevel: 4,
       subMaxLevel: 2,
-      search: 'auto',
+      search: { paths: 'auto', },
+      mustache: {
+        noPackage: false,
+        data: [
+          '_media/vars.json',
+          {
+            auto_link: link_render
+          }
+        ]
+      }
     }
   </script>
   <!-- Docsify v4 -->
@@ -35,6 +45,9 @@
   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
   <script src="//cdn.jsdelivr.net/npm/marked@4"></script>
 
+  <script src="//cdn.jsdelivr.net/npm/docsify-mustache"></script>
+
+
   <!-- CDN files for docsify-katex -->
   <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
   <!-- or <script src="//cdn.jsdelivr.net/gh/upupming/docsify-katex@latest/dist/docsify-katex.js"></script> -->
@@ -43,6 +56,17 @@
     integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8= sha256-T+aPohYXbm0fRYDpJLr+zJ9RmYTswGsahAoIsNiMld4="
     crossorigin="anonymous"></script>
   <script src="_media/render-output-code-plugin.js"></script>
+  <style>
+    a:has(code) {
+      text-decoration: none;
+      font-weight: unset !important;
+      /* color: #e96900 !important; */
+    }
+
+    a:has(code):hover {
+      text-decoration: underline;
+    }
+  </style>
 </body>
 
 </html>
