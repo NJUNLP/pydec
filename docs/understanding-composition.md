@@ -75,7 +75,7 @@ $$
 
 **By diagonal scatter**
 
-In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the `diagonal_init()` function.
+In practice, usually all inputs are batched into a tensor. Therefore a more useful initialization method is based on the {{#auto_link}}pydec.diagonal_init{{/auto_link}} function.
 ```python
 >>> component_num = 3
 >>> size = (3, 2)
@@ -108,7 +108,7 @@ composition{
 """
 ```
 ## Component Accessing
-Under normal circumstances, operations on compositions will only be carried out on the tensor dimensions, so as not to interfere with its transformation in the model. If you need to access its components, pydec provides context managers `pydec.enable_c_accessing()` and `pydec.set_c_accessing_enabled()` to achieve this.
+Under normal circumstances, operations on compositions will only be carried out on the tensor dimensions, so as not to interfere with its transformation in the model. If you need to access its components, pydec provides context managers {{#auto_link}}pydec.enable_c_accessing{{/auto_link}} and {{#auto_link}}pydec.set_c_accessing_enabled{{/auto_link}} to achieve this.
 
 In the context of c_accessing, the first dimension of indices is used to access components. If indexing a single component, a tensor is returned. If indexing multiple components, they are returned as a composition. Some functions, such as `len()` and `iter()`, are also affected.
 
@@ -162,7 +162,7 @@ composition{
 ## Attributes of a Composition
 **Size**
 
-[Composition.size()]() returns the shape of each composition tensor; [Composition.c_size()]() returns the shape whose first dimension is the number of components.
+{{#auto_link}}pydec.Composition.size short:1{{/auto_link}} returns the shape of each composition tensor; {{#auto_link}}pydec.Composition.c_size short:1{{/auto_link}} returns the shape whose first dimension is the number of components.
 ```python
 >>> c = pydec.zeros((3, 2), c_num=4)
 >>> c.size()
@@ -175,7 +175,7 @@ torch.Size([4, 3, 2])
 """
 ```
 
-`len()` in the `enable_c_accessing` context and [Composition.numc()]() return the number of components.
+`len()` in the *enable_c_accessing* context and {{#auto_link}}pydec.Composition.numc short:1{{/auto_link}} return the number of components.
 ```python
 >>> len(c())
 """
@@ -197,7 +197,7 @@ $$
 
 where $b$ is the bias parameters of the model. 
 
-This term $\frac{\mathscr{D}h}{\mathscr{D}\{b^1\cdots\mathscr{D}b^L\}}$ is saved to `Composition.residual`.
+This term $\frac{\mathscr{D}h}{\mathscr{D}\{b^1\cdots\mathscr{D}b^L\}}$ is saved to {{#auto_link}}pydec.Composition.residual short:1 with_parentheses:false{{/auto_link}}.
 
 
 ## Operations on Compositions
