@@ -1,56 +1,54 @@
-# Bias Decomposition
+# Decompose Activation Functions
+As the activation functions are non-linear, linear substitutes need to be found to generate decomposition.
 
-In order to reallocate bias term, PyDec will assign them to components other than residual whenever it encounters bias addition operation.
 
-Assume that $h^\prime=h+b$ and $h$ is denoted as the sum of $m$ components, i.e., $h=c_1+\cdots+c_m$. Then $b$ is decomposed into $m$ parts and added to each of the $m$ components:
+## Configuring the decomposition algorithm
+PyDec has some built-in strategies to decompose activation functions. By default, PyDec uses the algorithm [*affine decomposition*]().
 
-$$
-\begin{split}
-b=&p_1+\cdots+p_m,\newline
-c^\prime_i=&c_i+p_i.
-\end{split}
-$$
-
-The decomposition of $h^\prime$ was thus obtained as $h^\prime=c^\prime_1+\cdots+c^\prime_m$
-
-PyDec has some built-in strategies to decompose bias, and they mostly calculate $p_i$ based on the value of $c_i$. By default, PyDec just adds bias to residual component without performing any bias decomposition.
-
-## Using Bias Decomposition
-
-Usually you do not need to call an explicit interface to use bias decomposition. PyDec overloads the addition operator (TODO), whenever `pydec.Composition` is added with `torch.Tensor`, PyDec recognizes it automatically as bias addition and calls the configured bias decomposition.
-
-## Configuring Bias Decomposition
-
-By default, PyDec does not perform any bias decomposition, but adds the bias directly to `Composition._residual`. To use the specified bias decomposition, call `pydec.set_bias_decomposition_func` and pass in the name of the bias decomposition. This will set the global bias decomposition method for PyDec. Here (TODO) is a list of all the built-in strategies and their names.
+To use the specified algorithm, call {{#auto_link}}pydec.decOVF.set_decomposition_func{{/auto_link}} and pass in the name of the decomposition algorithm. This will set the global decomposition algorithm for PyDec. [Here](#decomposition-algorithms) is a list of all the built-in strategies and their names.
 
 ### Configuring by context
 
-If you need to locally use the specified bias decomposition method in a context, use `pydec.using_bias_decomposition_func` and pass in the name of the bias decomposition to create the context. `pydec.no_bias_decomposition` provides a context in which bias decomposition is not performed.
+If you need to locally use the specified decomposition algorithm in a context, use {{#auto_link}}pydec.decOVF.using_decomposition_func{{/auto_link}} and pass in the name to create the context.
 
 Example:
 ```python
-pydec.set_bias_decomposition_func('norm_decomposition')
-# The code here uses the method called 'norm_decomposition'.
+pydec.decOVF.set_decomposition_func("affine")
+# The code here uses the algorithm called 'affine'.
+print(pydec.decOVF.get_decomposition_name()) # 'affine'
 ...
-with pydec.using_bias_decomposition_func('abs_decomposition'):
-    # The code here uses the method called 'abs_decomposition'.
+with pydec.decOVF.using_decomposition_func("scaling"):
+    # The code here uses the algorithm called 'scaling'.
+    print(pydec.decOVF.get_decomposition_name()) # 'scaling'
     ...
-    with pydec.no_bias_decomposition():
-        # The code here does not perform any bias decomposition'.
-        ...
 ```
-### Specify the arguments for bias decomposition
 
-Some bias decomposition functions provide configurable hyperparameters, but the arguments cannot be passed explicitly when using the addition operator.
+### Specify the arguments for decomposition algorithm
 
-You can avoid calling the addition operator by calling `pydec.add`, which supports passing in custom keyword arguments.
+Some decomposition algorithm provide configurable hyperparameters, but the arguments cannot be passed explicitly when calling the torch operators.
 
-We recommend using `pydec.set_bias_decomposition_args` to set the arguments of the bias decomposition function. We also provide the context manager to locally set parameters, using `pydec.using_bias_decomposition_args` to create contexts.
+Use {{#auto_link}}pydec.decOVF.set_decomposition_args{{/auto_link}} to set the arguments of the decomposition algorithm. We also provide the context manager to locally set arguments, by using {{#auto_link}}pydec.decOVF.using_decomposition_func{{/auto_link}}.
 
-## Explicit Interface
+Example:
+```python
+pydec.decOVF.set_decomposition_args(threshold=0.1)
+print(pydec.decOVF.get_decomposition_args()) # "{'threshold': 0.1}"
+...
+with pydec.decOVF.using_decomposition_args(threshold=0.2, foo="foo"):
+    print(pydec.decOVF.get_decomposition_args()) # "{'threshold': 0.2, 'foo': 'foo'}"
+    ...
+```
 
-You can get the bias decomposition function in the current context via `pydec.get_bias_decomposition_func`. In addition, you can get the name of the current bias decomposition function via `pydec.get_bias_decomposition_name`.
+## Decomposition algorithms
+| Name          | API                                                                  | Comments                                                                                                 |
+| ------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| affine        | {{#auto_link}}pydec.decOVF.affine_decomposition{{/auto_link}}        | The decomposition $\hat{\mathscr{D}}$(signed) in our paper.                                              |
+| scaling       | {{#auto_link}}pydec.decOVF.scaling_decomposition{{/auto_link}}       | The decomposition $\bar{\mathscr{D}}$ in our paper.                                                      |
+| abs_affine    | {{#auto_link}}pydec.decOVF.abs_affine_decomposition{{/auto_link}}    | The decomposition $\hat{\mathscr{D}}$(abs) in our paper.                                                 |
+| hybrid_affine | {{#auto_link}}pydec.decOVF.hybrid_affine_decomposition{{/auto_link}} | $\hat{\mathscr{D}}$(signed) and $\hat{\mathscr{D}}$(abs) are hybridized by the hyperparameter $\lambda$. |
+| none          | {{#auto_link}}pydec.decOVF._none_decomposition{{/auto_link}}         | No decomposition is performed.                                                                           |
 
-## Customizing Bias Decomposition
 
-See {% include doc.html name="Customizing bias decomposition" path="pythonapi/pydec.bias_decomposition/#customizing-bias-decomposition" %}.
+## Customizing the decomposition algorithm
+TODO
+<!-- See {% include doc.html name="Customizing bias decomposition" path="pythonapi/pydec.bias_decomposition/#customizing-bias-decomposition" %}. -->
