@@ -20,6 +20,8 @@ The pydec package contains data structures for compositions and defines mathemat
 
 ## Indexing, Slicing, Joining, Mutating Ops
 
+?> To access components by indexing and slicing, see [Component Accessing](understanding-composition.md#component-accessing).
+
 | API                                                                             | Description                                                                                                                                                  |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | {{#auto_link}}pydec.cat short with_parentheses:false{{/auto_link}}              | Concatenates the given sequence of `seq` compositions in the given dimension.                                                                                |
@@ -32,15 +34,15 @@ The pydec package contains data structures for compositions and defines mathemat
 | {{#auto_link}}pydec.masked_select short with_parentheses:false{{/auto_link}}    | Returns a new 1-D composition which indexes the `input` composition according to the boolean mask `mask` which is a *BoolTensor*.                            |
 | {{#auto_link}}pydec.masked_fill short with_parentheses:false{{/auto_link}}      | Fills elements of each component in `input` composition with `value` where `mask` is *True*.                                                                 |
 | {{#auto_link}}pydec.c_masked_fill short with_parentheses:false{{/auto_link}}    | Fills components of the `input` composition with `value` where `mask` is *True*.                                                                             |
-| {{#auto_link}}pydec.permute short with_parentheses:false{{/auto_link}}          | Returns a view of the original composition `input` with its components' dimensions permuted.                                                                 |
+| {{#auto_link}}pydec.permute short with_parentheses:false{{/auto_link}}          | Returns a view of the original composition `input` with its dimensions permuted.                                                                             |
 | {{#auto_link}}pydec.reshape short with_parentheses:false{{/auto_link}}          | Returns a composition with the same data and number of elements as `input`, but with the specified shape.                                                    |
 | {{#auto_link}}pydec.scatter short with_parentheses:false{{/auto_link}}          | Out-of-place version of {{#auto_link}}pydec.Composition.scatter_{{/auto_link}}.                                                                              |
-| {{#auto_link}}pydec.diagonal_scatter short with_parentheses:false{{/auto_link}} | Embeds the values of the `src` tensor into `input` composition along the diagonal elements of every component of `input`, with respect to `dim1` and `dim2`. |
+| {{#auto_link}}pydec.diagonal_scatter short with_parentheses:false{{/auto_link}} | Embeds the values of the `src` tensor into `input` composition along the diagonal elements of every component in `input`, with respect to `dim1` and `dim2`. |
 | {{#auto_link}}pydec.diagonal_init short with_parentheses:false{{/auto_link}}    | Embeds the values of the `src` tensor into `input` composition along the diagonal components of `input`, with respect to `dim`.                              |
-| {{#auto_link}}pydec.squeeze short with_parentheses:false{{/auto_link}}          | Returns a composition with all the dimensions of components of `input` of size *1* removed.                                                                  |
-| {{#auto_link}}pydec.stack short with_parentheses:false{{/auto_link}}            | Concatenates every component of a sequence of compositions along a new dimension.                                                                            |
+| {{#auto_link}}pydec.squeeze short with_parentheses:false{{/auto_link}}          | Returns a composition with all specified dimensions of `input` of size *1* removed.                                                                          |
+| {{#auto_link}}pydec.stack short with_parentheses:false{{/auto_link}}            | Concatenates a sequence of compositions along a new dimension.                                                                                               |
 | {{#auto_link}}pydec.transpose short with_parentheses:false{{/auto_link}}        | Returns a composition that is a transposed version of `input`.                                                                                               |
-| {{#auto_link}}pydec.unsqueeze short with_parentheses:false{{/auto_link}}        | Returns a new composition with a dimension of size one inserted at the specified position of each component.                                                 |
+| {{#auto_link}}pydec.unsqueeze short with_parentheses:false{{/auto_link}}        | Returns a new composition with a dimension of size one inserted at the specified position.                                                                   |
 
 ## Math operations
 ### Pointwise Ops
