@@ -1,9 +1,6 @@
 
-<p align="center" style="font-size:30px; margin-bottom:0; color:#2D7D59">
-    PyDec
-</p>
 <p align="center">
-  <img src="docs/_images/PyDec_Logo2.png" width="150">
+  <img src="docs/_images/PyDec_Logo1.png" width="200">
 </p>
 
 <p align="center">
