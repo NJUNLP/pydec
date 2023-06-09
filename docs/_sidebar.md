@@ -4,9 +4,12 @@
 
 - Notes
   
-  - [Error Control](error-control.md)
-  - [Math Operators](math-operators.md)
+  - [Compatibility with PyTorch](compatibility-with-pytorch.md)
+  - [Variable Tracing](variable-tracing.md)
   - [Decompose Activation Functions](decompose-activation-functions.md)
+  - [Error Control](error-control.md)
+  - [Reduce Memory Overhead](reduce-memory-overhead.md)
+  - [Extending PyDec](extending-pydec.md)
 
 - Python API
 
