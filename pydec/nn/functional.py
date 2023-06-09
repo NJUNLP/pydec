@@ -535,6 +535,7 @@ def embedding(
 
 
 def legacy_relu(input: Composition, ref: Optional[Tensor] = None) -> Composition:
+    # TODO: maybe deprecated after we have scaling decomposition
     if ref is None:
         ref = input.c_sum()
     zero_mask = ref < 0
