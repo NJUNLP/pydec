@@ -107,7 +107,7 @@ composition{
             [0., 0.]])}
 """
 ```
-## Component Accessing
+## Component accessing
 Under normal circumstances, operations on compositions will only be carried out on the tensor dimensions, so as not to interfere with its transformation in the model. If you need to access its components, pydec provides context managers {{#auto_link}}pydec.enable_c_accessing{{/auto_link}} and {{#auto_link}}pydec.set_c_accessing_enabled{{/auto_link}} to achieve this.
 
 In the context of c_accessing, the first dimension of indices is used to access components. If indexing a single component, a tensor is returned. If indexing multiple components, they are returned as a composition. Some functions, such as `len()` and `iter()`, are also affected.
