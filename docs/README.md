@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="_images/PyDec_Logo2.png" width="280">
+  <img src="_images/PyDec_Logo1.png" width="250">
 </p>
 
 ## Welcome to PyDec Documentation
