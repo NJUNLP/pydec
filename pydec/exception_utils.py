@@ -56,6 +56,7 @@ def none_decomposition_func_error(func_name: Optional[str] = None) -> RuntimeErr
     )
 
 
+# TODO: deprecated
 def args_error_not_in_tracing(*args, **kwargs):
     error_msg = (
         "received Composition type argument but not in the tracing mode - got ({}).\nTo fix this error: "
