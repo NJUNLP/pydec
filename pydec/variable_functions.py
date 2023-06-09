@@ -200,18 +200,44 @@ def diagonal_init(
 
 
 def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
+    # TODO: shoud we check the results' shape?
     out_component_tensor = callable(input._component_tensor)
     out_residual_tensor = callable(input._residual_tensor)
+    if not isinstance(out_component_tensor, Tensor) or not isinstance(
+        out_residual_tensor, Tensor
+    ):
+        raise RuntimeError(
+            "TypeError: 'callable' must return a tensor, not {}".format(
+                type(
+                    out_component_tensor
+                    if not isinstance(out_component_tensor, Tensor)
+                    else out_residual_tensor
+                ).__name__
+            )
+        )
     return as_composition(out_component_tensor, out_residual_tensor)
 
 
 def c_map(
-    input, composition: Composition, callable: Callable[..., Tensor]
+    input, other: Composition, callable: Callable[..., Tensor]
 ) -> Composition:
+    # TODO: shoud we check the results' shape?
     out_component_tensor = callable(
-        input._component_tensor, composition._component_tensor
+        input._component_tensor, other._component_tensor
     )
-    out_residual_tensor = callable(input._residual_tensor, composition._residual_tensor)
+    out_residual_tensor = callable(input._residual_tensor, other._residual_tensor)
+    if not isinstance(out_component_tensor, Tensor) or not isinstance(
+        out_residual_tensor, Tensor
+    ):
+        raise RuntimeError(
+            "TypeError: 'callable' must return a tensor, not {}".format(
+                type(
+                    out_component_tensor
+                    if not isinstance(out_component_tensor, Tensor)
+                    else out_residual_tensor
+                ).__name__
+            )
+        )
     return as_composition(out_component_tensor, out_residual_tensor)
 
 
@@ -290,6 +316,10 @@ def add(
     alpha: Optional[Number] = 1,
     out: Optional[Composition] = None,
 ) -> Composition:
+    # TODO: fix bug: broadcasting errors, trigger when composition + composition
+    # TODO: fix bug: shape errors, trigger when composition(residual broadcasting) + tensor
+    # TODO: fix bug: also fix `sub`
+    # TODO: add broadcasting examples in docs after bug fixing
     if not isinstance(input, Composition) and not isinstance(other, Composition):
         raise unsupported_operand_error("add", type(input), type(other))
     if isinstance(input, Composition):
@@ -335,6 +365,7 @@ def sub(
     alpha: Optional[Number] = 1,
     out: Optional[Composition] = None,
 ) -> Composition:
+    # TODO: fix bug: see TODOs in `add`
     if not isinstance(input, Composition) and not isinstance(other, Composition):
         raise unsupported_operand_error("sub", type(input), type(other))
     if isinstance(input, Composition):
@@ -939,17 +970,18 @@ def mean(
         )
     if dim is None:
         dim = tuple(range(1, input._component_tensor.dim()))
-        out_component_tensor = torch.mean(
-            input._component_tensor,
-            dim=dim,
-            dtype=dtype,
-            out=out._component_tensor if out is not None else None,
-        )
-        out_residual_tensor = torch.mean(
-            input._residual_tensor,
-            dtype=dtype,
-            out=out._residual_tensor if out is not None else None,
-        )
+        if out is not None:
+            out_component_tensor = torch.mean(
+                input._component_tensor, dim=dim, dtype=dtype, out=out._component_tensor
+            )
+            out_residual_tensor = torch.mean(
+                input._residual_tensor, dtype=dtype, out=out._residual_tensor
+            )
+        else:
+            out_component_tensor = torch.mean(
+                input._component_tensor, dim=dim, dtype=dtype
+            )
+            out_residual_tensor = torch.mean(input._residual_tensor, dtype=dtype)
     else:
         out_residual_tensor = torch.mean(
             input._residual_tensor,
@@ -1382,14 +1414,8 @@ def round(
             out=out._residual_tensor if out is not None else None,
         )
     else:
-        out_component_tensor = torch.round(
-            input._component_tensor,
-            decimals=decimals,
-        )
-        out_residual_tensor = torch.round(
-            input._residual_tensor,
-            decimals=decimals,
-        )
+        out_component_tensor = torch.round(input._component_tensor)
+        out_residual_tensor = torch.round(input._residual_tensor)
     return as_composition(out_component_tensor, out_residual_tensor)
 
 
