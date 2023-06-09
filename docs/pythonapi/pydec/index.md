@@ -50,11 +50,11 @@ The pydec package contains data structures for compositions and defines mathemat
 | API                                                                     | Description                                                                                           |
 | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | {{#auto_link}}pydec.add short with_parentheses:false{{/auto_link}}      | Adds `other`, scaled by `alpha`, to `input`.                                                          |
-| {{#auto_link}}pydec.div short with_parentheses:false{{/auto_link}}      | Divides each element of every component of the `input` input by the corresponding element of `other`. |
+| {{#auto_link}}pydec.div short with_parentheses:false{{/auto_link}}      | Divides each element of every component in the `input` input by the corresponding element of `other`. |
 | {{#auto_link}}pydec.divide short with_parentheses:false{{/auto_link}}   | Alias for {{#auto_link}}pydec.div{{/auto_link}}.                                                      |
-| {{#auto_link}}pydec.mul short with_parentheses:false{{/auto_link}}      | Multiplies each component of `input` by `other`.                                                      |
+| {{#auto_link}}pydec.mul short with_parentheses:false{{/auto_link}}      | Multiplies each component in `input` by `other`.                                                      |
 | {{#auto_link}}pydec.multiply short with_parentheses:false{{/auto_link}} | Alias for {{#auto_link}}pydec.mul{{/auto_link}}.                                                      |
-| {{#auto_link}}pydec.round short with_parentheses:false{{/auto_link}}    | Rounds elements of each component of `input` to the nearest integer.                                  |
+| {{#auto_link}}pydec.round short with_parentheses:false{{/auto_link}}    | Rounds elements of each component in `input` to the nearest integer.                                  |
 | {{#auto_link}}pydec.sub short with_parentheses:false{{/auto_link}}      | Subtracts `other`, scaled by `alpha`, from `input`.                                                   |
 | {{#auto_link}}pydec.subtract short with_parentheses:false{{/auto_link}} | Alias for {{#auto_link}}pydec.sub{{/auto_link}}.                                                      |
 
@@ -63,11 +63,11 @@ The pydec package contains data structures for compositions and defines mathemat
 
 | API                                                                  | Description                                                                          |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| {{#auto_link}}pydec.all short with_parentheses:false{{/auto_link}}   | Tests if all elements in `input.recovery` evaluate to True.                          |
-| {{#auto_link}}pydec.any short with_parentheses:false{{/auto_link}}   | Tests if any element in `input.recovery` evaluates to True.                          |
-| {{#auto_link}}pydec.mean short with_parentheses:false{{/auto_link}}  | Returns the mean value of all elements in each component of the `input` composition. |
-| {{#auto_link}}pydec.sum short with_parentheses:false{{/auto_link}}   | Returns the sum of all elements in each component of the `input` composition.        |
-| {{#auto_link}}pydec.c_sum short with_parentheses:false{{/auto_link}} | Returns the sum of all components of the `input` composition.                        |
+| {{#auto_link}}pydec.all short with_parentheses:false{{/auto_link}}   | Tests if all elements in `input.recovery` evaluate to *True*.                        |
+| {{#auto_link}}pydec.any short with_parentheses:false{{/auto_link}}   | Tests if any element in `input.recovery` evaluates to *True*.                        |
+| {{#auto_link}}pydec.mean short with_parentheses:false{{/auto_link}}  | Returns the mean value of all elements of each component in the `input` composition. |
+| {{#auto_link}}pydec.sum short with_parentheses:false{{/auto_link}}   | Returns the sum of all elements of each component in the `input` composition.        |
+| {{#auto_link}}pydec.c_sum short with_parentheses:false{{/auto_link}} | Returns the sum of all components in the `input` composition.                        |
 
 
 ## Other Operations
@@ -77,4 +77,4 @@ Currently PyDec does not yet fully cover the API supported by PyTorch. As a work
 | API                                                                    | Description                                                                 |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | {{#auto_link}}pydec.c_apply short with_parentheses:false{{/auto_link}} | Applies the function `callable` to each component of `input`.               |
-| {{#auto_link}}pydec.c_map short with_parentheses:false{{/auto_link}}   | Applies `callable` for each component of `input` and the given composition. |
+| {{#auto_link}}pydec.c_map short with_parentheses:false{{/auto_link}}   | Applies `callable` for each component in `input` and the given composition. |
