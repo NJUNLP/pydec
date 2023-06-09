@@ -27,7 +27,7 @@ with pydec.decOVF.using_decomposition_func("scaling"):
 
 Some decomposition algorithm provide configurable hyperparameters, but the arguments cannot be passed explicitly when calling the torch operators.
 
-Use {{#auto_link}}pydec.decOVF.set_decomposition_args{{/auto_link}} to set the arguments of the decomposition algorithm. We also provide the context manager to locally set arguments, by using {{#auto_link}}pydec.decOVF.using_decomposition_func{{/auto_link}}.
+Use {{#auto_link}}pydec.decOVF.set_decomposition_args{{/auto_link}} to set the arguments of the decomposition algorithm. We also provide the context manager to locally set arguments, by using {{#auto_link}}pydec.decOVF.using_decomposition_args{{/auto_link}}.
 
 Example:
 ```python
@@ -50,5 +50,27 @@ with pydec.decOVF.using_decomposition_args(threshold=0.2, foo="foo"):
 
 
 ## Customizing the decomposition algorithm
-TODO
-<!-- See {% include doc.html name="Customizing bias decomposition" path="pythonapi/pydec.bias_decomposition/#customizing-bias-decomposition" %}. -->
+
+To use a customized bias decomposition algorithm, you need to register your function using {{#auto_link}}pydec.decOVF.register_decomposition_func{{/auto_link}} decorator:
+```python
+@pydec.decOVF.register_decomposition_func("your_algorithm_name")
+def customized_decomposition(input, func, *, ref=None, inplace=False) -> Composition:
+    ...
+```
+Your function signature should contain at least the positional arguments `input` and `func` and the keyword arguments `ref` and `inplace`. `input` is the input composition. `func` is an element-wise function whose input and output are both tensor, [`torch.nn.functional.relu()`](https://pytorch.org/docs/stable/generated/torch.nn.functional.relu.html#torch.nn.functional.relu) for example.
+
+You can add more keyword arguments to the function signature, which can be specified via {{#auto_link}}pydec.decOVF.set_decomposition_args{{/auto_link}} and {{#auto_link}}pydec.decOVF.using_decomposition_args{{/auto_link}}.
+```python
+@pydec.decOVF.register_decomposition_func("your_algorithm_name")
+def customized_decomposition(input, func, *, ref=None, inplace=False, my_arg=None) -> Composition:
+    ...
+```
+
+Use {{#auto_link}}pydec.decOVF.set_decomposition_func{{/auto_link}} and {{#auto_link}}pydec.decOVF.using_decomposition_func{{/auto_link}} to specify PyDec to use your function:
+```python
+pydec.decOVF.set_decomposition_func("your_algorithm_name")
+...
+
+with pydec.decOVF.using_decomposition_func("your_algorithm_name"):
+    ...
+```
