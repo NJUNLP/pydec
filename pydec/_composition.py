@@ -16,7 +16,6 @@ from .overrides import (
     _auto_registration,
     is_registered,
     dispatch_torch_function,
-    get_customized_composition_methods,
 )
 
 # In some cases, these basic types are shadowed by corresponding
@@ -157,11 +156,6 @@ class Composition:
                     component_tensor
                 )
 
-        def bind_customized_methods():
-            method_dict = get_customized_composition_methods()
-            for name, func in method_dict.items():
-                setattr(self, name, types.MethodType(func, self))
-
         self._component_tensor: Tensor = None  # type: ignore[no-redef, assignment]
         self._residual_tensor: Tensor = None  # type: ignore[no-redef, assignment]
         input_kwargs = kwargs.copy()  # for error hint
@@ -169,7 +163,6 @@ class Composition:
         if len(args) == 0 and len(kwargs) == 0:
             # a private constructor to create a void composition with no data,
             # which is usually assigned in `_from_replace`.
-            bind_customized_methods()
             return
         elif len(args) > 0:
             if isinstance(args[0], Composition):
@@ -196,8 +189,6 @@ class Composition:
                 raise args_error("Composition.__init__", args, input_kwargs)
         else:
             raise args_error("Composition.__init__", args, input_kwargs)
-
-        bind_customized_methods()
 
     @_auto_registration
     def __getitem__(

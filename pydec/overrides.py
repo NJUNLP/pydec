@@ -20,7 +20,6 @@ T = TypeVar("T")
 
 _HANDLED_BUILTIN_FUNCTIONS = {}
 _HANDLED_CUSTOMIZED_FUNCTIONS = {}
-_HANDLED_COMPOSITION_METHODS = {}
 
 
 _namespaces_map = {
@@ -67,29 +66,6 @@ def _register_function(torch_function: T, builtin: bool = False) -> Callable[[T]
         if builtin:
             _HANDLED_BUILTIN_FUNCTIONS[torch_function] = func
         else:
-            overridable_functions = overrides.get_overridable_functions()
-            if torch_function in overridable_functions[torch.Tensor]:
-                _HANDLED_COMPOSITION_METHODS[torch_function.__name__] = func
-                if hasattr(pydec.Composition, torch_function.__name__):
-                    warnings.warn(
-                        f"pydec.Composition already has built-in method ({torch_function.__name__}), and will be overridden by {func}",
-                        stacklevel=2,
-                    )
-            # else:
-            # pydec_modules = [pydec, pydec.nn, pydec.nn.functional]
-            # module_name = ".".join(
-            #     ["pydec"] + overrides.resolve_name(torch_function).split(".")[1:-1]
-            # )
-            # if module_name in [m.__name__ for m in pydec_modules]:
-            #     for module in pydec_modules:
-            #         if module.__name__ == module_name:
-            #             setattr(module, torch_function.__name__, func)
-            #             break
-            # else:
-            #     warnings.warn(
-            #         f"function {torch_function} will not append to pydec cause the module {module_name} doesn't exist now.",
-            #         stacklevel=2,
-            #     )
             _HANDLED_CUSTOMIZED_FUNCTIONS[torch_function] = func
         return func
 
@@ -165,10 +141,6 @@ def is_registered(torch_function: Callable) -> bool:
         torch_function in _HANDLED_BUILTIN_FUNCTIONS
         or torch_function in _HANDLED_CUSTOMIZED_FUNCTIONS
     )
-
-
-def get_customized_composition_methods() -> Dict[str, Callable]:
-    return _HANDLED_COMPOSITION_METHODS
 
 
 def dispatch_torch_function(torch_function: Callable) -> Callable:
