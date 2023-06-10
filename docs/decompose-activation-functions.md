@@ -51,7 +51,7 @@ with pydec.decOVF.using_decomposition_args(threshold=0.2, foo="foo"):
 
 ## Customizing the decomposition algorithm
 
-To use a customized bias decomposition algorithm, you need to register your function using {{#auto_link}}pydec.decOVF.register_decomposition_func{{/auto_link}} decorator:
+To use a customized decomposition algorithm, you need to register your function using {{#auto_link}}pydec.decOVF.register_decomposition_func{{/auto_link}} decorator:
 ```python
 @pydec.decOVF.register_decomposition_func("your_algorithm_name")
 def customized_decomposition(input, func, *, ref=None, inplace=False) -> Composition:
