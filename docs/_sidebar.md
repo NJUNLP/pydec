@@ -15,3 +15,4 @@
 
   - [pydec](pythonapi/pydec/index.md)
   - [pydec.Composition](pythonapi/pydec.Composition/index.md)
+  - [pydec.decOVF](pythonapi/pydec.decOVF/index.md)
