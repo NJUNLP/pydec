@@ -4,6 +4,9 @@
     "python_bool": "[bool](https://docs.python.org/3/library/functions.html#bool)",
     "python_str": "[str](https://docs.python.org/3/library/stdtypes.html#str)",
     "python_callable": "[callable](https://docs.python.org/3/glossary.html#term-callable)",
+    "python_dict": "[dict](https://docs.python.org/3/library/functions.html#func-dict)",
+    "python_RuntimeError": "[RuntimeError](https://docs.python.org/3/library/exceptions.html#RuntimeError)",
+    "python_ValueError": "[ValueError](https://docs.python.org/3/library/exceptions.html#ValueError)",
     "torch_Tensor": "[Tensor](https://pytorch.org/docs/stable/tensors.html#torch.Tensor)",
     "torch_dtype": "[torch.dtype](https://pytorch.org/docs/stable/tensor_attributes.html#torch.dtype)",
     "torch_device": "[torch.device](https://pytorch.org/docs/stable/tensor_attributes.html#torch.device)",
@@ -59,5 +62,13 @@
     "pydec.Composition.c_size": "pythonapi/pydec.Composition/c_size.md",
     "pydec.Composition.numc": "pythonapi/pydec.Composition/numc.md",
     "pydec.Composition.c_sum": "pythonapi/pydec.Composition/c_sum.md",
-    "pydec.decOVF.set_decomposition_func": "pythonapi/pydec.decOVF/set_decomposition_func.md"
+    "pydec.decOVF": "pythonapi/pydec.decOVF/index.md",
+    "pydec.decOVF.get_decomposition_name": "pythonapi/pydec.decOVF/get_decomposition_name.md",
+    "pydec.decOVF.get_decomposition_func": "pythonapi/pydec.decOVF/get_decomposition_func.md",
+    "pydec.decOVF.get_decomposition_args": "pythonapi/pydec.decOVF/get_decomposition_args.md",
+    "pydec.decOVF.register_decomposition_func": "pythonapi/pydec.decOVF/register_decomposition_func.md",
+    "pydec.decOVF.set_decomposition_func": "pythonapi/pydec.decOVF/set_decomposition_func.md",
+    "pydec.decOVF.set_decomposition_args": "pythonapi/pydec.decOVF/set_decomposition_args.md",
+    "pydec.decOVF.using_decomposition_func": "pythonapi/pydec.decOVF/using_decomposition_func.md",
+    "pydec.decOVF.using_decomposition_args": "pythonapi/pydec.decOVF/using_decomposition_args.md"
 }
