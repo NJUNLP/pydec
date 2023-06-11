@@ -55,7 +55,7 @@ pip install pydec
 
 ## Example: deompose a tiny network
 
-As a simple example, here’s a very simple model with two linear layers and an activation function. We’ll create an instance of it andand get the decomposition of the output by autotracing:
+As a simple example, here's a very simple model with two linear layers and an activation function. We'll create an instance of it and get the decomposition of the output:
 ```python
 import torch
 
