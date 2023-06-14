@@ -12,11 +12,13 @@ The pydec package contains data structures for compositions and defines mathemat
 ## Creation Ops
 ?> To create Composition by class constructor, use {{#auto_link}}pydec.Composition{{/auto_link}}.
 
-| API                                                                       | Description                                                                                                                                                                         |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| {{#auto_link}}pydec.void short with_parentheses:false{{/auto_link}}       | Returns an void composition.                                                                                                                                                        |
-| {{#auto_link}}pydec.zeros short with_parentheses:false{{/auto_link}}      | Returns a composition whose components filled with the scalar value *0*, with the shape and the component number defined by the variable argument `size` and `c_num`, respectively. |
-| {{#auto_link}}pydec.zeros_like short with_parentheses:false{{/auto_link}} | Returns a composition whose components filled with the scalar value *0*, with the same shape as `input`.                                                                            |
+| API                                                                           | Description                                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.void short with_parentheses:false{{/auto_link}}           | Returns an void composition.                                                                                                                                                        |
+| {{#auto_link}}pydec.zeros short with_parentheses:false{{/auto_link}}          | Returns a composition whose components filled with the scalar value *0*, with the shape and the component number defined by the variable argument `size` and `c_num`, respectively. |
+| {{#auto_link}}pydec.zeros_like short with_parentheses:false{{/auto_link}}     | Returns a composition whose components filled with the scalar value *0*, with the same shape as `input`.                                                                            |
+| {{#auto_link}}pydec.empty_indices short with_parentheses:false{{/auto_link}}  | Returns a uninitialized index composition, with the shape and the component number defined by the variable argument `size` and `c_num`, respectively.                               |
+| {{#auto_link}}pydec.as_composition short with_parentheses:false{{/auto_link}} | Converts tensor into a composition, sharing data and preserving autograd history if possible.                                                                                       |
 
 ## Indexing, Slicing, Joining, Mutating Ops
 
@@ -41,8 +43,17 @@ The pydec package contains data structures for compositions and defines mathemat
 | {{#auto_link}}pydec.diagonal_init short with_parentheses:false{{/auto_link}}    | Embeds the values of the `src` tensor into `input` composition along the diagonal components of `input`, with respect to `dim`.                              |
 | {{#auto_link}}pydec.squeeze short with_parentheses:false{{/auto_link}}          | Returns a composition with all specified dimensions of `input` of size *1* removed.                                                                          |
 | {{#auto_link}}pydec.stack short with_parentheses:false{{/auto_link}}            | Concatenates a sequence of compositions along a new dimension.                                                                                               |
+| {{#auto_link}}pydec.c_stack short with_parentheses:false{{/auto_link}}          | Concatenates a sequence of tensors along a new dimension and returns their composition.                                                                      |
 | {{#auto_link}}pydec.transpose short with_parentheses:false{{/auto_link}}        | Returns a composition that is a transposed version of `input`.                                                                                               |
 | {{#auto_link}}pydec.unsqueeze short with_parentheses:false{{/auto_link}}        | Returns a new composition with a dimension of size one inserted at the specified position.                                                                   |
+
+
+## Component Indexing and Slicing
+| API                                                                                    | Description                                                             |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| {{#auto_link}}pydec.enable_c_accessing short with_parentheses:false{{/auto_link}}      | Context-manager that enables indexing and slicing of components.        |
+| {{#auto_link}}pydec.is_c_accessing_enabled short with_parentheses:false{{/auto_link}}  | Returns *True* if component accessing mode is currently enabled.        |
+| {{#auto_link}}pydec.set_c_accessing_enabled short with_parentheses:false{{/auto_link}} | Context-manager that sets indexing and slicing of components on or off. |
 
 ## Math operations
 ### Pointwise Ops
@@ -69,12 +80,31 @@ The pydec package contains data structures for compositions and defines mathemat
 | {{#auto_link}}pydec.sum short with_parentheses:false{{/auto_link}}   | Returns the sum of all elements of each component in the `input` composition.        |
 | {{#auto_link}}pydec.c_sum short with_parentheses:false{{/auto_link}} | Returns the sum of all components in the `input` composition.                        |
 
+### Comparison Ops
+| API                                                                  | Description                                                                                             |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.isinf short with_parentheses:false{{/auto_link}} | Tests if each element of every component in `input` is infinite (positive or negative infinity) or not. |
+| {{#auto_link}}pydec.isnan short with_parentheses:false{{/auto_link}} | Tests if each element of every component in `input` is NaN or not.                                      |
 
-## Other Operations
+### Other Operations
 
 Currently PyDec does not yet fully cover the API supported by PyTorch. As a workaround, PyDec provides the function {{#auto_link}}pydec.c_apply{{/auto_link}} and {{#auto_link}}pydec.c_map{{/auto_link}}, which will call the specified PyTorch function and pass in the combined component tensors as arguments. This usually works on [Pointwise Ops](https://pytorch.org/docs/stable/torch.html#pointwise-ops), while errors may occur on other operations.
 
-| API                                                                    | Description                                                                 |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| {{#auto_link}}pydec.c_apply short with_parentheses:false{{/auto_link}} | Applies the function `callable` to each component of `input`.               |
-| {{#auto_link}}pydec.c_map short with_parentheses:false{{/auto_link}}   | Applies `callable` for each component in `input` and the given composition. |
+If you want to extend or override the APIs of PyDec, see [Extending PyDec](extending-pydec.md).
+
+| API                                                                    | Description                                                                                                   |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.c_apply short with_parentheses:false{{/auto_link}} | Applies the function `callable` to each component of `input`.                                                 |
+| {{#auto_link}}pydec.c_map short with_parentheses:false{{/auto_link}}   | Applies `callable` for each component in `input` and the given composition.                                   |
+| {{#auto_link}}pydec.clone short with_parentheses:false{{/auto_link}}   | Returns a copy of `input`.                                                                                    |
+| {{#auto_link}}pydec.detach short with_parentheses:false{{/auto_link}}  | Returns a new composition, detached from the current graph.                                                   |
+| {{#auto_link}}pydec.detach_ short with_parentheses:false{{/auto_link}} | Detaches the composition from the graph that created it, making it a leaf. Views cannot be detached in-place. |
+
+### BLAS and LAPACK Operations
+
+| API                                                                   | Description                                                                      |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.bmm short with_parentheses:false{{/auto_link}}    | Performs a batch matrix-matrix product of matrices stored in `input` and `mat2`. |
+| {{#auto_link}}pydec.matmul short with_parentheses:false{{/auto_link}} | Matrix product of `input` and `other`.                                           |
+| {{#auto_link}}pydec.mm short with_parentheses:false{{/auto_link}}     | Performs a matrix multiplication of the matrices `input` and `mat2`.             |
+| {{#auto_link}}pydec.mv short with_parentheses:false{{/auto_link}}     | Performs a matrix-vector product of the matrix `input` and the vector `vec`.     |
