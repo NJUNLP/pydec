@@ -92,6 +92,7 @@ For more information about indexing, see [Indexing, Slicing, Joining, Mutating O
 
 ## Composition class reference
 > CLASS pydec.Composition
+
 There are a few main ways to create a composition, depending on your use case.
 * To create a composition with pre-existing data, pass in a tensor or composition as an argument.
 * To create a composition with specific size, use **pydec.zeros()** composition creation ops (see [Creation Ops](/pythonapi/pydec/index.md#creation-ops)).
@@ -222,3 +223,22 @@ Returns a view of this tensor with the last two dimensions transposed.
 | {{#auto_link}}pydec.Composition.view short:1 with_parentheses:false{{/auto_link}}             | Returns a new composition with the same data as the `self` composition but of a different `shape`.                                        |
 | {{#auto_link}}pydec.Composition.view_as short:1 with_parentheses:false{{/auto_link}}          | View this composition as the same shape as `other`.                                                                                       |
 
+## IndexComposition
+> CLASS pydec.IndexComposition
+
+The composition used to construct the input of the sparse layers ([Embedding](https://pytorch.org/docs/stable/generated/torch.nn.Embedding.html#torch.nn.Embedding) and [EmbeddingBag](https://pytorch.org/docs/stable/generated/torch.nn.EmbeddingBag.html#torch.nn.EmbeddingBag)).
+
+`IndexComposition.dtype` must be either `torch.int` or `torch.long`.
+
+?> Inherited from {{#auto_link}}pydec.Composition short:1 with_parentheses:false{{/auto_link}}.
+
+To create a index composition:
+* To create a index composition with pre-existing data, pass in a tensor or index composition as an argument.
+* (Recommended) To create a empty index composition with specific size, use **pydec.empty_indices()** composition creation ops (see [Creation Ops](/pythonapi/pydec/index.md#creation-ops)).
+
+<!-- TODO Example -->
+
+#### Attributes
+> IndexComposition.empty_mask
+
+The mask for empty elements, which is a tuple of *(component_empty_mask, residual_empty_mask)* with the mask tensor of the components and residual.
