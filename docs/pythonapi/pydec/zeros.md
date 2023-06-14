@@ -1,4 +1,3 @@
-
 # PYDEC.ZEROS
 > pydec.(*size, c_num, *, out=None, dtype=None, layout=torch.strided, device=None, requires_grad=False) →  {{{pydec_Composition}}}
 
