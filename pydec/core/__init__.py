@@ -1,5 +1,5 @@
 """
-Handles operations that need to do decomposition, just like a back-end module.
+PyDec back-end
 """
 from . import decBLAS
 from . import decOVF
