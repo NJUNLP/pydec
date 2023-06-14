@@ -8,6 +8,7 @@ This implementation is based on **[Hugging Face LLaMA](https://huggingface.co/do
 
 ## Example usage
 #### Setup
+Make sure you have Hugging Face Transformers installed, read [here](https://huggingface.co/docs/transformers/installation) to install it.
 
 To use it, first prepare the model checkpoints and configuration information. [Here](https://huggingface.co/yahma/llama-7b-hf) is an example, as a ready-to-use resource.
 
@@ -69,4 +70,6 @@ for step, composition in enumerate(
 ```
 
 ## To reduce memory usage
-TODO
+[Here](https://doublevii.github.io/pydec/#/reduce-memory-overhead) are some suggestions to reduce memory overhead.
+
+The [8bit quantization](https://huggingface.co/docs/transformers/v4.30.0/en/perf_infer_gpu_one#bitsandbytes-integration-for-int8-mixedprecision-matrix-decomposition) is not currently supported.
