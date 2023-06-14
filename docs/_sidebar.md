@@ -15,4 +15,7 @@
 
   - [pydec](pythonapi/pydec/index.md)
   - [pydec.Composition](pythonapi/pydec.Composition/index.md)
+  - [pydec.nn](pythonapi/pydec.nn/index.md)
+  - [pydec.nn.functional](pythonapi/pydec.nn.functional/index.md)
   - [pydec.decOVF](pythonapi/pydec.decOVF/index.md)
+  - [pydec.overrides](pythonapi/pydec.overrides/index.md)
