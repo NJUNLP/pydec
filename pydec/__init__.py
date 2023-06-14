@@ -10,33 +10,16 @@ from ._composition import (
 )
 from . import core
 
-# from .core import decBLAS, decOVF, decMVF
+from .core import decOVF
 
-from .error_check import (
-    no_error_check,
-    error_check,
-    check_error,
-    is_error_checking_enabled,
-)
 
 # TODO: need update
 __all__ = [
     "Composition",
-    "set_decomposition_func",
-    "get_decomposition_name",
-    "get_decomposition_func",
-    "using_decomposition_func",
-    "set_decomposition_args",
-    "get_decomposition_args",
-    "using_decomposition_args",
-    "no_error_check",
-    "error_check",
-    "check_error",
-    "is_error_checking_enabled",
-    "no_tracing",
-    "enable_tracing",
-    "set_tracing_enabled",
-    "is_tracing_enabled",
+    "IndexComposition",
+    "enable_c_accessing",
+    "set_c_accessing_enabled",
+    "is_c_accessing_enabled",
 ]
 
 import typing as _typing
@@ -61,7 +44,5 @@ for name in dir(_variable_functions):
     globals()[name] = obj
     if not name.startswith("_"):
         __all__.append(name)
-
-from .variable_functions import _from_replce
 
 import pydec.nn as nn

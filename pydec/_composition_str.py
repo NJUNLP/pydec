@@ -272,6 +272,8 @@ def _c_str(self, *, composition_contents: Optional[List[Union[str, None]]] = Non
         equal to the number of components (include the residual). For components that do not
         use customized content, use `None` placeholder in the list.
     """
+    if self.components is None:
+        return r"composition{}"
     if composition_contents is not None:
         contents_num = len(composition_contents)
         components_num = self.numc() + 1
@@ -292,7 +294,7 @@ def _c_str(self, *, composition_contents: Optional[List[Union[str, None]]] = Non
             else None,
             prefix_indent=indent + 2,  # second indent
         )[0]
-        for i in range(len(self))
+        for i in range(self.numc())
     ]
     residual_repr, suffixes = _t_str(
         self._residual_tensor,

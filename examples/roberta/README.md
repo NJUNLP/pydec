@@ -11,6 +11,8 @@ We provide two implementations for [Fairseq](https://github.com/facebookresearch
 ## Example usage
 ### Run decomposition with Fairseq
 #### Setup
+Make sure you have Fairseq installed, read [here](https://github.com/facebookresearch/fairseq#requirements-and-installation) to install it.
+
 To obtain the RoBERTa pre-trained models, please refer to [here](https://github.com/facebookresearch/fairseq/tree/main/examples/roberta).
 
 To finetune RoBERTa on the sentence classification tasks, please refer to [Finetuning RoBERTa on GLUE tasks](https://github.com/facebookresearch/fairseq/blob/main/examples/roberta/README.glue.md) or [Finetuning RoBERTa on a custom classification task](https://github.com/facebookresearch/fairseq/blob/main/examples/roberta/README.custom_classification.md).
@@ -21,7 +23,7 @@ We provide a script for changing the architecture name:
 ```bash
 python change_fairseq_architecture.py $PATH_TO_CHECKPOINT
 ```
-This will change the architecture name of the entered checkpoint and save it to `checkpoints/checkpoint.dec.pt`.
+This will change the architecture name of the input checkpoint and save it to `checkpoints/checkpoint.dec.pt`.
 
 #### Decompose RoBERTa in sentence classification tasks
 ```python

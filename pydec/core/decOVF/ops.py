@@ -44,6 +44,7 @@ __all__ = [
 
 
 def relu(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
+    # TODO: maybe optimize the relu in scaling algorithm for speed .
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         # TODO: inplace arg overwrite
@@ -214,7 +215,7 @@ def biased_exp(
     # TODO: need a special dec to address numerical  explosion
     if ref is None:
         ref = input.c_sum()
-    new_input = pydec._from_replce(input.components, input.residual + bias)
+    new_input = pydec.as_composition(input.components, input.residual + bias)
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         out = decomposition_func(input=new_input, func=torch.exp, ref=ref + bias)
@@ -235,14 +236,14 @@ def biased_exp(
 #         ref = input.c_sum()
 #     new_components = torch.cat([input.components, input.residual[None]])
 #     new_residual = torch.zeros_like(input.residual).fill_(-torch.inf)
-#     new_input = pydec._from_replce(new_components, new_residual)
+#     new_input = pydec.as_composition(new_components, new_residual)
 #     decomposition_func = get_decomposition_func()
 #     if decomposition_func is not None:
 #         out = decomposition_func(input=new_input, func=torch.exp, ref=ref + bias)
 #         assert isinstance(out, pydec.Composition)
 #         out_components = out.components[:-1]
 #         out_residual = out.components[-1]
-#         return pydec._from_replce(out_components, out_residual)
+#         return pydec.as_composition(out_components, out_residual)
 #     else:
 #         raise none_decomposition_func_error(get_decomposition_name())
 
@@ -288,7 +289,7 @@ def square(
         ref + input.residual,
         out=out.components if out is not None else None,
     )
-    return pydec._from_replce(out_components, out_residual)
+    return pydec.as_composition(out_components, out_residual)
 
 
 def square_(

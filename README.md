@@ -1,36 +1,39 @@
-[![PyPI](https://img.shields.io/pypi/v/pydec)](https://pypi.org/project/pydec/)
-[![Test](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master)](https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/DoubleVII/pydec/jekyll-gh-pages.yml?label=docs)](https://doublevii.github.io/pydec/)
-[![codecov](https://codecov.io/gh/DoubleVII/pydec/branch/master/graph/badge.svg?token=UGXWFEKQA9)](https://codecov.io/gh/DoubleVII/pydec)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+<p align="center">
+  <img src="docs/_images/PyDec_Logo1.png" width="200">
+</p>
 
+<p align="center">
+  <br />
+  <br />
+  <a href="https://pypi.org/project/pydec/"><img alt="PyPi" src="https://img.shields.io/pypi/v/pydec" /></a>
+  <a href="https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml"><img alt="Test" src="https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master" /></a>
+  <a href="https://doublevii.github.io/pydec/"><img alt="Docs Build Status" src="https://img.shields.io/github/actions/workflow/status/DoubleVII/pydec/deploy-static-pages.yml?label=docs" /></a>
+  <a href="https://codecov.io/gh/DoubleVII/pydec"><img alt="codecov" src="https://codecov.io/gh/DoubleVII/pydec/branch/master/graph/badge.svg?token=UGXWFEKQA9" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
+</p>
 
-<h1 align="center" style="font-size:60px">
-  PyDec
-</h1>
+--------------------------------------------------------------------------------
 
 PyDec is a linear decomposition toolkit for neural network based on [PyTorch](https://pytorch.org/), which can decompose the tensor in the forward process into given components with a small amount of code. The result of decomposition can be applied to tasks such as attribution analysis.
 
 ### Features:
 * Fast. Compute decomposition in foward process and benefit from GPU acceleration.
-* Real-time. Outputs attribution along with the model output results.
+* Run once, decompose anywhere. Obtain the decomposition of all hidden states (if you saved them) in forward propagation.
 * Applicable to networks such as Transformer, CNN and RNN.
 
 # Examples
-## Attribution
+<!-- ## Attribution
 Contribution Heat maps of the Roberta model (fine-tuned on SST-2). Warm colors indicate high
 contribution while cool colors indicate low contribution. The outputs of the model were positive, negative and positive, but the latter two samples did not match the labels.
 
 <div align="center">
 <img src="./docs/assets/img/pydec_demo1.png" width="70%">
-</div>
+</div> -->
 
 ## Data flow visualization
 
-![demo2](./docs/assets/img/pydec_demo2_1.gif)
-
-![demo2](./docs/assets/img/pydec_demo2_2.gif)
+![Data flow demo](docs/_images/pydec_demo2_1.gif)
 
 # Requirements and Installation
 * [PyTorch](https://pytorch.org/) version >= 1.11.0
@@ -52,7 +55,7 @@ pip install pydec
 
 ## Example: deompose a tiny network
 
-As a simple example, here’s a very simple model with two linear layers and an activation function. We’ll create an instance of it andand get the decomposition of the output by autotracing:
+As a simple example, here's a very simple model with two linear layers and an activation function. We'll create an instance of it and get the decomposition of the output:
 ```python
 import torch
 
@@ -144,4 +147,8 @@ tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
 
 # Documentation
 
-The [full documentation](https://doublevii.github.io/pydec/) contains examples of implementations on realistic models, tutorials, notes and Python API.
+The [full documentation](https://doublevii.github.io/pydec/) contains examples of implementations on real-world models, tutorials, notes and Python API descriptions.
+
+
+# Linear Decomposition Theory
+To understand the principles and theories behind PyDec, see our paper [Local Interpretation of Transformer Based on Linear Decomposition]().

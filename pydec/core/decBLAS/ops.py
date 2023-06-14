@@ -76,7 +76,7 @@ def cc_add(
         alpha=alpha,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def cc_add_(
@@ -95,7 +95,7 @@ def cc_add_(
         other._residual_tensor,
         alpha=alpha,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_add(
@@ -116,7 +116,7 @@ def ct_add(
         alpha=alpha,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_add_(
@@ -130,7 +130,7 @@ def ct_add_(
         other,
         alpha=alpha,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def tc_add(
@@ -164,7 +164,7 @@ def cc_sub(
         alpha=alpha,
         out=out.out_residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def cc_sub_(
@@ -183,7 +183,7 @@ def cc_sub_(
         other._residual_tensor,
         alpha=alpha,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_sub(
@@ -204,7 +204,7 @@ def ct_sub(
         alpha=alpha,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_sub_(
@@ -218,7 +218,7 @@ def ct_sub_(
         other,
         alpha=alpha,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def tc_sub(
@@ -239,7 +239,7 @@ def tc_sub(
         alpha=alpha,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_mul(
@@ -267,7 +267,7 @@ def ct_mul(
         other,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_mul_(input: Composition, other: Union[Tensor, Number]) -> Composition:
@@ -319,7 +319,7 @@ def ct_div(
         rounding_mode=rounding_mode,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_div_(
@@ -359,7 +359,7 @@ def ct_matmul(
         other,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def tc_matmul(
@@ -387,7 +387,7 @@ def tc_matmul(
         other._residual_tensor,
         out=out._residual_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_mv(
@@ -406,7 +406,7 @@ def ct_mv(
         vec,
         out=out._component_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def tc_mv(
@@ -428,7 +428,7 @@ def tc_mv(
     out_component_tensor.squeeze_(-1)
     if out is not None:
         out._component_tensor.squeeze_(-1)
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_mm(
@@ -447,7 +447,7 @@ def ct_mm(
         mat2,
         out=out._component_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def tc_mm(
@@ -466,7 +466,7 @@ def tc_mm(
         mat2._component_tensor,
         out=out._component_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def ct_bmm(
@@ -485,7 +485,7 @@ def ct_bmm(
         mat2,
         out=out._component_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
 def tc_bmm(
@@ -504,4 +504,4 @@ def tc_bmm(
         mat2._component_tensor,
         out=out._component_tensor if out is not None else None,
     )
-    return pydec._from_replce(out_component_tensor, out_residual_tensor)
+    return pydec.as_composition(out_component_tensor, out_residual_tensor)

@@ -16,7 +16,6 @@ from .overrides import (
     _auto_registration,
     is_registered,
     dispatch_torch_function,
-    get_customized_composition_methods,
 )
 
 # In some cases, these basic types are shadowed by corresponding
@@ -86,6 +85,10 @@ class Composition:
         return self._residual_tensor.dtype
 
     @property
+    def layout(self) -> _dtype:
+        return self._residual_tensor.layout
+
+    @property
     def T(self) -> Composition:
         return self.permute(*torch.arange(self.ndim - 1, -1, -1))
 
@@ -104,6 +107,10 @@ class Composition:
     @property
     def residual(self) -> Tensor:
         return self._residual_tensor
+
+    @property
+    def recovery(self) -> Tensor:
+        return self.c_sum()
 
     @overload
     def __init__(
@@ -149,11 +156,6 @@ class Composition:
                     component_tensor
                 )
 
-        def bind_customized_methods():
-            method_dict = get_customized_composition_methods()
-            for name, func in method_dict.items():
-                setattr(self, name, types.MethodType(func, self))
-
         self._component_tensor: Tensor = None  # type: ignore[no-redef, assignment]
         self._residual_tensor: Tensor = None  # type: ignore[no-redef, assignment]
         input_kwargs = kwargs.copy()  # for error hint
@@ -161,7 +163,6 @@ class Composition:
         if len(args) == 0 and len(kwargs) == 0:
             # a private constructor to create a void composition with no data,
             # which is usually assigned in `_from_replace`.
-            bind_customized_methods()
             return
         elif len(args) > 0:
             if isinstance(args[0], Composition):
@@ -188,8 +189,6 @@ class Composition:
                 raise args_error("Composition.__init__", args, input_kwargs)
         else:
             raise args_error("Composition.__init__", args, input_kwargs)
-
-        bind_customized_methods()
 
     @_auto_registration
     def __getitem__(
@@ -236,7 +235,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor[indices]
             out_residual_tensor = self._residual_tensor[indices[1:]]
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     def __c_setitem__(
         self,
@@ -271,11 +270,17 @@ class Composition:
 
     @_auto_registration
     def __len__(self):
-        # TODO: maybe same as the behavior of tensor
-        return self._component_tensor.__len__()
+        if pydec.is_c_accessing_enabled():
+            return self.components.__len__()
+        else:
+            return self.residual.__len__()
 
     def __iter__(self):
-        return self._component_tensor.__iter__()
+        if pydec.is_c_accessing_enabled():
+            return self._component_tensor.__iter__()
+        else:
+            # TODO: return a iterator
+            raise NotImplementedError
 
     @_auto_registration
     def __reversed__(self):
@@ -352,11 +357,11 @@ class Composition:
 
     @_auto_registration
     def __neg__(self) -> Composition:
-        return pydec._from_replce(-self._component_tensor, -self._residual_tensor)
+        return pydec.as_composition(-self._component_tensor, -self._residual_tensor)
 
     @_auto_registration
     def __pos__(self) -> Composition:
-        return pydec._from_replce(+self._component_tensor, +self._residual_tensor)
+        return pydec.as_composition(+self._component_tensor, +self._residual_tensor)
 
     @_auto_registration
     def __iadd__(self, other) -> Composition:
@@ -478,37 +483,37 @@ class Composition:
     @_auto_registration
     def __eq__(self, other: Any) -> Tensor:  # type: ignore[override]
         if isinstance(other, Composition):
-            return other.__eq__(self.c_sum())
+            return self.c_sum().__eq__(other.c_sum())
         return self.c_sum().__eq__(other)
 
     @_auto_registration
     def __ne__(self, other: Any) -> Tensor:  # type: ignore[override]
         if isinstance(other, Composition):
-            return other.__ne__(self.c_sum())
+            return self.c_sum().__ne__(other.c_sum())
         return self.c_sum().__ne__(other)
 
     @_auto_registration
     def __gt__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__lt__(self.c_sum())
+            return self.c_sum().__gt__(other.c_sum())
         return self.c_sum().__gt__(other)
 
     @_auto_registration
     def __lt__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__gt__(self.c_sum())
+            return self.c_sum().__lt__(other.c_sum())
         return self.c_sum().__lt__(other)
 
     @_auto_registration
     def __ge__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__le__(self.c_sum())
+            return self.c_sum().__ge__(other.c_sum())
         return self.c_sum().__ge__(other)
 
     @_auto_registration
     def __le__(self, other: Any) -> Tensor:
         if isinstance(other, Composition):
-            return other.__ge__(self.c_sum())
+            return self.c_sum().__le__(other.c_sum())
         return self.c_sum().__le__(other)
 
     @_auto_registration
@@ -632,6 +637,114 @@ class Composition:
     @_auto_registration
     def all(self, *args: Any, **kwargs: Any) -> Tensor:
         return pydec.all(self, *args, **kwargs)
+
+    @overload
+    def eq(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def eq(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def eq(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def eq(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().eq(other.c_sum())
+        return self.c_sum().eq(other)
+
+    @overload
+    def ne(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def ne(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def ne(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def ne(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().ne(other.c_sum())
+        return self.c_sum().ne(other)
+
+    @overload
+    def gt(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def gt(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def gt(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def gt(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().gt(other.c_sum())
+        return self.c_sum().gt(other)
+
+    @overload
+    def lt(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def lt(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def lt(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def lt(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().lt(other.c_sum())
+        return self.c_sum().lt(other)
+
+    @overload
+    def ge(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def ge(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def ge(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def ge(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().ge(other.c_sum())
+        return self.c_sum().ge(other)
+
+    @overload
+    def le(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def le(self, other: Composition) -> Composition:
+        ...
+
+    @overload
+    def le(self, other: Number) -> Composition:
+        ...
+
+    @_auto_registration
+    def le(self, other):
+        if isinstance(other, Composition):
+            return self.c_sum().le(other.c_sum())
+        return self.c_sum().le(other)
 
     @_auto_registration
     def unsqueeze(self, dim: _int) -> Composition:
@@ -779,7 +892,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor.view((self.numc(),) + size)
             out_residual_tensor = self._residual_tensor.view(size)
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def view_as(self, other: Union[Tensor, Composition]) -> Composition:
@@ -810,7 +923,7 @@ class Composition:
     def contiguous(self, memory_format=torch.contiguous_format) -> Composition:
         out_component_tensor = self._component_tensor.contiguous()
         out_residual_tensor = self._residual_tensor.contiguous()
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def is_contiguous(self, memory_format=torch.contiguous_format) -> _bool:
@@ -854,7 +967,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor.to(*args, **kwargs)
             out_residual_tensor = self._residual_tensor.to(*args, **kwargs)
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @overload
     def masked_fill(self, mask: Tensor, value: Tensor) -> Composition:
@@ -1034,13 +1147,13 @@ class Composition:
         out_residual_tensor = self._residual_tensor.cuda(
             device=device, non_blocking=non_blocking
         )
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def cpu(self) -> Composition:
         out_component_tensor = self._component_tensor.cpu()
         out_residual_tensor = self._residual_tensor.cpu()
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     def is_cuda(self):
         return self._residual_tensor.is_cuda
@@ -1102,7 +1215,7 @@ class Composition:
             dim=_shift_dim(dim), index=index
         )
         out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @overload
     def type(self, dtype: None = None, non_blocking: _bool = False) -> str:
@@ -1123,7 +1236,7 @@ class Composition:
             out_residual_tensor = self._residual_tensor.type(
                 dtype=dtype, non_blocking=non_blocking
             )
-            return pydec._from_replce(out_component_tensor, out_residual_tensor)
+            return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def type_as(self, other: Union[Tensor, Composition]) -> Composition:
@@ -1135,7 +1248,7 @@ class Composition:
         else:
             out_component_tensor = self._component_tensor.type_as(other)
             out_residual_tensor = self._residual_tensor.type_as(other)
-        return pydec._from_replce(out_component_tensor, out_residual_tensor)
+        return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @overload
     def round(self) -> Composition:
@@ -1264,15 +1377,14 @@ class IndexComposition(Composition):
 
     # we use this number to represent empty value
     # all indices should avoid this value
-    MASK_NUM = -sys.maxsize
+    MASK_NUM = -2147483648
 
     @property
-    def component_indices_mask(self) -> Tensor:
-        return self.components == IndexComposition.MASK_NUM
-
-    @property
-    def residual_indices_mask(self) -> Tensor:
-        return self.residual == IndexComposition.MASK_NUM
+    def empty_mask(self) -> Tensor:
+        return (
+            self.components == IndexComposition.MASK_NUM,
+            self.residual == IndexComposition.MASK_NUM,
+        )
 
     @overload
     def __init__(
@@ -1287,7 +1399,6 @@ class IndexComposition(Composition):
         ...
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-
         super().__init__(*args, **kwargs)
 
         if len(args) + len(kwargs) == 0:
@@ -1304,6 +1415,7 @@ class IndexComposition(Composition):
 
     def __repr__(self, *, composition_contents: List[str] = None) -> str:
         # TODO
+        # TODO: add example for docs
         return super().__repr__(composition_contents=composition_contents)
 
 
@@ -1369,3 +1481,9 @@ class _C_AccessingComposition(Composition):
         val: Union[Composition, Tensor, Number],
     ) -> None:
         return super().__c_setitem__(indices, val)
+
+    def __len__(self):
+        return self.components.__len__()
+
+    def __iter__(self):
+        return self._component_tensor.__iter__()

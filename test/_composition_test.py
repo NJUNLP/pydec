@@ -182,10 +182,10 @@ class TestPlus:
     c = init_composition((2, 3))
 
     def test1(self):
-        from pydec.core.decOVF import set_decomposition_func
+        from pydec import decOVF
 
         self.c[:] = 1.5
-        set_decomposition_func("abs_decomposition")
+        decOVF.set_decomposition_func("abs_affine")
         c = self.c + 3
         assert (self.c._residual_tensor + 3 == c._residual_tensor).all()
 
@@ -193,7 +193,7 @@ class TestPlus:
         # c = self.c + 3
         # assert (self.c._residual_tensor + 3 == c._residual_tensor).all()
 
-        set_decomposition_func("hybrid_decomposition")
+        decOVF.set_decomposition_func("hybrid_affine")
         c = self.c + 3
         assert (self.c._residual_tensor + 3 == c._residual_tensor).all()
 
@@ -205,7 +205,7 @@ class TestPlus:
         # c = self.c + 3
         # assert (self.c._residual_tensor + 3 == c._residual_tensor).all()
 
-        with pydec.core.decOVF.no_decomposition():
+        with decOVF.using_decomposition_func("none"):
             c = self.c + 3
             assert (self.c._component_tensor == c._component_tensor).all()
             assert (self.c._residual_tensor + 3 == c._residual_tensor).all()

@@ -57,7 +57,7 @@ from pydec.exception_utils import args_error
 #     out_components = torch.matmul(input.components, grad.transpose(-1, -2))
 #     multiplier = out_cbody / out_components.sum(dim=0)
 #     out_components *= multiplier
-#     return pydec._from_replce(out_components, out_residual)
+#     return pydec.as_composition(out_components, out_residual)
 
 
 # def _decomposeMVF_func(
@@ -179,7 +179,7 @@ def cc_mul(
     if out is not None:
         out.residual[:] = out_residual
         out.components[:] = out_component_tensor
-    return pydec._from_replce(out_component_tensor, out_residual)
+    return pydec.as_composition(out_component_tensor, out_residual)
 
 
 def cc_mul_(
@@ -265,7 +265,7 @@ def cc_div_composite(
     if out is not None:
         out.residual[:] = out_residual
         out.components[:] = out_component_tensor
-    return pydec._from_replce(out_component_tensor, out_residual)
+    return pydec.as_composition(out_component_tensor, out_residual)
 
 
 def cc_matmul(
@@ -379,7 +379,7 @@ def layer_norm_loo(
 
     out_components = torch.zeros_like(input.components)
     for i in range(input.numc()):
-        masked_input: Composition = pydec._from_replce(
+        masked_input: Composition = pydec.as_composition(
             input.components.clone(), input.residual
         )
         masked_input()[i] = 0
@@ -389,7 +389,7 @@ def layer_norm_loo(
     scaler = (ref_out - out_residual) / out_components.sum(dim=0)
     out_components *= scaler
 
-    out = pydec._from_replce(out_components, out_residual)
+    out = pydec.as_composition(out_components, out_residual)
     if weight is not None:
         out *= weight
     if bias is not None:
@@ -468,7 +468,7 @@ def layer_norm_grad(
 
     tw /= input.components.sum(dim=0).unsqueeze(-2)
     out_components = input.components @ tw.transpose(-1, -2)
-    out = pydec._from_replce(out_components, out_residual)
+    out = pydec.as_composition(out_components, out_residual)
     out = out.view(batch_shape + tuple(normalized_shape))
 
     if weight is not None:
