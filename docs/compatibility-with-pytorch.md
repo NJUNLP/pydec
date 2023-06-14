@@ -2,7 +2,7 @@
 
 ## Torch API dispatch mechanism
 
-To minimize the overhead of applying PyDec to pre-defined models. We apply [`__torch_function__` mechanism](https://pytorch.org/docs/stable/notes/extending.html#extending-torch) to dispatch the torch API invocations to the corresponding pydec API implementations. For example, `torch.mul(composition, 2)` is equivalent to `pydec.mul(composition, 2)`.
+To minimize the overhead of applying PyDec to pre-defined models. We employ [`__torch_function__` mechanism](https://pytorch.org/docs/stable/notes/extending.html#extending-torch) to dispatch the torch API invocations to the corresponding pydec API implementations. For example, `torch.mul(composition, 2)` is equivalent to `pydec.mul(composition, 2)`.
 
 Thus, for a given model:
 ```python
