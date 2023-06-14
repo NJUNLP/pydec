@@ -6,7 +6,7 @@ If you only need to modify the decomposition algorithm of the activation functio
 
 ## Overriding PyDec APIs
 
-If you need to override PyDec APIs instead of just modifying the decomposition algorithm. You can use {{#auto_link}}pydec.overrides.register_torch_function{{/auto_link}} to register your customized functions so that when you invoke the specified torch API, the invocation is dispatched to the customized function instead of the PyDec API.
+If you need to **(1)** override PyDec APIs instead of just modifying the decomposition algorithm; **(2)** extend the API that is not yet supported by PyDec. You can use {{#auto_link}}pydec.overrides.register_torch_function{{/auto_link}} to register your customized functions so that when you invoke the specified torch API, the invocation is dispatched to the customized function instead of the PyDec API.
 ```python
 @pydec.overrides.register_torch_function(torch.add)
 def my_add(input: pydec.Composition, other: Any) -> pydec.Composition:
@@ -14,7 +14,6 @@ def my_add(input: pydec.Composition, other: Any) -> pydec.Composition:
     return input + len(other)
 
 c = pydec.zeros(3, c_num=2)
-
 print(torch.add(c, c))
 ```
 
