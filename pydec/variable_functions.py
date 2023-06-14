@@ -51,14 +51,12 @@ def void() -> Composition:
     return Composition()
 
 
-def as_composition(
-    component_tensor: Tensor, residual_tensor: Tensor = None
-) -> Composition:
+def as_composition(components: Tensor, residual: Tensor = None) -> Composition:
     out = void()
-    out._component_tensor = component_tensor
-    if residual_tensor is None:
-        residual_tensor = torch.zeros(component_tensor.size()[1:]).to(component_tensor)
-    out._residual_tensor = residual_tensor
+    out._component_tensor = components
+    if residual is None:
+        residual = torch.zeros(components.size()[1:]).to(components)
+    out._residual_tensor = residual
     return out
 
 
@@ -218,13 +216,9 @@ def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
     return as_composition(out_component_tensor, out_residual_tensor)
 
 
-def c_map(
-    input, other: Composition, callable: Callable[..., Tensor]
-) -> Composition:
+def c_map(input, other: Composition, callable: Callable[..., Tensor]) -> Composition:
     # TODO: shoud we check the results' shape?
-    out_component_tensor = callable(
-        input._component_tensor, other._component_tensor
-    )
+    out_component_tensor = callable(input._component_tensor, other._component_tensor)
     out_residual_tensor = callable(input._residual_tensor, other._residual_tensor)
     if not isinstance(out_component_tensor, Tensor) or not isinstance(
         out_residual_tensor, Tensor
@@ -1544,7 +1538,7 @@ def zeros_like(
     return as_composition(out_component_tensor, out_residual_tensor)
 
 
-def empty_index_composition(
+def empty_indices(
     size: _size,
     c_num: _int,
     *,
