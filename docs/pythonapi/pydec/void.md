@@ -3,7 +3,7 @@
 
 Returns an void composition.
 
-!> No storage space will be allocated for the composition, i.e. no tensor will be created inside the composition.
+!> No underlying data will be created for the composition.
 
 **Keyword Arguments:**
 
