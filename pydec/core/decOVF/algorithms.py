@@ -135,6 +135,9 @@ def affine_decomposition(
 
     composition = input._component_tensor
     multiplier = decompose_out / composition.sum(dim=0)
+
+    # TODO: After processing NANs the residuals should be added to `out.residual`.
+    # Also add a warning when there are NANs
     multiplier.nan_to_num_(0, 0, 0)
 
     if inplace:
