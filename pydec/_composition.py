@@ -1377,15 +1377,14 @@ class IndexComposition(Composition):
 
     # we use this number to represent empty value
     # all indices should avoid this value
-    MASK_NUM = -sys.maxsize
+    MASK_NUM = -2147483648
 
     @property
-    def component_indices_mask(self) -> Tensor:
-        return self.components == IndexComposition.MASK_NUM
-
-    @property
-    def residual_indices_mask(self) -> Tensor:
-        return self.residual == IndexComposition.MASK_NUM
+    def empty_mask(self) -> Tensor:
+        return (
+            self.components == IndexComposition.MASK_NUM,
+            self.residual == IndexComposition.MASK_NUM,
+        )
 
     @overload
     def __init__(
@@ -1416,6 +1415,7 @@ class IndexComposition(Composition):
 
     def __repr__(self, *, composition_contents: List[str] = None) -> str:
         # TODO
+        # TODO: add example for docs
         return super().__repr__(composition_contents=composition_contents)
 
 

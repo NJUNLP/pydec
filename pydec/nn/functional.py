@@ -515,13 +515,12 @@ def embedding(
         # remove once script supports set_grad_enabled
         _no_grad_embedding_renorm_(weight, input, max_norm, norm_type)
 
-    component_tensor_mask = input._component_tensor == IndexComposition.MASK_NUM
-    residual_tensor_mask = input._residual_tensor == IndexComposition.MASK_NUM
+    component_empty_mask, residual_empty_mask = input.empty_mask
     component_tensor = input._component_tensor.masked_fill(
-        component_tensor_mask, padding_idx
+        component_empty_mask, padding_idx
     )
     residual_tensor = input._residual_tensor.masked_fill(
-        residual_tensor_mask, padding_idx
+        residual_empty_mask, padding_idx
     )
     out_component_tensor = torch.embedding(
         weight, component_tensor, padding_idx, scale_grad_by_freq, sparse
@@ -529,8 +528,8 @@ def embedding(
     out_residual_tensor = torch.embedding(
         weight, residual_tensor, padding_idx, scale_grad_by_freq, sparse
     )
-    out_component_tensor[component_tensor_mask] = 0
-    out_residual_tensor[residual_tensor_mask] = 0
+    out_component_tensor[component_empty_mask] = 0
+    out_residual_tensor[residual_empty_mask] = 0
     return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
 
