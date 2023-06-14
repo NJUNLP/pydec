@@ -44,6 +44,7 @@ __all__ = [
 
 
 def relu(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
+    # TODO: maybe optimize the relu in scaling algorithm for speed .
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
         # TODO: inplace arg overwrite
