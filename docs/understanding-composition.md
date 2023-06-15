@@ -204,7 +204,7 @@ This term $\frac{\mathscr{D}h}{\mathscr{D}\{b^1\cdots\mathscr{D}b^L\}}$ is saved
 
 We have implemented some common operations on Compositions, including arithmetic, linear algebra, matrix manipulation (transposing, indexing, slicing).
 
-Most of the operations are the same as tensor operations, and a convenient expression to understand is that performing one operation on a composition is equivalent to performing the same operation for all components of the composition, including the residual component. More details about the operations can be found [here](math-operators.md).
+Most of the operations are the same as tensor operations, and a rough way to understand is that performing one operation on a composition is equivalent to performing the same operation for all components of the composition, including the residual component.
 
 Example:
 ```python
