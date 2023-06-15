@@ -23,7 +23,6 @@ from torch.types import (
     _qscheme,
     _size,
     _layout,
-    SymInt,
 )
 
 from pydec.exception_utils import component_num_error

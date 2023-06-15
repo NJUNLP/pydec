@@ -33,7 +33,6 @@ from torch.types import (
     _qscheme,
     _size,
     _layout,
-    SymInt,
 )
 
 from torch import strided
