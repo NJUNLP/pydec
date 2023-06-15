@@ -34,11 +34,13 @@ The pydec package contains data structures for compositions and defines mathemat
 | {{#auto_link}}pydec.index_select short with_parentheses:false{{/auto_link}}     | Returns a new composition which indexes the `input` composition along dimension `dim` using the entries in `index` which is a *LongTensor*.                  |
 | {{#auto_link}}pydec.c_index_select short with_parentheses:false{{/auto_link}}   | Returns a new composition which indexes the `input` composition along the component dimension using the entries in `index` which is a *LongTensor*.          |
 | {{#auto_link}}pydec.masked_select short with_parentheses:false{{/auto_link}}    | Returns a new 1-D composition which indexes the `input` composition according to the boolean mask `mask` which is a *BoolTensor*.                            |
+| {{#auto_link}}pydec.index_fill short with_parentheses:false{{/auto_link}}       | Out-of-place version of {{#auto_link}}pydec.Composition.index_fill_{{/auto_link}}.                                                                           |
 | {{#auto_link}}pydec.masked_fill short with_parentheses:false{{/auto_link}}      | Fills elements of each component in `input` composition with `value` where `mask` is *True*.                                                                 |
 | {{#auto_link}}pydec.c_masked_fill short with_parentheses:false{{/auto_link}}    | Fills components of the `input` composition with `value` where `mask` is *True*.                                                                             |
 | {{#auto_link}}pydec.permute short with_parentheses:false{{/auto_link}}          | Returns a view of the original composition `input` with its dimensions permuted.                                                                             |
 | {{#auto_link}}pydec.reshape short with_parentheses:false{{/auto_link}}          | Returns a composition with the same data and number of elements as `input`, but with the specified shape.                                                    |
 | {{#auto_link}}pydec.scatter short with_parentheses:false{{/auto_link}}          | Out-of-place version of {{#auto_link}}pydec.Composition.scatter_{{/auto_link}}.                                                                              |
+| {{#auto_link}}pydec.masked_scatter short with_parentheses:false{{/auto_link}}   | Out-of-place version of {{#auto_link}}pydec.Composition.masked_scatter_{{/auto_link}}.                                                                       |
 | {{#auto_link}}pydec.diagonal_scatter short with_parentheses:false{{/auto_link}} | Embeds the values of the `src` tensor into `input` composition along the diagonal elements of every component in `input`, with respect to `dim1` and `dim2`. |
 | {{#auto_link}}pydec.diagonal_init short with_parentheses:false{{/auto_link}}    | Embeds the values of the `src` tensor into `input` composition along the diagonal components of `input`, with respect to `dim`.                              |
 | {{#auto_link}}pydec.squeeze short with_parentheses:false{{/auto_link}}          | Returns a composition with all specified dimensions of `input` of size *1* removed.                                                                          |
@@ -58,16 +60,22 @@ The pydec package contains data structures for compositions and defines mathemat
 ## Math operations
 ### Pointwise Ops
 
-| API                                                                     | Description                                                                                           |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| {{#auto_link}}pydec.add short with_parentheses:false{{/auto_link}}      | Adds `other`, scaled by `alpha`, to `input`.                                                          |
-| {{#auto_link}}pydec.div short with_parentheses:false{{/auto_link}}      | Divides each element of every component in the `input` input by the corresponding element of `other`. |
-| {{#auto_link}}pydec.divide short with_parentheses:false{{/auto_link}}   | Alias for {{#auto_link}}pydec.div{{/auto_link}}.                                                      |
-| {{#auto_link}}pydec.mul short with_parentheses:false{{/auto_link}}      | Multiplies each component in `input` by `other`.                                                      |
-| {{#auto_link}}pydec.multiply short with_parentheses:false{{/auto_link}} | Alias for {{#auto_link}}pydec.mul{{/auto_link}}.                                                      |
-| {{#auto_link}}pydec.round short with_parentheses:false{{/auto_link}}    | Rounds elements of each component in `input` to the nearest integer.                                  |
-| {{#auto_link}}pydec.sub short with_parentheses:false{{/auto_link}}      | Subtracts `other`, scaled by `alpha`, from `input`.                                                   |
-| {{#auto_link}}pydec.subtract short with_parentheses:false{{/auto_link}} | Alias for {{#auto_link}}pydec.sub{{/auto_link}}.                                                      |
+| API                                                                       | Description                                                                                                 |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.add short with_parentheses:false{{/auto_link}}        | Adds `other`, scaled by `alpha`, to `input`.                                                                |
+| {{#auto_link}}pydec.div short with_parentheses:false{{/auto_link}}        | Divides each element of every component in the `input` input by the corresponding element of `other`.       |
+| {{#auto_link}}pydec.divide short with_parentheses:false{{/auto_link}}     | Alias for {{#auto_link}}pydec.div{{/auto_link}}.                                                            |
+| {{#auto_link}}pydec.exp short with_parentheses:false{{/auto_link}}        | See [torch.exp()](https://pytorch.org/docs/stable/generated/torch.exp.html#torch.exp).                      |
+| {{#auto_link}}pydec.mul short with_parentheses:false{{/auto_link}}        | Multiplies each component in `input` by `other`.                                                            |
+| {{#auto_link}}pydec.multiply short with_parentheses:false{{/auto_link}}   | Alias for {{#auto_link}}pydec.mul{{/auto_link}}.                                                            |
+| {{#auto_link}}pydec.reciprocal short with_parentheses:false{{/auto_link}} | See [torch.reciprocal()](https://pytorch.org/docs/stable/generated/torch.reciprocal.html#torch.reciprocal). |
+| {{#auto_link}}pydec.round short with_parentheses:false{{/auto_link}}      | Rounds elements of each component in `input` to the nearest integer.                                        |
+| {{#auto_link}}pydec.sigmoid short with_parentheses:false{{/auto_link}}    | See [torch.sigmoid()](https://pytorch.org/docs/stable/generated/torch.sigmoid.html#torch.sigmoid).          |
+| {{#auto_link}}pydec.sqrt short with_parentheses:false{{/auto_link}}       | See [torch.sqrt()](https://pytorch.org/docs/stable/generated/torch.sqrt.html#torch.sqrt).                   |
+| {{#auto_link}}pydec.square short with_parentheses:false{{/auto_link}}     | See [torch.square()](https://pytorch.org/docs/stable/generated/torch.square.html#torch.square).             |
+| {{#auto_link}}pydec.sub short with_parentheses:false{{/auto_link}}        | Subtracts `other`, scaled by `alpha`, from `input`.                                                         |
+| {{#auto_link}}pydec.subtract short with_parentheses:false{{/auto_link}}   | Alias for {{#auto_link}}pydec.sub{{/auto_link}}.                                                            |
+| {{#auto_link}}pydec.tanh short with_parentheses:false{{/auto_link}}       | See [torch.tanh()](https://pytorch.org/docs/stable/generated/torch.tanh.html#torch.tanh).                   |
 
 
 ### Reduction Ops
