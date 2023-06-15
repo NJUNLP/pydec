@@ -921,16 +921,19 @@ class Composition:
 
     @_auto_registration
     def contiguous(self, memory_format=torch.contiguous_format) -> Composition:
-        out_component_tensor = self._component_tensor.contiguous()
-        out_residual_tensor = self._residual_tensor.contiguous()
+        out_component_tensor = self._component_tensor.contiguous(
+            memory_format=memory_format
+        )
+        out_residual_tensor = self._residual_tensor.contiguous(
+            memory_format=memory_format
+        )
         return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def is_contiguous(self, memory_format=torch.contiguous_format) -> _bool:
-        return (
-            self._component_tensor.is_contiguous()
-            and self._residual_tensor.is_contiguous()
-        )
+        return self._component_tensor.is_contiguous(
+            memory_format=memory_format
+        ) and self._residual_tensor.is_contiguous(memory_format=memory_format)
 
     @overload
     def to(
