@@ -1563,7 +1563,7 @@ def empty_indices(
 
 @_auto_registration
 def abs(input: Composition, *, out: Optional[Composition] = None) -> Composition:
-    # TODO: bug: c.abs() not eqal to c.c_sum().abs()
+    # TODO: bug: c.abs() not eqal to c.c_sum().abs(); This API has not been documented.
     out_component_tensor = torch.abs(
         input._component_tensor,
         out=out._component_tensor if out is not None else None,
@@ -2142,6 +2142,7 @@ def softmax(
     ref: Optional[Tensor] = None,
 ) -> Composition:
     # TODO: should we disable grad here?
+    # TODO: This API has not been documented.
     if dtype is not None:
         input = input.to(dtype)
         if ref is not None:
