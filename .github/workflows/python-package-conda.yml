@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10"]
-        pytorch-version: [1.11, 1.12, 1.13, 2.0]
+        pytorch-version: ["1.11.0", "1.12.1", "1.13.1", "2.0.0"]
       max-parallel: 4
     env:
       OS: 'ubuntu-latest'
