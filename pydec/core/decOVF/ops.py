@@ -130,10 +130,15 @@ def tanh_(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
         raise none_decomposition_func_error(get_decomposition_name())
 
 
-def sigmoid(input: Composition, *, ref: Optional[Tensor] = None) -> Composition:
+def sigmoid(
+    input: Composition,
+    *,
+    out: Optional[Composition] = None,
+    ref: Optional[Tensor] = None,
+) -> Composition:
     decomposition_func = get_decomposition_func()
     if decomposition_func is not None:
-        out = decomposition_func(input=input, func=torch.sigmoid, ref=ref)
+        out = decomposition_func(input=input, func=torch.sigmoid, out=out, ref=ref)
         assert isinstance(out, pydec.Composition)
         return out
     else:
