@@ -21,7 +21,7 @@ REQUIRES_PYTHON = ">=3.7.0"
 VERSION = "0.3.0"
 
 # What packages are required for this module to be executed?
-REQUIRED = ["torch>=1.7.0", "numpy"]
+REQUIRED = ["torch>=1.11.0", "numpy"]
 
 # What packages are optional?
 EXTRAS = {
