@@ -111,6 +111,10 @@ class Composition:
     def recovery(self) -> Tensor:
         return self.c_sum()
 
+    @property
+    def is_cuda(self):
+        return self._residual_tensor.is_cuda
+
     @overload
     def __init__(
         self, component_tensor: Tensor, residual_tensor: Optional[Tensor] = None
@@ -250,6 +254,7 @@ class Composition:
             )
 
         if isinstance(val, (Tensor, _int, _float, _bool)):
+            # TODO: also set item for residual? `c[:]=0` not work with c.residual
             self._component_tensor[indices] = val
             return
         if isinstance(val, (Composition)):
@@ -1040,9 +1045,7 @@ class Composition:
 
     @_auto_registration
     def masked_scatter_(self, mask: Tensor, source: Tensor) -> Composition:
-        r"""
-        Unsafe.
-        """
+        # TODO: seems not make sense, see examples in docs
         self._component_tensor.masked_scatter_(mask[None], source)
         self._residual_tensor.masked_scatter_(mask, source)
         return self
@@ -1156,9 +1159,6 @@ class Composition:
         out_component_tensor = self._component_tensor.cpu()
         out_residual_tensor = self._residual_tensor.cpu()
         return pydec.as_composition(out_component_tensor, out_residual_tensor)
-
-    def is_cuda(self):
-        return self._residual_tensor.is_cuda
 
     @overload
     def index_select(self, dim: _int, index: Tensor) -> Composition:
