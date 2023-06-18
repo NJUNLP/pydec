@@ -50,7 +50,15 @@ def void() -> Composition:
     return Composition()
 
 
+@overload
 def as_composition(components: Tensor, residual: Tensor = None) -> Composition:
+    ...
+
+
+def as_composition(
+    components: Tensor, residual: Tensor = None, check: _bool = True
+) -> Composition:
+    # TODO: implement `check`, check shape, dtype and device
     out = void()
     out._component_tensor = components
     if residual is None:
@@ -1345,6 +1353,19 @@ def masked_select(
     )
     if out is not None:
         out._component_tensor = out._component_tensor.reshape(input.numc(), -1)
+    return as_composition(out_component_tensor, out_residual_tensor)
+
+
+@overload
+def select(input: Composition, dim: _int, index: _int) -> Composition:
+    ...
+
+
+def select(input: Composition, dim: Any, index: _int) -> Composition:
+    out_component_tensor = torch.select(
+        input._component_tensor, dim=_shift_dim(dim), index=index
+    )
+    out_residual_tensor = torch.select(input._residual_tensor, dim=dim, index=index)
     return as_composition(out_component_tensor, out_residual_tensor)
 
 

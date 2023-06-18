@@ -898,6 +898,14 @@ class Composition:
             out_residual_tensor = self._residual_tensor.view(size)
         return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
+    @overload
+    def view_as(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def view_as(self, other: Composition) -> Composition:
+        ...
+
     @_auto_registration
     def view_as(self, other: Union[Tensor, Composition]) -> Composition:
         return self.view(other.size())
@@ -958,7 +966,16 @@ class Composition:
     @overload
     def to(
         self,
-        other: Union[Tensor, Composition],
+        other: Tensor,
+        non_blocking: _bool = False,
+        copy: _bool = False,
+    ) -> Composition:
+        ...
+
+    @overload
+    def to(
+        self,
+        other: Composition,
         non_blocking: _bool = False,
         copy: _bool = False,
     ) -> Composition:
@@ -968,7 +985,7 @@ class Composition:
     def to(self, *args, **kwargs) -> Composition:
         if isinstance(self, Tensor):
             assert isinstance(args[0], Composition)
-            return self.to(args[0].residual)
+            return self.to(args[0].residual, *args[1:], **kwargs)
         if isinstance(args[0], Composition):
             return self.to(args[0]._component_tensor, *args[1:], **kwargs)
         else:
@@ -1213,11 +1230,7 @@ class Composition:
 
     @_auto_registration
     def select(self, dim: _int, index: _int) -> Composition:
-        out_component_tensor = self._component_tensor.select(
-            dim=_shift_dim(dim), index=index
-        )
-        out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
-        return pydec.as_composition(out_component_tensor, out_residual_tensor)
+        return pydec.select(self, dim=dim, index=index)
 
     @overload
     def type(self, dtype: None = None, non_blocking: _bool = False) -> str:
@@ -1239,6 +1252,14 @@ class Composition:
                 dtype=dtype, non_blocking=non_blocking
             )
             return pydec.as_composition(out_component_tensor, out_residual_tensor)
+
+    @overload
+    def type_as(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def type_as(self, other: Composition) -> Composition:
+        ...
 
     @_auto_registration
     def type_as(self, other: Union[Tensor, Composition]) -> Composition:
