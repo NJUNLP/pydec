@@ -117,11 +117,11 @@ composition{
 #### Attributes
 > Composition.components
 
-This is the data structure inside composition that stores the components. Its first dimension represents the number of components and the subsequent dimensions represent the shape of the components, i.e.,
+This is the tensor inside composition that stores the components. Its first dimension represents the number of components and the subsequent dimensions represent the shape of the components, i.e.,
 
-`Composition.components.size(0)` is the result of `Composition.numc()`.
+`Composition.components.size(0)` is equivalent to `Composition.numc()`.
 
-`Composition.components.size()[1:]` is the result of `Composition.size()`.
+`Composition.components.size()[1:]` is equivalent to `Composition.size()`.
 
 ?> This is a read-only attribute.
 
@@ -135,30 +135,7 @@ A special component for storing residuals. It has the same shape as the other co
 
 The tensor that is decomposed to Composition, obtained by summing up each component.
 
-`Composition.recovery` is the result of `Composition.c_sum()`.
-
-
-> Composition.requires_grad
-
-Is **True** if gradients need to be computed for this Composition, **False** otherwise.
-
-> Composition.shape
-
-Alias of {{#auto_link}}pydec.Composition.size short:1{{/auto_link}}.
-
-> Composition.device
-
-Is the {{{torch_device}}} where this Composition is.
-
-> Composition.dtype
-
-The data type of this Composition.
-
-> Composition.layout
-
-The memory layout of this Composition.
-
-!> Currently PyDec is not designed for the sparse tensor (**torch.sparse_coo**) and no testing has been done for it.
+`Composition.recovery` is equivalent to `Composition.c_sum()`.
 
 > Composition.T
 
@@ -166,39 +143,65 @@ Returns a view of this composition with its dimensions reversed.
 
 > Composition.mT
 
-Returns a view of this tensor with the last two dimensions transposed.
+Returns a view of this composition with the last two dimensions transposed.
 
 | API                                                                                           | Description                                                                                                                                                    |
 | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.Composition.device short:1 with_parentheses:false{{/auto_link}}           | Is the {{{torch_device}}} where the composition is.                                                                                                            |
+| {{#auto_link}}pydec.Composition.dtype short:1 with_parentheses:false{{/auto_link}}            | The data type of the composition.                                                                                                                              |
+| {{#auto_link}}pydec.Composition.layout short:1 with_parentheses:false{{/auto_link}}           | The memory layout of the Composition.                                                                                                                          |
 | {{#auto_link}}pydec.Composition.is_cuda short:1 with_parentheses:false{{/auto_link}}          | Is `True` if the Composition is stored on the GPU, `False` otherwise.                                                                                          |
+| {{#auto_link}}pydec.Composition.ndim short:1 with_parentheses:false{{/auto_link}}             | Alias for {{#auto_link}}pydec.Composition.dim short:2{{/auto_link}}.                                                                                           |
 | {{#auto_link}}pydec.Composition.add short:1 with_parentheses:false{{/auto_link}}              | Add a scalar or tensor or composition to `self` composition.                                                                                                   |
 | {{#auto_link}}pydec.Composition.add_ short:1 with_parentheses:false{{/auto_link}}             | In-place version of {{#auto_link}}pydec.Composition.add short:2{{/auto_link}}.                                                                                 |
+| {{#auto_link}}pydec.Composition.apply_ short:1 with_parentheses:false{{/auto_link}}           | Applies the function `callable` to each element of components in the composition, replacing each element with the value returned by `callable`.                |
 | {{#auto_link}}pydec.Composition.all short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.all{{/auto_link}}.                                                                                                                     |
 | {{#auto_link}}pydec.Composition.any short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.any{{/auto_link}}.                                                                                                                     |
+| {{#auto_link}}pydec.Composition.c_index_select short:1 with_parentheses:false{{/auto_link}}   | See {{#auto_link}}pydec.c_index_select{{/auto_link}}.                                                                                                          |
+| {{#auto_link}}pydec.Composition.c_masked_fill short:1 with_parentheses:false{{/auto_link}}    | See {{#auto_link}}pydec.c_masked_fill{{/auto_link}}.                                                                                                           |
+| {{#auto_link}}pydec.Composition.c_masked_fill_ short:1 with_parentheses:false{{/auto_link}}   | In-place version of {{#auto_link}}pydec.Composition.c_masked_fill short:2{{/auto_link}}.                                                                       |
 | {{#auto_link}}pydec.Composition.clone short:1 with_parentheses:false{{/auto_link}}            | See {{#auto_link}}pydec.clone{{/auto_link}}.                                                                                                                   |
 | {{#auto_link}}pydec.Composition.contiguous short:1 with_parentheses:false{{/auto_link}}       | Returns a contiguous in memory composition containing the same data as `self` composition.                                                                     |
 | {{#auto_link}}pydec.Composition.cpu short:1 with_parentheses:false{{/auto_link}}              | Returns a copy of this object in CPU memory.                                                                                                                   |
 | {{#auto_link}}pydec.Composition.cuda short:1 with_parentheses:false{{/auto_link}}             | Returns a copy of this object in CUDA memory.                                                                                                                  |
+| {{#auto_link}}pydec.Composition.detach short:1 with_parentheses:false{{/auto_link}}           | See {{#auto_link}}pydec.detach{{/auto_link}}.                                                                                                                  |
+| {{#auto_link}}pydec.Composition.detach_ short:1 with_parentheses:false{{/auto_link}}          | In-place version of {{#auto_link}}pydec.Composition.detach short:2{{/auto_link}}.                                                                              |
 | {{#auto_link}}pydec.Composition.diagonal_scatter short:1 with_parentheses:false{{/auto_link}} | See {{#auto_link}}pydec.diagonal_scatter{{/auto_link}}.                                                                                                        |
 | {{#auto_link}}pydec.Composition.dim short:1 with_parentheses:false{{/auto_link}}              | Returns the number of dimensions of `self` composition (excluding component dimension).                                                                        |
 | {{#auto_link}}pydec.Composition.div short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.div{{/auto_link}}.                                                                                                                     |
 | {{#auto_link}}pydec.Composition.div_ short:1 with_parentheses:false{{/auto_link}}             | In-place version of {{#auto_link}}pydec.Composition.div short:2{{/auto_link}}.                                                                                 |
+| {{#auto_link}}pydec.Composition.eq short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.eq{{/auto_link}}.                                                                                                                      |
+| {{#auto_link}}pydec.Composition.exp short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.exp{{/auto_link}}.                                                                                                                     |
+| {{#auto_link}}pydec.Composition.exp_ short:1 with_parentheses:false{{/auto_link}}             | In-place version of {{#auto_link}}pydec.Composition.exp short:2{{/auto_link}}.                                                                                 |
 | {{#auto_link}}pydec.Composition.gather short:1 with_parentheses:false{{/auto_link}}           | See {{#auto_link}}pydec.gather{{/auto_link}}.                                                                                                                  |
+| {{#auto_link}}pydec.Composition.ge short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.ge{{/auto_link}}.                                                                                                                      |
+| {{#auto_link}}pydec.Composition.gt short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.gt{{/auto_link}}.                                                                                                                      |
 | {{#auto_link}}pydec.Composition.index_fill_ short:1 with_parentheses:false{{/auto_link}}      | Fills the elements of each component (including residual) of the `self` composition with value `value` by selecting the indices in the order given in `index`. |
 | {{#auto_link}}pydec.Composition.index_fill short:1 with_parentheses:false{{/auto_link}}       | Out-of-place version of {{#auto_link}}pydec.Composition.index_fill_{{/auto_link}}.                                                                             |
 | {{#auto_link}}pydec.Composition.index_select short:1 with_parentheses:false{{/auto_link}}     | See {{#auto_link}}pydec.index_select{{/auto_link}}.                                                                                                            |
 | {{#auto_link}}pydec.Composition.is_contiguous short:1 with_parentheses:false{{/auto_link}}    | Returns True if `self` composition is contiguous in memory in the order specified by memory format.                                                            |
+| {{#auto_link}}pydec.Composition.le short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.le{{/auto_link}}.                                                                                                                      |
+| {{#auto_link}}pydec.Composition.lt short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.lt{{/auto_link}}.                                                                                                                      |
+| {{#auto_link}}pydec.Composition.map_ short:1 with_parentheses:false{{/auto_link}}             | Applies `callable` for each element of components in `self` composition and the given composition and stores the results in `self` composition.                |
 | {{#auto_link}}pydec.Composition.masked_scatter_ short:1 with_parentheses:false{{/auto_link}}  | Copies elements from `source` into each component (including residual) of `self` composition at positions where the `mask` is True.                            |
 | {{#auto_link}}pydec.Composition.masked_scatter short:1 with_parentheses:false{{/auto_link}}   | Out-of-place version of {{#auto_link}}pydec.Composition.masked_scatter_{{/auto_link}}.                                                                         |
 | {{#auto_link}}pydec.Composition.masked_fill_ short:1 with_parentheses:false{{/auto_link}}     | Fills elements of each component (including residual) of `self` composition with value where `mask` is True.                                                   |
+| {{#auto_link}}pydec.Composition.masked_fill short:1 with_parentheses:false{{/auto_link}}      | Out-of-place version of {{#auto_link}}pydec.Composition.masked_fill_{{/auto_link}}.                                                                            |
 | {{#auto_link}}pydec.Composition.masked_select short:1 with_parentheses:false{{/auto_link}}    | See {{#auto_link}}pydec.masked_select{{/auto_link}}.                                                                                                           |
 | {{#auto_link}}pydec.Composition.mean short:1 with_parentheses:false{{/auto_link}}             | See {{#auto_link}}pydec.mean{{/auto_link}}.                                                                                                                    |
+| {{#auto_link}}pydec.Composition.mm short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.mm{{/auto_link}}.                                                                                                                      |
 | {{#auto_link}}pydec.Composition.mul short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.mul{{/auto_link}}.                                                                                                                     |
 | {{#auto_link}}pydec.Composition.mul_ short:1 with_parentheses:false{{/auto_link}}             | In-place version of {{#auto_link}}pydec.Composition.mul short:2{{/auto_link}}.                                                                                 |
+| {{#auto_link}}pydec.Composition.mv short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.mv{{/auto_link}}.                                                                                                                      |
+| {{#auto_link}}pydec.Composition.ne short:1 with_parentheses:false{{/auto_link}}               | See {{#auto_link}}pydec.ne{{/auto_link}}.                                                                                                                      |
 | {{#auto_link}}pydec.Composition.numel short:1 with_parentheses:false{{/auto_link}}            | See {{#auto_link}}pydec.numel{{/auto_link}}.                                                                                                                   |
 | {{#auto_link}}pydec.Composition.c_numel short:1 with_parentheses:false{{/auto_link}}          | See {{#auto_link}}pydec.c_numel{{/auto_link}}.                                                                                                                 |
 | {{#auto_link}}pydec.Composition.numc short:1 with_parentheses:false{{/auto_link}}             | See {{#auto_link}}pydec.numc{{/auto_link}}.                                                                                                                    |
 | {{#auto_link}}pydec.Composition.permute short:1 with_parentheses:false{{/auto_link}}          | See {{#auto_link}}pydec.permute{{/auto_link}}.                                                                                                                 |
+| {{#auto_link}}pydec.Composition.reciprocal short:1 with_parentheses:false{{/auto_link}}       | See {{#auto_link}}pydec.reciprocal{{/auto_link}}.                                                                                                              |
+| {{#auto_link}}pydec.Composition.reciprocal_ short:1 with_parentheses:false{{/auto_link}}      | In-place version of {{#auto_link}}pydec.Composition.reciprocal short:2{{/auto_link}}.                                                                          |
+| {{#auto_link}}pydec.Composition.requires_grad short:1 with_parentheses:false{{/auto_link}}    | Is *True* if gradients need to be computed for this Composition, *False* otherwise.                                                                            |
+| {{#auto_link}}pydec.Composition.requires_grad_ short:1 with_parentheses:false{{/auto_link}}   | Change if autograd should record operations on this composition: sets this composition's `requires_grad` attribute in-place.                                   |
 | {{#auto_link}}pydec.Composition.reshape short:1 with_parentheses:false{{/auto_link}}          | Returns a composition with the same data and number of elements as `self` but with the specified shape.                                                        |
 | {{#auto_link}}pydec.Composition.reshape_as short:1 with_parentheses:false{{/auto_link}}       | Returns this composition as the same shape as `other`.                                                                                                         |
 | {{#auto_link}}pydec.Composition.round short:1 with_parentheses:false{{/auto_link}}            | See {{#auto_link}}pydec.round{{/auto_link}}.                                                                                                                   |
@@ -206,8 +209,13 @@ Returns a view of this tensor with the last two dimensions transposed.
 | {{#auto_link}}pydec.Composition.scatter_ short:1 with_parentheses:false{{/auto_link}}         | Writes all values from the tensor `src` into each component (including residual) of `self` at the indices specified in the `index` tensor.                     |
 | {{#auto_link}}pydec.Composition.scatter short:1 with_parentheses:false{{/auto_link}}          | Out-of-place version of {{#auto_link}}pydec.Composition.scatter_{{/auto_link}}.                                                                                |
 | {{#auto_link}}pydec.Composition.select short:1 with_parentheses:false{{/auto_link}}           | See {{#auto_link}}pydec.select{{/auto_link}}.                                                                                                                  |
+| {{#auto_link}}pydec.Composition.shape short:1 with_parentheses:false{{/auto_link}}            | Alias of {{#auto_link}}pydec.Composition.size short:1{{/auto_link}}.                                                                                           |
+| {{#auto_link}}pydec.Composition.sigmoid short:1 with_parentheses:false{{/auto_link}}          | See {{#auto_link}}pydec.sigmoid{{/auto_link}}.                                                                                                                 |
+| {{#auto_link}}pydec.Composition.sigmoid_ short:1 with_parentheses:false{{/auto_link}}         | In-place version of {{#auto_link}}pydec.Composition.sigmoid short:2{{/auto_link}}.                                                                             |
 | {{#auto_link}}pydec.Composition.size short:1 with_parentheses:false{{/auto_link}}             | Returns the size of the `self` composition.                                                                                                                    |
 | {{#auto_link}}pydec.Composition.c_size short:1 with_parentheses:false{{/auto_link}}           | Returns the size of the `self` composition, including component dimension as the first dimension.                                                              |
+| {{#auto_link}}pydec.Composition.sqrt short:1 with_parentheses:false{{/auto_link}}             | See {{#auto_link}}pydec.sqrt{{/auto_link}}.                                                                                                                    |
+| {{#auto_link}}pydec.Composition.sqrt_ short:1 with_parentheses:false{{/auto_link}}            | In-place version of {{#auto_link}}pydec.Composition.sqrt short:2{{/auto_link}}.                                                                                |
 | {{#auto_link}}pydec.Composition.squeeze short:1 with_parentheses:false{{/auto_link}}          | See {{#auto_link}}pydec.squeeze{{/auto_link}}.                                                                                                                 |
 | {{#auto_link}}pydec.Composition.squeeze_ short:1 with_parentheses:false{{/auto_link}}         | In-place version of {{#auto_link}}pydec.Composition.squeeze short:2{{/auto_link}}.                                                                             |
 | {{#auto_link}}pydec.Composition.sub short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.sub{{/auto_link}}.                                                                                                                     |
@@ -215,6 +223,8 @@ Returns a view of this tensor with the last two dimensions transposed.
 | {{#auto_link}}pydec.Composition.sum short:1 with_parentheses:false{{/auto_link}}              | See {{#auto_link}}pydec.sum{{/auto_link}}.                                                                                                                     |
 | {{#auto_link}}pydec.Composition.c_sum short:1 with_parentheses:false{{/auto_link}}            | See {{#auto_link}}pydec.c_sum{{/auto_link}}.                                                                                                                   |
 | {{#auto_link}}pydec.Composition.to short:1 with_parentheses:false{{/auto_link}}               | Performs Composition dtype and/or device conversion.                                                                                                           |
+| {{#auto_link}}pydec.Composition.tanh short:1 with_parentheses:false{{/auto_link}}             | See {{#auto_link}}pydec.tanh{{/auto_link}}.                                                                                                                    |
+| {{#auto_link}}pydec.Composition.tanh_ short:1 with_parentheses:false{{/auto_link}}            | In-place version of {{#auto_link}}pydec.Composition.tanh short:2{{/auto_link}}.                                                                                |
 | {{#auto_link}}pydec.Composition.transpose short:1 with_parentheses:false{{/auto_link}}        | See {{#auto_link}}pydec.transpose{{/auto_link}}.                                                                                                               |
 | {{#auto_link}}pydec.Composition.transpose_ short:1 with_parentheses:false{{/auto_link}}       | In-place version of {{#auto_link}}pydec.Composition.transpose short:2{{/auto_link}}.                                                                           |
 | {{#auto_link}}pydec.Composition.type short:1 with_parentheses:false{{/auto_link}}             | Returns the type if *dtype* is not provided, else casts this object to the specified type.                                                                     |
