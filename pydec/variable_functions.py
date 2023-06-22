@@ -205,7 +205,7 @@ def diagonal_init(
 
 
 def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
-    # TODO: shoud we check the results' shape?
+    # TODO: check shape, dtype and device of result
     out_component_tensor = callable(input._component_tensor)
     out_residual_tensor = callable(input._residual_tensor)
     if not isinstance(out_component_tensor, Tensor) or not isinstance(
@@ -224,7 +224,7 @@ def c_apply(input: Composition, callable: Callable[..., Tensor]) -> Composition:
 
 
 def c_map(input, other: Composition, callable: Callable[..., Tensor]) -> Composition:
-    # TODO: shoud we check the results' shape?
+    # TODO: check shape, dtype and device of result
     out_component_tensor = callable(input._component_tensor, other._component_tensor)
     out_residual_tensor = callable(input._residual_tensor, other._residual_tensor)
     if not isinstance(out_component_tensor, Tensor) or not isinstance(
@@ -2274,3 +2274,141 @@ def _softmax_rescale(input: Composition) -> Composition:
     out_components = rescaled_components[:-1]
     out_residual = rescaled_components[-1]
     return as_composition(out_components, out_residual)
+
+
+@overload
+def eq(input: Composition, other: Tensor, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+@overload
+def eq(
+    input: Composition, other: Composition, *, out: Optional[Tensor] = None
+) -> Tensor:
+    ...
+
+
+@overload
+def eq(input: Composition, other: Number, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+def eq(input: Composition, other: Any, *, out: Optional[Tensor] = None) -> Tensor:
+    if isinstance(other, Composition):
+        return input.c_sum().eq(other.c_sum())
+    return input.c_sum().eq(other)
+
+
+@overload
+def ne(input: Composition, other: Tensor, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+@overload
+def ne(
+    input: Composition, other: Composition, *, out: Optional[Tensor] = None
+) -> Tensor:
+    ...
+
+
+@overload
+def ne(input: Composition, other: Number, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+def ne(input: Composition, other: Any, *, out: Optional[Tensor] = None) -> Tensor:
+    if isinstance(other, Composition):
+        return input.c_sum().ne(other.c_sum())
+    return input.c_sum().ne(other)
+
+
+@overload
+def gt(input: Composition, other: Tensor, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+@overload
+def gt(
+    input: Composition, other: Composition, *, out: Optional[Tensor] = None
+) -> Tensor:
+    ...
+
+
+@overload
+def gt(input: Composition, other: Number, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+def gt(input: Composition, other: Any, *, out: Optional[Tensor] = None) -> Tensor:
+    if isinstance(other, Composition):
+        return input.c_sum().gt(other.c_sum())
+    return input.c_sum().gt(other)
+
+
+@overload
+def lt(input: Composition, other: Tensor, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+@overload
+def lt(
+    input: Composition, other: Composition, *, out: Optional[Tensor] = None
+) -> Tensor:
+    ...
+
+
+@overload
+def lt(input: Composition, other: Number, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+def lt(input: Composition, other: Any, *, out: Optional[Tensor] = None) -> Tensor:
+    if isinstance(other, Composition):
+        return input.c_sum().lt(other.c_sum())
+    return input.c_sum().lt(other)
+
+
+@overload
+def ge(input: Composition, other: Tensor, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+@overload
+def ge(
+    input: Composition, other: Composition, *, out: Optional[Tensor] = None
+) -> Tensor:
+    ...
+
+
+@overload
+def ge(input: Composition, other: Number, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+def ge(input: Composition, other: Any, *, out: Optional[Tensor] = None) -> Tensor:
+    if isinstance(other, Composition):
+        return input.c_sum().ge(other.c_sum())
+    return input.c_sum().ge(other)
+
+
+@overload
+def le(input: Composition, other: Tensor, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+@overload
+def le(
+    input: Composition, other: Composition, *, out: Optional[Tensor] = None
+) -> Tensor:
+    ...
+
+
+@overload
+def le(input: Composition, other: Number, *, out: Optional[Tensor] = None) -> Tensor:
+    ...
+
+
+def le(input: Composition, other: Any, *, out: Optional[Tensor] = None) -> Tensor:
+    if isinstance(other, Composition):
+        return input.c_sum().le(other.c_sum())
+    return input.c_sum().le(other)
