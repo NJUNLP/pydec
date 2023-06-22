@@ -92,8 +92,14 @@ The pydec package contains data structures for compositions and defines mathemat
 ### Comparison Ops
 | API                                                                  | Description                                                                                             |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.eq short with_parentheses:false{{/auto_link}}    | Computes element-wise equality of recoveries.                                                           |
+| {{#auto_link}}pydec.ge short with_parentheses:false{{/auto_link}}    | Computes `input.recovery >= other.recovery` element-wise.                                               |
+| {{#auto_link}}pydec.gt short with_parentheses:false{{/auto_link}}    | Computes `input.recovery > other.recovery` element-wise.                                                |
 | {{#auto_link}}pydec.isinf short with_parentheses:false{{/auto_link}} | Tests if each element of every component in `input` is infinite (positive or negative infinity) or not. |
 | {{#auto_link}}pydec.isnan short with_parentheses:false{{/auto_link}} | Tests if each element of every component in `input` is NaN or not.                                      |
+| {{#auto_link}}pydec.le short with_parentheses:false{{/auto_link}}    | Computes `input.recovery <= other.recovery` element-wise.                                               |
+| {{#auto_link}}pydec.lt short with_parentheses:false{{/auto_link}}    | Computes `input.recovery < other.recovery` element-wise.                                                |
+| {{#auto_link}}pydec.ne short with_parentheses:false{{/auto_link}}    | Computes `input.recovery != other.recovery` element-wise.                                               |
 
 ### Other Operations
 
