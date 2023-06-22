@@ -281,6 +281,7 @@ class Composition:
 
     def __iter__(self):
         if pydec.is_c_accessing_enabled():
+            # TODO: should return composition
             return self._component_tensor.__iter__()
         else:
             # TODO: return a iterator
@@ -656,9 +657,7 @@ class Composition:
 
     @_auto_registration
     def eq(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().eq(other.c_sum())
-        return self.c_sum().eq(other)
+        return pydec.eq(self, other)
 
     @overload
     def ne(self, other: Tensor) -> Composition:
@@ -674,9 +673,7 @@ class Composition:
 
     @_auto_registration
     def ne(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().ne(other.c_sum())
-        return self.c_sum().ne(other)
+        return pydec.ne(self, other)
 
     @overload
     def gt(self, other: Tensor) -> Composition:
@@ -692,9 +689,7 @@ class Composition:
 
     @_auto_registration
     def gt(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().gt(other.c_sum())
-        return self.c_sum().gt(other)
+        return pydec.gt(self, other)
 
     @overload
     def lt(self, other: Tensor) -> Composition:
@@ -710,9 +705,7 @@ class Composition:
 
     @_auto_registration
     def lt(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().lt(other.c_sum())
-        return self.c_sum().lt(other)
+        return pydec.lt(self, other)
 
     @overload
     def ge(self, other: Tensor) -> Composition:
@@ -728,9 +721,7 @@ class Composition:
 
     @_auto_registration
     def ge(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().ge(other.c_sum())
-        return self.c_sum().ge(other)
+        return pydec.ge(self, other)
 
     @overload
     def le(self, other: Tensor) -> Composition:
@@ -746,9 +737,7 @@ class Composition:
 
     @_auto_registration
     def le(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().le(other.c_sum())
-        return self.c_sum().le(other)
+        return pydec.le(self, other)
 
     @_auto_registration
     def unsqueeze(self, dim: _int) -> Composition:
