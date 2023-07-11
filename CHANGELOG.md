@@ -13,6 +13,13 @@ Critical items to know are:
  - migration guidance
  - changed behaviour
 
+## PyDec 0.3.0
+* Remove `pydec.nn`, `pydec.autotracing`, now auto tracing is more automatic.
+* Add a lot of new APIs.
+* A new doc web site powered by docsify.
+* Add complete, detailed documentation.
+* Fix bugs.
+
 ## PyDec 0.2.0
 * Add non linear decompose algorithm.
 * Add nn modules (Linear, Containers, ReLU).
