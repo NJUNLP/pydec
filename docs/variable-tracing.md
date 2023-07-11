@@ -66,7 +66,7 @@ ref = ops(c1.recovery) # the ground truth
 
 torch.all((c2.recovery - ref).abs() < 1e-6) # false
 
-c2.residual += ref - c2.recovery
+c2.residual[:] += ref - c2.recovery
 
 torch.all((c2.recovery - ref).abs() < 1e-6) # true
 ...

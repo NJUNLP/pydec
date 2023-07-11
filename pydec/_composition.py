@@ -33,7 +33,6 @@ from torch.types import (
     _qscheme,
     _size,
     _layout,
-    SymInt,
 )
 
 from pydec.exception_utils import (
@@ -111,6 +110,10 @@ class Composition:
     @property
     def recovery(self) -> Tensor:
         return self.c_sum()
+
+    @property
+    def is_cuda(self):
+        return self._residual_tensor.is_cuda
 
     @overload
     def __init__(
@@ -251,6 +254,7 @@ class Composition:
             )
 
         if isinstance(val, (Tensor, _int, _float, _bool)):
+            # TODO: also set item for residual? `c[:]=0` not work with c.residual
             self._component_tensor[indices] = val
             return
         if isinstance(val, (Composition)):
@@ -277,6 +281,7 @@ class Composition:
 
     def __iter__(self):
         if pydec.is_c_accessing_enabled():
+            # TODO: should return composition
             return self._component_tensor.__iter__()
         else:
             # TODO: return a iterator
@@ -652,9 +657,7 @@ class Composition:
 
     @_auto_registration
     def eq(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().eq(other.c_sum())
-        return self.c_sum().eq(other)
+        return pydec.eq(self, other)
 
     @overload
     def ne(self, other: Tensor) -> Composition:
@@ -670,9 +673,7 @@ class Composition:
 
     @_auto_registration
     def ne(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().ne(other.c_sum())
-        return self.c_sum().ne(other)
+        return pydec.ne(self, other)
 
     @overload
     def gt(self, other: Tensor) -> Composition:
@@ -688,9 +689,7 @@ class Composition:
 
     @_auto_registration
     def gt(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().gt(other.c_sum())
-        return self.c_sum().gt(other)
+        return pydec.gt(self, other)
 
     @overload
     def lt(self, other: Tensor) -> Composition:
@@ -706,9 +705,7 @@ class Composition:
 
     @_auto_registration
     def lt(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().lt(other.c_sum())
-        return self.c_sum().lt(other)
+        return pydec.lt(self, other)
 
     @overload
     def ge(self, other: Tensor) -> Composition:
@@ -724,9 +721,7 @@ class Composition:
 
     @_auto_registration
     def ge(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().ge(other.c_sum())
-        return self.c_sum().ge(other)
+        return pydec.ge(self, other)
 
     @overload
     def le(self, other: Tensor) -> Composition:
@@ -742,9 +737,7 @@ class Composition:
 
     @_auto_registration
     def le(self, other):
-        if isinstance(other, Composition):
-            return self.c_sum().le(other.c_sum())
-        return self.c_sum().le(other)
+        return pydec.le(self, other)
 
     @_auto_registration
     def unsqueeze(self, dim: _int) -> Composition:
@@ -894,6 +887,14 @@ class Composition:
             out_residual_tensor = self._residual_tensor.view(size)
         return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
+    @overload
+    def view_as(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def view_as(self, other: Composition) -> Composition:
+        ...
+
     @_auto_registration
     def view_as(self, other: Union[Tensor, Composition]) -> Composition:
         return self.view(other.size())
@@ -921,16 +922,19 @@ class Composition:
 
     @_auto_registration
     def contiguous(self, memory_format=torch.contiguous_format) -> Composition:
-        out_component_tensor = self._component_tensor.contiguous()
-        out_residual_tensor = self._residual_tensor.contiguous()
+        out_component_tensor = self._component_tensor.contiguous(
+            memory_format=memory_format
+        )
+        out_residual_tensor = self._residual_tensor.contiguous(
+            memory_format=memory_format
+        )
         return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
     @_auto_registration
     def is_contiguous(self, memory_format=torch.contiguous_format) -> _bool:
-        return (
-            self._component_tensor.is_contiguous()
-            and self._residual_tensor.is_contiguous()
-        )
+        return self._component_tensor.is_contiguous(
+            memory_format=memory_format
+        ) and self._residual_tensor.is_contiguous(memory_format=memory_format)
 
     @overload
     def to(
@@ -951,7 +955,16 @@ class Composition:
     @overload
     def to(
         self,
-        other: Union[Tensor, Composition],
+        other: Tensor,
+        non_blocking: _bool = False,
+        copy: _bool = False,
+    ) -> Composition:
+        ...
+
+    @overload
+    def to(
+        self,
+        other: Composition,
         non_blocking: _bool = False,
         copy: _bool = False,
     ) -> Composition:
@@ -961,7 +974,7 @@ class Composition:
     def to(self, *args, **kwargs) -> Composition:
         if isinstance(self, Tensor):
             assert isinstance(args[0], Composition)
-            return self.to(args[0].residual)
+            return self.to(args[0].residual, *args[1:], **kwargs)
         if isinstance(args[0], Composition):
             return self.to(args[0]._component_tensor, *args[1:], **kwargs)
         else:
@@ -1038,9 +1051,7 @@ class Composition:
 
     @_auto_registration
     def masked_scatter_(self, mask: Tensor, source: Tensor) -> Composition:
-        r"""
-        Unsafe.
-        """
+        # TODO: seems not make sense, see examples in docs
         self._component_tensor.masked_scatter_(mask[None], source)
         self._residual_tensor.masked_scatter_(mask, source)
         return self
@@ -1155,9 +1166,6 @@ class Composition:
         out_residual_tensor = self._residual_tensor.cpu()
         return pydec.as_composition(out_component_tensor, out_residual_tensor)
 
-    def is_cuda(self):
-        return self._residual_tensor.is_cuda
-
     @overload
     def index_select(self, dim: _int, index: Tensor) -> Composition:
         ...
@@ -1211,11 +1219,7 @@ class Composition:
 
     @_auto_registration
     def select(self, dim: _int, index: _int) -> Composition:
-        out_component_tensor = self._component_tensor.select(
-            dim=_shift_dim(dim), index=index
-        )
-        out_residual_tensor = self._residual_tensor.select(dim=dim, index=index)
-        return pydec.as_composition(out_component_tensor, out_residual_tensor)
+        return pydec.select(self, dim=dim, index=index)
 
     @overload
     def type(self, dtype: None = None, non_blocking: _bool = False) -> str:
@@ -1237,6 +1241,14 @@ class Composition:
                 dtype=dtype, non_blocking=non_blocking
             )
             return pydec.as_composition(out_component_tensor, out_residual_tensor)
+
+    @overload
+    def type_as(self, other: Tensor) -> Composition:
+        ...
+
+    @overload
+    def type_as(self, other: Composition) -> Composition:
+        ...
 
     @_auto_registration
     def type_as(self, other: Union[Tensor, Composition]) -> Composition:

@@ -3,7 +3,7 @@
 
 Returns a uninitialized index composition, with the shape and the component number defined by the variable argument `size` and `c_num`, respectively.
 
-!> This is the method specifically used to create {{#auto_link}}pydec.IndexComposition short with_parentheses:false{{/auto_link}}, which can safely input sparse layers ([Embedding](https://pytorch.org/docs/stable/generated/torch.nn.Embedding.html#torch.nn.Embedding) and [EmbeddingBag](https://pytorch.org/docs/stable/generated/torch.nn.EmbeddingBag.html#torch.nn.EmbeddingBag)) and return the composition of the indexed tensors.
+?> This is the method specifically used to create {{#auto_link}}pydec.IndexComposition short with_parentheses:false{{/auto_link}}, which can safely input sparse layers ([Embedding](https://pytorch.org/docs/stable/generated/torch.nn.Embedding.html#torch.nn.Embedding) and [EmbeddingBag](https://pytorch.org/docs/stable/generated/torch.nn.EmbeddingBag.html#torch.nn.EmbeddingBag)) and return the composition of the indexed tensors.
 
 **Parameters:**
 

@@ -7,7 +7,7 @@ Tests if all elements in `input.recovery` evaluate to *True*.
 
 ?> This function matches the behaviour of NumPy in returning output of dtype *bool* for all supported dtypes except *uint8*. For *uint8* the dtype of output is *uint8* itself.
 
-!> The composition for the bool tensors is uncommon, make sure you know what you are doing.
+!> The composition of the bool tensors is uncommon, make sure you know what you are doing.
 
 Example:
 ```python

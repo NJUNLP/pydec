@@ -151,4 +151,4 @@ The [full documentation](https://doublevii.github.io/pydec/) contains examples o
 
 
 # Linear Decomposition Theory
-To understand the principles and theories behind PyDec, see our paper [Local Interpretation of Transformer Based on Linear Decomposition]().
+To understand the principles and theories behind PyDec, see our paper [Local Interpretation of Transformer Based on Linear Decomposition](https://aclanthology.org/2023.acl-long.572/).

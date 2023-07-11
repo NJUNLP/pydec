@@ -3,7 +3,7 @@ As the activation functions are non-linear, linear substitutes need to be found 
 
 
 ## Configuring the decomposition algorithm
-PyDec has some built-in strategies to decompose activation functions. By default, PyDec uses the algorithm [*affine decomposition*]().
+PyDec has some built-in strategies to decompose activation functions. By default, PyDec uses the algorithm {{#auto_link}}pydec.decOVF.affine_decomposition short with_parentheses:false{{/auto_link}}.
 
 To use the specified algorithm, call {{#auto_link}}pydec.decOVF.set_decomposition_func{{/auto_link}} and pass in the name of the decomposition algorithm. This will set the global decomposition algorithm for PyDec. [Here](#decomposition-algorithms) is a list of all the built-in strategies and their names.
 
@@ -40,13 +40,13 @@ with pydec.decOVF.using_decomposition_args(threshold=0.2, foo="foo"):
 ```
 
 ## Decomposition algorithms
-| Name          | API                                                                  | Comments                                                                                                 |
-| ------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| affine        | {{#auto_link}}pydec.decOVF.affine_decomposition{{/auto_link}}        | The decomposition $\hat{\mathscr{D}}$(signed) in our paper.                                              |
-| scaling       | {{#auto_link}}pydec.decOVF.scaling_decomposition{{/auto_link}}       | The decomposition $\bar{\mathscr{D}}$ in our paper.                                                      |
-| abs_affine    | {{#auto_link}}pydec.decOVF.abs_affine_decomposition{{/auto_link}}    | The decomposition $\hat{\mathscr{D}}$(abs) in our paper.                                                 |
-| hybrid_affine | {{#auto_link}}pydec.decOVF.hybrid_affine_decomposition{{/auto_link}} | $\hat{\mathscr{D}}$(signed) and $\hat{\mathscr{D}}$(abs) are hybridized by the hyperparameter $\lambda$. |
-| none          | {{#auto_link}}pydec.decOVF._none_decomposition{{/auto_link}}         | No decomposition is performed.                                                                           |
+| Name          | API                                                                                         | Comments                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| affine        | {{#auto_link}}pydec.decOVF.affine_decomposition with_parentheses:false{{/auto_link}}        | The decomposition $\hat{\mathscr{D}}$(signed) in our paper.                                              |
+| scaling       | {{#auto_link}}pydec.decOVF.scaling_decomposition with_parentheses:false{{/auto_link}}       | The decomposition $\bar{\mathscr{D}}$ in our paper.                                                      |
+| abs_affine    | {{#auto_link}}pydec.decOVF.abs_affine_decomposition with_parentheses:false{{/auto_link}}    | The decomposition $\hat{\mathscr{D}}$(abs) in our paper.                                                 |
+| hybrid_affine | {{#auto_link}}pydec.decOVF.hybrid_affine_decomposition with_parentheses:false{{/auto_link}} | $\hat{\mathscr{D}}$(signed) and $\hat{\mathscr{D}}$(abs) are hybridized by the hyperparameter $\lambda$. |
+| none          | {{#auto_link}}pydec.decOVF._none_decomposition with_parentheses:false{{/auto_link}}         | No decomposition is performed.                                                                           |
 
 
 ## Customizing the decomposition algorithm

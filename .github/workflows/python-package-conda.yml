@@ -6,9 +6,11 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-      max-parallel: 5
+        python-version: ["3.9", "3.10"]
+        pytorch-version: ["1.11.0", "1.12.1", "1.13.1", "2.0.0"]
+      max-parallel: 4
     env:
       OS: 'ubuntu-latest'
       PYTHON: Python ${{ matrix.python-version }}
@@ -24,9 +26,10 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
+    - name: Install dependencies with PyTorch ${{ matrix.pytorch-version }}
       run: |
           python -m pip install --upgrade pip setuptools wheel
+          pip install torch==${{ matrix.pytorch-version }}
           pip install black pytest pytest-cov
           pip install .
     - name: Python Lint (isort/black)
