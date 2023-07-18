@@ -35,6 +35,10 @@ contribution while cool colors indicate low contribution. The outputs of the mod
 
 ![Data flow demo](docs/_images/pydec_demo2_1.gif)
 
+## Attribution of language models
+* [Our implementation on RoBERTa](/examples/roberta)
+* [Our implementation on LLaMA](/examples/llama)
+
 # Requirements and Installation
 * [PyTorch](https://pytorch.org/) version >= 1.11.0
 * Python version >= 3.7

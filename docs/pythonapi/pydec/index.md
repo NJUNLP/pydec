@@ -3,11 +3,11 @@ The pydec package contains data structures for compositions and defines mathemat
 
 ## Compositions
 
-| API                                                                    | Description                                                                                   |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| {{#auto_link}}pydec.numel short with_parentheses:false{{/auto_link}}   | Returns the total number of elements in the individual components of the `input` composition. |
-| {{#auto_link}}pydec.c_numel short with_parentheses:false{{/auto_link}} | Returns the total number of elements in all components of the `input` composition.            |
-| {{#auto_link}}pydec.numc short with_parentheses:false{{/auto_link}}    | Returns the number of components in the `input` composition.                                  |
+| API                                                                    | Description                                                                        |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| {{#auto_link}}pydec.numel short with_parentheses:false{{/auto_link}}   | Returns the total number of elements in the recovery of the `input` composition.   |
+| {{#auto_link}}pydec.c_numel short with_parentheses:false{{/auto_link}} | Returns the total number of elements in all components of the `input` composition. |
+| {{#auto_link}}pydec.numc short with_parentheses:false{{/auto_link}}    | Returns the number of components in the `input` composition.                       |
 
 ## Creation Ops
 ?> To create Composition by class constructor, use {{#auto_link}}pydec.Composition{{/auto_link}}.

@@ -34,7 +34,6 @@ __all__ = [
 
 
 # TODO: all inplace operations should be re-examined, `ref` args should not be overridden
-# TODO: algorithms should support `out` argument
 
 
 @register_decomposition_func("abs_affine")
@@ -42,7 +41,6 @@ def abs_affine_decomposition(
     input: Composition,
     func: Callable[[Tensor], Tensor],
     *,
-    out: Optional[Composition] = None,
     ref: Optional[Tensor] = None,
     inplace: _bool = False,
 ) -> Composition:
