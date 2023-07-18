@@ -115,9 +115,9 @@ def leaky_relu(
     See :class:`~torch.nn.LeakyReLU` for more details.
     """
     if inplace:
-        result = core.decOVF.leaky_relu_(input, negative_slope)
+        result = core.decOVF.leaky_relu_(input, negative_slope, ref=ref)
     else:
-        result = core.decOVF.leaky_relu(input, negative_slope)
+        result = core.decOVF.leaky_relu(input, negative_slope, ref=ref)
     return result
 
 
