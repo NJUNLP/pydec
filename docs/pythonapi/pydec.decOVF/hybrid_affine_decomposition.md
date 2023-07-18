@@ -14,6 +14,8 @@ Once $r<$`threshold`, take absolute values for $c_1,\cdots,c_m$ to construct $x^
 
 !> For each element in the input tensor of `func`, the result of decomposition is either the output of {{#auto_link}}pydec.decOVF.affine_decomposition short with_parentheses:false{{/auto_link}} or the output of {{#auto_link}}pydec.decOVF.abs_affine_decomposition short with_parentheses:false{{/auto_link}}, rather than their interpolation.
 
+!> This algorithm consumes more memory and is slower compared to the {{#auto_link}}ppydec.decOVF.affine_decomposition short with_parentheses:false{{/auto_link}} algorithm.
+
 **Parameters:**
 
 * **input** (*{{{pydec_Composition}}}*) – the input composition.
