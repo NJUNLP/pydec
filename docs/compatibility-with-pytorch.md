@@ -44,6 +44,12 @@ To check if a torch API is overridden by pydec, use {{#auto_link}}pydec.override
 
 There are some cases PyDec cannot handle automatically, for example, it is illegal to calculate the product of two compositions. In Transformer, these problems occur in Layer Normalization and Attention layer. We propose the method to linearize them in our paper. For Layer Normalization, the linearization has been integrated into the [`torch.nn.LayerNorm`](https://pytorch.org/docs/stable/generated/torch.nn.LayerNorm.html?highlight=layernorm#torch.nn.LayerNorm) module and the [`torch.nn.functional.layer_norm`](https://pytorch.org/docs/stable/generated/torch.nn.functional.layer_norm.html#torch.nn.functional.layer_norm) function, but you still need to linearize the Attention layer and third-party implementations of Layer Normalization manually.
 
+```python
+hidden_dim = composition.size(-1)
+ln = torch.nn.LayerNorm(hidden_dim)
+ln(composition)  # safe to input a composition
+```
+
 Here is an example of a manually linearized LayerNorm module:
 ```python
 def c2t(input: Union[pydec.Composition, torch.Tensor]):
