@@ -40,11 +40,13 @@ label_fn = lambda label: roberta.task.label_dictionary.string(
     [label + roberta.task.label_dictionary.nspecial]
 )
 
+label2str = lambda label: "Positive" if label == "1" else "Negative"
+
 roberta.cuda()
 roberta.eval()
-with open("/home/yangs/data/glue_data/SST-2/dev.tsv") as fin:
+with open("glue_data/SST-2/dev.tsv") as fin:
     fin.readline()  # table header
-    line = fin.readline() # first sample
+    line = fin.readline()  # first sample
     sent, label = line.strip().split("\t")
     tokens = roberta.encode(sent)
     with torch.no_grad():
@@ -57,13 +59,68 @@ with open("/home/yangs/data/glue_data/SST-2/dev.tsv") as fin:
     logits = c_logits.c_sum()
     prediction = logits.argmax().item()
     prediction_label = label_fn(prediction)
-    print("Label: {}, Prediction: {}".format(label, prediction_label))
+    print("Input: {}".format(sent))
+    print(
+        "Label: {}, Prediction: {}".format(
+            label2str(label), label2str(prediction_label)
+        )
+    )
     print("Logits of prediction:")
     print(logits[0, prediction])
     print("Decompositoin of the logits:")
     print(c_logits[0, prediction])
+
+    # print the score for each word piece
+    word_pieces = [
+        roberta.bpe.decode(item) for item in roberta.bpe.encode(sent).split()
+    ]
+    word_pieces = ["<cls>"] + word_pieces + ["<eos>"]
+    print("\n{:<16}| {}".format("Word piece", "Score"))
+    for word_piece, score in zip(word_pieces, c_logits[0, prediction].components):
+        print("{:<16}| {:.2f}".format('"' + word_piece + '"', score.item()))
 ```
 
+Output:
+```
+Input: it 's a charming and often affecting journey . 
+Label: Positive, Prediction: Positive
+Logits of prediction:
+tensor(3.3450, device='cuda:0')
+Decompositoin of the logits:
+composition{
+  components:
+    tensor(0.2433),
+    tensor(0.1477),
+    tensor(0.0596),
+    tensor(0.1328),
+    tensor(0.1651),
+    tensor(1.0371),
+    tensor(0.2327),
+    tensor(0.3910),
+    tensor(0.2959),
+    tensor(0.4994),
+    tensor(0.0403),
+    tensor(0.0095),
+    tensor(0.0023),
+  residual:
+    tensor(0.0884),
+  device='cuda:0'}
+
+Word piece      | Score
+"<cls>"         | 0.24
+"it"            | 0.15
+" '"            | 0.06
+"s"             | 0.13
+" a"            | 0.17
+" charming"     | 1.04
+" and"          | 0.23
+" often"        | 0.39
+" affecting"    | 0.30
+" journey"      | 0.50
+" ."            | 0.04
+" "             | 0.01
+"<eos>"         | 0.00
+```
 
 ### Run decomposition with Hugging Face transformers
 Not ready yet, coming soon.
