@@ -7,8 +7,8 @@
   <br />
   <br />
   <a href="https://pypi.org/project/pydec/"><img alt="PyPi" src="https://img.shields.io/pypi/v/pydec" /></a>
-  <a href="https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml"><img alt="Test" src="https://github.com/DoubleVII/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master" /></a>
-  <a href="https://doublevii.github.io/pydec/"><img alt="Docs Build Status" src="https://img.shields.io/github/actions/workflow/status/DoubleVII/pydec/deploy-static-pages.yml?label=docs" /></a>
+  <a href="https://github.com/njunlp/pydec/actions/workflows/python-package-conda.yml"><img alt="Test" src="https://github.com/njunlp/pydec/actions/workflows/python-package-conda.yml/badge.svg?branch=master" /></a>
+  <a href="https://njunlp.github.io/pydec/"><img alt="Docs Build Status" src="https://img.shields.io/github/actions/workflow/status/njunlp/pydec/deploy-static-pages.yml?label=docs" /></a>
   <a href="https://codecov.io/gh/DoubleVII/pydec"><img alt="codecov" src="https://codecov.io/gh/DoubleVII/pydec/branch/master/graph/badge.svg?token=UGXWFEKQA9" /></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
 </p>
@@ -45,7 +45,7 @@ contribution while cool colors indicate low contribution. The outputs of the mod
 * To install PyDec and develop locally:
 
 ``` bash
-git clone https://github.com/DoubleVII/pydec
+git clone https://github.com/njunlp/pydec
 cd pydec
 pip install --editable ./
 ```
@@ -151,7 +151,7 @@ tensor([0.2751, 0.3626], grad_fn=<AddBackward0>)
 
 # Documentation
 
-The [full documentation](https://doublevii.github.io/pydec/) contains examples of implementations on real-world models, tutorials, notes and Python API descriptions.
+The [full documentation](https://njunlp.github.io/pydec/) contains examples of implementations on real-world models, tutorials, notes and Python API descriptions.
 
 
 # Linear Decomposition Theory
