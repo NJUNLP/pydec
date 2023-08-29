@@ -76,4 +76,4 @@ class LlamaRMSNorm(nn.Module):
         return self.weight * hidden_states
 ```
 
-See our [examples](https://github.com/DoubleVII/pydec/tree/master/examples) for implementations in real-world models.
+See our [examples](https://github.com/NJUNLP/pydec/tree/master/examples) for implementations in real-world models.

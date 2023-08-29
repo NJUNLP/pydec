@@ -118,6 +118,6 @@ Word piece      | Score
 
 
 ## To reduce memory usage
-[Here](https://doublevii.github.io/pydec/#/reduce-memory-overhead) are some suggestions to reduce memory overhead.
+[Here](https://njunlp.github.io/pydec/#/reduce-memory-overhead) are some suggestions to reduce memory overhead.
 
 The [8bit quantization](https://huggingface.co/docs/transformers/v4.30.0/en/perf_infer_gpu_one#bitsandbytes-integration-for-int8-mixedprecision-matrix-decomposition) is not currently supported.

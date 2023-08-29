@@ -14,7 +14,7 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = "pydec"
 DESCRIPTION = "Linear decomposition toolkit for neural network based on pytorch."
-URL = "https://github.com/DoubleVII/pydec/"
+URL = "https://github.com/njunlp/pydec/"
 EMAIL = "yangsen@smail.nju.edu.cn"
 AUTHOR = "Sen Yang"
 REQUIRES_PYTHON = ">=3.7.0"
