@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10"]
-        pytorch-version: ["1.11.0", "1.12.1", "1.13.1", "2.0.0"]
+        pytorch-version: ["1.13.1", "2.0.1"]
       max-parallel: 4
     env:
       OS: 'ubuntu-latest'
